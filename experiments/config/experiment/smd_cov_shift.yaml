@@ -1,0 +1,56 @@
+# @package _global_
+name: "smd_cov_shift"
+
+initial_seed: 10
+
+data:
+  ndim: 10
+  cate: 0.4
+  scale_t: 10.0
+  shape_t: 3.0
+  propensity: "linear"
+  standardize_features: False
+
+defaults:
+  - /model@models.IPTW: pooled_iptw
+  - /model@models.MAIC: matching_adjusted
+  - /model@models.FedECA: fl_iptw
+  - _self_
+
+models:
+  IPTW:
+    cox_fit_kwargs:
+      robust: True
+  MAIC:
+    cox_fit_kwargs:
+      robust: True
+  FedECA:
+    ndim: ${data.ndim}
+    fedeca_path: "/home/owkin/federated-eca-code/"
+
+# config fit FedECA
+fit_fedeca:
+  n_clients: 2
+  split_method: "split_control_over_centers"
+  split_method_kwargs: {"treatment_info": "treatment_allocation"}
+  data_path: "fl_data_overlap"
+  backend_type: "simu"
+  robust: True
+
+models_common:
+  treated_col: "treatment_allocation"
+  event_col: "event"
+  duration_col: "time"
+
+parameters:
+  n_samples: 1000
+  n_reps: 100
+  return_propensities: False
+  return_weights: False
+
+hydra:
+  sweep:
+    dir: "/home/owkin/project/results_experiments/smd_cov_shift"
+  sweeper:
+    params:
+      data.overlap: range(-1,4,1)

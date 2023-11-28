@@ -1,0 +1,57 @@
+# @package _global_
+name: "Pooled equivalent DP"
+
+# initial_seed is used to generate seed for each run
+initial_seed: 42
+
+data:
+  ndim: 10
+  cate: 0.7
+  scale_t: 10.0
+  shape_t: 3.0
+  propensity: "linear"
+  standardize_features: False
+
+defaults:
+  - /model@models.IPTW: pooled_iptw
+  - /model@models.FedECA: fl_iptw
+  - _self_
+
+models:
+  IPTW:
+    effect: "ATE"
+    cox_fit_kwargs:
+      robust: True
+  FedECA:
+    ndim: 10
+    num_rounds_list: [50, 50]
+
+# config fit FedECA
+fit_fedeca:
+  n_clients: 3
+  split_method: "split_control_over_centers"
+  split_method_kwargs: {"treatment_info": "treatment_allocation"}
+  dp_max_grad_norm: 1.
+  dp_target_delta: 0.001
+  dp_propensity_model_training_params: {"batch_size": 100, "num_updates": 100}
+  dp_propensity_model_optimizer_kwargs: {"lr": 1e-2}
+  backend_type: "simu"
+  robust: True
+
+models_common:
+  treated_col: "treatment_allocation"
+  event_col: "event"
+  duration_col: "time"
+
+parameters:
+  n_samples: 1_000
+  n_reps: 5
+
+hydra:
+  sweep:
+    dir: "pooled_equivalent_dp"
+  sweeper:
+    params:
+      +fit_fedeca.dp_target_epsilon: 0.1, 0.13869189, 0.19235439, 0.26677993, 0.37000212, 0.51316292, 0.71171532, 0.9870914 , 1.36901568, 1.89871366, 2.63336178, 3.65225911, 5.06538703, 7.02528079, 9.7434944, 13.51343612, 18.74203937, 25.99368781, 36.05113577, 50.
+      ++fit_fedeca.dp_target_delta: 0.001, 0.01, 0.1
+

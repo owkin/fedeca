@@ -1,0 +1,64 @@
+# @package _global_
+# An example of experiment config that extends "default_config.yaml".
+# First line is crucial, don't forget to add it!
+name: "Example experiment"
+
+# initial_seed is used to generate seed for each run
+initial_seed: 42
+
+# modify data generation model, full list of params available at data/cox_data
+data:
+  ndim: 5
+  cate: 0.7
+  scale_t: 10.0
+  shape_t: 3.0
+  propensity: "linear"
+  standardize_features: False
+
+defaults:
+  # To setup the dict "models" with predefined models in the group "model",
+  # we need to use the default list. The following line add the key-value pair
+  # ("IPTW", pooled_iptw) to the dict/package `models`, where `pooled_iptw` is a
+  # predefined config in "model" ("model/pooled_iptw.yaml")
+  - /model@models.IPTW: pooled_iptw
+  - /model@models.OracleIPTW: pooled_iptw
+  - /model@models.MAIC: matching_adjusted
+  - /model@models.Naive: naive_comparison
+  - /model@models.new_model: pooled_iptw
+  - _self_
+
+# modify/extend specific models or add your own
+models:
+  # modify pre-defined
+  IPTW:
+    effect: "ATE"
+  new_model:
+    effect: "ATT"
+  # Add new one: _target_ is the class, the rest is the initial kwargs
+  my_naive:
+    _target_: fedeca.competitors.NaiveComparison
+    treated_col: "treated"
+    event_col: "event"
+    duration_col: "time"
+    ps_col: "propensity_scores"
+
+# In case you want to modify/add anything common to all models, parameters
+# listed here will override for all models before initialization
+models_common:
+  treated_col: "TREATED"
+
+parameters:
+  # Whether to return propensity scores of each model in the results
+  return_propensities: False
+  # Whether to return computed weights of each model in the results
+  return_weights: False
+
+hydra:
+  sweep:
+    # You can specify output dir, but it's recommended to keep it unique
+    # for each experiment, for example, by using the default value which uses
+    # the timestamp of execution.
+    dir: "example_results"
+  sweeper:
+    params:
+      parameters.n_samples: range(200,700,100)

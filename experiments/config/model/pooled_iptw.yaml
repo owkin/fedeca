@@ -1,0 +1,4 @@
+defaults:
+  - common
+
+_target_: fedeca.competitors.PooledIPTW

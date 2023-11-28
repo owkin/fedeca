@@ -1,0 +1,13 @@
+name: "pooled_equivalent"
+
+parameters:
+  experiments:
+    nb_clients: [3]
+    n_samples: 500
+    n_covariates: 10
+    n_repeat: 20
+    percent_ties: null
+    group_treated: False
+
+  fedeca:
+    nb_rounds_list: [20, 20]

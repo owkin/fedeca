@@ -1,0 +1,48 @@
+# @package _global_
+name: "Robust Pooled Equivalent"
+
+# initial_seed is used to generate seed for each run
+initial_seed: 42
+
+data:
+  ndim: 10
+  cate: 0.7
+  scale_t: 10.0
+  shape_t: 3.0
+  propensity: "linear"
+  standardize_features: False
+
+defaults:
+  - /model@models.IPTW: pooled_iptw
+  - /model@models.FedECA: fl_iptw
+  - _self_
+
+models:
+  IPTW:
+    effect: "ATE"
+    cox_fit_kwargs:
+      robust: True
+  FedECA:
+    ndim: 10
+
+# config fit FedECA
+fit_fedeca:
+  n_clients: 3
+  split_method: "split_control_over_centers"
+  split_method_kwargs: {"treatment_info": "treatment_allocation"}
+  data_path: "/home/owkin/federated-eca-code/experiments/simulated_cox/iptw_experiment/"
+  robust: True
+  backend_type: "simu"
+
+models_common:
+  treated_col: "treatment_allocation"
+  event_col: "event"
+  duration_col: "time"
+
+parameters:
+  n_samples: 1_000
+  n_reps: 100
+
+hydra:
+  sweep:
+    dir: "/home/owkin/project/results_experiments/robust_pooled_equivalence"

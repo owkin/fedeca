@@ -1,0 +1,31 @@
+# @package _global_
+name: "Vary overlap"
+
+initial_seed: 42
+
+data:
+  ndim: 10
+  cate: 0.7
+  scale_t: 10.0
+  shape_t: 3.0
+  propensity: "linear"
+  standardize_features: True
+  prop_treated: 0.5
+
+defaults:
+  - /model@models.IPTW: pooled_iptw
+  - /model@models.OracleIPTW: pooled_iptw
+  - /model@models.MAIC: matching_adjusted
+  - /model@models.Naive: naive_comparison
+  - _self_
+
+parameters:
+  n_samples: 500
+  n_reps: 20
+
+hydra:
+  sweep:
+    dir: "vary_overlap"
+  sweeper:
+    params:
+      data.overlap: range(0,11,2)

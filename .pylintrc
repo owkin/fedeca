@@ -1,0 +1,39 @@
+[MAIN]
+load-plugins=
+    pylint.extensions.check_elif,
+    pylint.extensions.bad_builtin,
+    pylint.extensions.docparams,
+    pylint.extensions.for_any_all,
+    pylint.extensions.set_membership,
+    pylint.extensions.code_style,
+    pylint.extensions.overlapping_exceptions,
+    pylint.extensions.typing,
+    pylint.extensions.redefined_variable_type,
+    pylint.extensions.comparison_placement,
+
+[MESSAGES CONTROL]
+disable =
+    too-many-instance-attributes,
+    too-few-public-methods,
+    too-many-public-methods,
+    too-many-arguments,
+    too-many-locals,
+    fixme,
+
+[BASIC]
+good-names = a,b,c,i,j,k,n,r,s,t,u,v,w,x,y,z,id,_,df,X
+good-names-rgxs = X_[a-zA-Z]*
+
+[FORMAT]
+max-line-length = 88
+max-module-lines = 1500
+
+[SIMILARITIES]
+ignore-imports = yes
+min-similarity-lines = 10
+
+[TYPING]
+runtime-typing = yes
+
+[TYPECHECK]
+generated-members=numpy.*,torch.*

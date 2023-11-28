@@ -1,0 +1,10 @@
+name: "power_comparison"
+
+seed: 42
+
+parameters:
+  experiments:
+    cate: 0.0
+    n_samples: [200, 300, 400, 500, 600, 700]
+    n_covariates: 5
+    n_repeats: 1000

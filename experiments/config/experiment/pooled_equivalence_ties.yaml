@@ -1,0 +1,54 @@
+# @package _global_
+name: "Pooled equivalent ties"
+
+# initial_seed is used to generate seed for each run
+initial_seed: 42
+
+data:
+  ndim: 10
+  cate: 0.7
+  scale_t: 10.0
+  shape_t: 3.0
+  propensity: "linear"
+  standardize_features: False
+
+defaults:
+  - /model@models.IPTW: pooled_iptw
+  - /model@models.FedECA: fl_iptw
+  - _self_
+
+models:
+  IPTW:
+    effect: "ATE"
+    cox_fit_kwargs:
+      robust: True
+  FedECA:
+    ndim: 10
+    num_rounds_list: [50, 50]
+
+# config fit FedECA
+fit_fedeca:
+  n_clients: 3
+  split_method: "split_control_over_centers"
+  split_method_kwargs: {"treatment_info": "treatment_allocation"}
+  backend_type: "simu"
+  robust: True
+
+models_common:
+  treated_col: "treatment_allocation"
+  event_col: "event"
+  duration_col: "time"
+
+parameters:
+  n_samples: 1_000
+  n_reps: 5
+  return_propensities: True
+  return_weights: True
+
+hydra:
+  sweep:
+    dir: "pooled_equivalent_ties"
+  sweeper:
+    params:
+      ++data.percent_ties: null, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9
+

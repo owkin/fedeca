@@ -1,0 +1,58 @@
+# @package _global_
+name: "Power and type one error analyses"
+
+initial_seed: 10
+
+data:
+  ndim: 10
+  scale_t: 10.0
+  shape_t: 3.0
+  overlap: 3.0
+  propensity: "linear"
+  standardize_features: False
+
+defaults:
+  - /model@models.IPTW_bootstrap: pooled_iptw
+  - /model@models.IPTW_robust: pooled_iptw
+  - /model@models.IPTW_naive: pooled_iptw
+  - /model@models.MAIC_bootstrap: matching_adjusted
+  - /model@models.MAIC_robust: matching_adjusted
+  - /model@models.Unweighted: naive_comparison
+  - _self_
+
+n_bootstrap: 200
+
+models:
+  IPTW_bootstrap:
+    variance_method: "bootstrap"
+    n_bootstrap: ${n_bootstrap}
+  IPTW_robust:
+    variance_method: "robust"
+  IPTW_naive:
+    variance_method: "naive"
+  MAIC_bootstrap:
+    variance_method: "bootstrap"
+    n_bootstrap: ${n_bootstrap}
+  MAIC_robust:
+    variance_method: "robust"
+  Unweighted:
+    variance_method: "naive"
+
+models_common:
+  treated_col: "treatment_allocation"
+  event_col: "event"
+  duration_col: "time"
+
+parameters:
+  n_samples: 1000
+  n_reps: 1000
+  return_propensities: False
+  return_weights: False
+
+hydra:
+  sweep:
+    dir: "/home/owkin/project/results_experiments/power_and_type_one_error_n_samples"
+  sweeper:
+    params:
+      data.cate: 1.0,0.4
+      parameters.n_samples: range(300,1101,200)

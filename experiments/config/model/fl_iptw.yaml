@@ -1,0 +1,6 @@
+defaults:
+  - common
+
+_target_: fedeca.fedeca_core.FedECA
+num_rounds_list: [20, 20]
+dtype: "float64"

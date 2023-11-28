@@ -1,0 +1,58 @@
+# @package _global_
+name: "Real-world experiments"
+
+# initial_seed is used to generate seed for each run
+initial_seed: 42
+
+data:
+  ndim: 10
+  cate: 0.7
+  scale_t: 10.0
+  shape_t: 3.0
+  propensity: "linear"
+  standardize_features: False
+
+defaults:
+  - /model@models.IPTW: pooled_iptw
+  - /model@models.FedECA: fl_iptw
+  - _self_
+
+models:
+  IPTW:
+    effect: "ATE"
+    cox_fit_kwargs:
+      robust: False
+  FedECA:
+    ndim: 10
+    num_rounds_list: [50, 50]
+
+# config fit FedECA
+fit_fedeca:
+  n_clients: 3
+  robust: True
+  split_method: "split_control_over_centers"
+  split_method_kwargs: {"treatment_info": "treatment_allocation"}
+  data_path: "/home/owkin/real-world/"
+  # We start on the second url the first is reserved for the server
+  urls: ["https://api.org-2.fedeca-rw.cg.owkin.tech", "https://api.org-3.fedeca-rw.cg.owkin.tech", "https://api.org-4.fedeca-rw.cg.owkin.tech", "https://api.org-5.fedeca-rw.cg.owkin.tech", "https://api.org-6.fedeca-rw.cg.owkin.tech", "https://api.org-7.fedeca-rw.cg.owkin.tech", "https://api.org-8.fedeca-rw.cg.owkin.tech", "https://api.org-9.fedeca-rw.cg.owkin.tech", "https://api.org-10.fedeca-rw.cg.owkin.tech", "https://api.org-11.fedeca-rw.cg.owkin.tech"]
+  server_org_id: 'MyOrg1MSP'
+
+models_common:
+  treated_col: "treatment_allocation"
+  event_col: "event"
+  duration_col: "time"
+
+parameters:
+  n_samples: 1_000
+  n_reps: 5
+
+hydra:
+  sweep:
+    dir: "real-world"
+  sweeper:
+    params:
+      # 9 will not be kept but used as a warm-up for the server
+      ++fit_fedeca.n_clients: 9, 10, 8, 5, 3, 2
+      +fit_fedeca.backend_type: remote, simu
+      
+

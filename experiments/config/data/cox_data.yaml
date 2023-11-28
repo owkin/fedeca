@@ -1,0 +1,16 @@
+_target_: fedeca.utils.survival_utils.CoxData
+ndim: 10
+features_type: "cov_toeplitz"
+cate: 1.0
+propensity: "constant"
+prop_treated: 0.5
+overlap: 0.0
+cov_corr: 0.5
+scale_t: 1.0
+shape_t: 1.0
+censoring_factor: 0.5
+percent_ties: null
+random_censoring: False
+seed: 42
+standardize_features: True
+dtype: "float64"

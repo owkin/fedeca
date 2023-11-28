@@ -1,0 +1,14 @@
+[flake8]
+max-line-length = 88
+ignore = D105, E731, W503, F821, E203
+docstring-convention = numpy
+per-file-ignores = __init__.py:F401
+exclude =
+    .git
+    .github
+    .dvc
+    __pycache__
+    .venv
+    .mypy_cache
+    .pytest_cache
+    conf.py

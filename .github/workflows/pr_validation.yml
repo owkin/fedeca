@@ -1,0 +1,48 @@
+name: pr-validation
+
+# Controls when the workflow will run
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    paths-ignore:
+    - 'experiments/**'  # if only the exps are modified, no need to run it
+    - 'docs/**'  # if only the docs are modified, no need to run it
+  schedule:
+    # Every monday at 3h30 UTC
+    - cron: '30 3 * * 1'
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  run_tests:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        python: ["3.9"]
+        # python: ["3.9", "3.10", "3.11"]  # TODO: expand to other pythons
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install dependencies
+        env:
+          GIT_TOKEN: ${{ secrets.GIT_TOKEN }}
+          GIT_USERNAME: ${{ secrets.GIT_USERNAME }}
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[all_extra]"
+      - name: Testing with pytest
+        run: |
+          coverage run -m pytest -v fedeca
+      - name: Generate code coverage report
+        run: |
+          coverage html --omit="*/local-worker/*"
+      - name: Upload coverage artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-coverage-report
+          path: htmlcov/
+          retention-days: 20

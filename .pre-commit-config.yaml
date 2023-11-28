@@ -1,0 +1,37 @@
+repos:
+-   repo: https://github.com/ambv/black
+    rev: 22.1.0
+    hooks:
+    - id: black
+      additional_dependencies: ['click==8.0.4']
+      args: # arguments to configure black
+       - --line-length=88
+-   repo: https://github.com/PyCQA/docformatter
+    rev: v1.7.5
+    hooks:
+    - id: docformatter
+      name: Format docstrings with `docformatter`
+      language: system
+      types: [python]
+      require_serial: true
+      args: [--in-place,--wrap-summaries=88, --wrap-descriptions=87, --recursive]
+
+-   repo: https://github.com/pre-commit/mirrors-isort
+    rev: v5.10.1
+    hooks:
+    - id: isort
+      args : ["--profile", "black", "--filter-files"]
+
+-   repo: local
+    hooks:
+    - id: flake8
+      name: "Run linter flake8"
+      language: system
+      types: [python]
+      require_serial: true
+      entry: flake8
+      args :
+       - "--max-line-length=88"
+       - "--per-file-ignores=*/__init__.py:F401"
+       # copy ignore cases from .flake8 file to be run by pre-commit
+       - "--ignore=D105, E731, W503, F821, E203"

@@ -1,0 +1,30 @@
+name: "Default configuration"
+
+# Use default list to load predefined configs
+defaults:
+  - data: cox_data
+  # Select "model/common.yaml" and assign it to `models_common`
+  - model@models_common: common
+  # For each experiment we need to specify a dictionary of `models` (models of
+  # different dict keys can have the same model as values). By default no model
+  # is specified, see "experiment/example.yaml" for instructions.
+  - _self_
+  # Specification of each experiment, to be overriden by configs under the group
+  # "experiment".
+  - experiment: null
+
+parameters:
+  # Number of repetitions of each experiment
+  n_reps: 10
+  # Number of samples of the generated dataset in each repetition
+  n_samples: 100
+  # Whether to return propensity scores of each model in the results
+  return_propensities: True
+  # Whether to return computed weights of each model in the results
+  return_weights: True
+
+# initial_seed is used to generate seed for each run (set of parameters)
+initial_seed: 42
+
+hydra:
+  mode: "MULTIRUN"

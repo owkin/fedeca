@@ -1,0 +1,4 @@
+treated_col: "treated"
+event_col: "event"
+duration_col: "time"
+ps_col: "propensity_scores"
