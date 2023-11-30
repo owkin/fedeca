@@ -18,15 +18,15 @@ Citing this work
 
 ::
 
-@misc{
-      terrail2023fedeca,
-      title={FedECA: A Federated External Control Arm Method for Causal Inference with Time-To-Event Data in Distributed Settings}, 
-      author={Jean Ogier du Terrail and Quentin Klopfenstein and Honghao Li and Imke Mayer and Nicolas Loiseau and Mohammad Hallal and Félix Balazard and Mathieu Andreux},
-      year={2023},
-      eprint={2311.16984},
-      archivePrefix={arXiv},
-      primaryClass={stat.ME}
-      }
+   @misc{
+         terrail2023fedeca,
+         title={FedECA: A Federated External Control Arm Method for Causal Inference with Time-To-Event Data in Distributed Settings}, 
+         author={Jean Ogier du Terrail and Quentin Klopfenstein and Honghao Li and Imke Mayer and Nicolas Loiseau and Mohammad Hallal and Félix Balazard and Mathieu Andreux},
+         year={2023},
+         eprint={2311.16984},
+         archivePrefix={arXiv},
+         primaryClass={stat.ME}
+         }
 
 License
 -------
