@@ -6,8 +6,8 @@ from typing import Union
 import types
 import re
 import copy
-import tempfile
 from pathlib import Path
+from substrafl.algorithms.pytorch.torch_base_algo import TorchAlgo
 
 def make_bootstrap_strategy(strategy: Strategy, n_bootstraps: Union[int, None] = 10, bootstrap_seeds: Union[list[int], None] = None, inplace : bool = False):
     """Bootstrap a substrafl strategy wo impacting the number of compute tasks.
@@ -103,12 +103,7 @@ def make_bootstrap_strategy(strategy: Strategy, n_bootstraps: Union[int, None] =
     aggregations_fct = {}
     # Define the merged methods using the functions defined above.
     for key in ["strategy", "algo"]:
-        if key == "strategy":
-            obj = strategy
-        else:
-            obj = strategy.algo
         # most important line as substrafl will never use instances themselves
-        obj_class = obj.__class__
         local_computations_fct[key] = [
             _bootstrap_local_function(local_function, name, bootstrap_seeds_list=bootstrap_seeds_list)
             for local_function, name in zip(
@@ -119,28 +114,95 @@ def make_bootstrap_strategy(strategy: Strategy, n_bootstraps: Union[int, None] =
             _aggregate_all_bootstraps(agg, name)
             for agg, name in zip(orig_aggregations[key], aggregations_names[key])
         ]
-        # Very important we have to decorate AT THE CLASS LEVEL
-        # here we decorate both at the instance and at the class level
-        # but for actual deployments only class-level is important
-        # this stems from the algo reinstantiating itself using its class
-        # doing sthg like my_algo.__class__(**my_algo.kwargs)
-        for local_computation, local_name in zip(local_computations_fct[key], local_functions_names[key]):
-            setattr(obj_class, local_name, types.MethodType(local_computation, obj_class))
-            setattr(obj, local_name, types.MethodType(local_computation, obj))
+    # define what will be the __init__ method of
+    # the to-be-dynamically-defined MergedClass
+    def bootstrapped_algo_init(self, *args, **kwargs):
+        """Initialize the merged strategy.
+
+        Parameters
+        ----------
+        self : BtstAlgo
+            The BtstAlgo instance.
+        algo : Strategy
+            List of the strategies used.
+        args: Any
+            extra arguments
+        kwargs: Any
+            extra keyword arguments
+        """
+        super(self.__class__, self).__init__(
+            *args, **kwargs
+        )
+        self.original_algo = strategy.algo
+
+    # Dict holding the methods of the to-be-dynamically-defined MergedClass
+    methods_dict = dict(zip(local_functions_names["algo"], local_computations_fct["algo"]))
+    methods_dict.update(dict(zip(aggregations_names["algo"], aggregations_fct["algo"])))
+    methods_dict.update({"load_local_state_original": getattr(strategy.algo, "load_local_state")})
+    methods_dict.update({"save_local_state_original": getattr(strategy.algo, "save_local_state")})
+    methods_dict.update({"load_local_state": _load_all_bootstraps_states()})
+    methods_dict.update({"save_local_state": _save_all_bootstraps_states()})
+    methods_dict.update({"strategies": strategy.algo.strategies})
+    methods_dict.update({"__init__": bootstrapped_algo_init})
+
+    # dynamically define the BtstStrategy Class, which inherits from
+    # Strategy, and whose methods are defined by the method dict.
+    BtstAlgo = type("BtstAlgo", (strategy.algo.__class__,), methods_dict)
+    btst_algo = BtstAlgo()
+
+       # define what will be the __init__ method of
+    # the to-be-dynamically-defined MergedClass
+    def bootstrapped_strategy_init(self, *args, **kwargs):
+        """Initialize the merged strategy.
+
+        Parameters
+        ----------
+        self : BtstStrategy
+            The BtstStrategy instance.
+        strategy : Strategy
+            List of the strategies used.
+        args: Any
+            extra arguments
+        kwargs: Any
+            extra keyword arguments
+        """
+        super(self.__class__, self).__init__(
+            *args, **kwargs
+        )
+        self.original_strategy = strategy
+
+    # Dict holding the methods of the to-be-dynamically-defined MergedClass
+    methods_dict = dict(zip(local_functions_names["strategy"], local_computations_fct["strategy"]))
+    methods_dict.update(dict(zip(aggregations_names["strategy"], aggregations_fct["strategy"])))
+    methods_dict.update({"__init__": bootstrapped_strategy_init}) 
+    # dynamically define the BtstStrategy Class, which inherits from
+    # Strategy, and whose methods are defined by the method dict.
+    BtstStrategy = type("BtstStrategy", (strategy.__class__,), methods_dict)
+    # return an instance of this class.
+    strat = BtstStrategy(algo=btst_algo)
+    return strat
+    #     # Very important we have to decorate AT THE CLASS LEVEL
+    #     # here we decorate both at the instance and at the class level
+    #     # but for actual deployments only class-level is important
+    #     # this stems from the algo reinstantiating itself using its class
+    #     # doing sthg like my_algo.__class__(**my_algo.kwargs)
+    #     for local_computation, local_name in zip(local_computations_fct[key], local_functions_names[key]):
+    #         setattr(obj_class, local_name, types.MethodType(local_computation, obj_class))
+    #         setattr(obj, local_name, types.MethodType(local_computation, obj))
 
 
-        for agg_fct, agg_name in zip(aggregations_fct[key], aggregations_names[key]):
-            setattr(obj, agg_name, types.MethodType(agg_fct, obj))
-            setattr(obj_class, agg_name, types.MethodType(agg_fct, obj_class))
+    #     for agg_fct, agg_name in zip(aggregations_fct[key], aggregations_names[key]):
+    #         setattr(obj, agg_name, types.MethodType(agg_fct, obj))
+    #         setattr(obj_class, agg_name, types.MethodType(agg_fct, obj_class))
 
-    # We need to hook the load and save state methods to be able to save load
-    # all bootstrapped states
-    setattr(strategy.algo, "save_local_state", types.MethodType(_save_all_bootstraps_states(), strategy.algo))
-    setattr(strategy.algo, "save_local_state", types.MethodType(_save_all_bootstraps_states(), strategy.algo.__class__))
-    setattr(strategy.algo, "load_local_state", types.MethodType(_load_all_bootstraps_states(), strategy.algo))
-    setattr(strategy.algo, "load_local_state", types.MethodType(_load_all_bootstraps_states(), strategy.algo.__class__))
-    if not inplace:
-        return strategy
+    # # We need to hook the load and save state methods to be able to save load
+    # # all bootstrapped states
+    # setattr(strategy.algo, "save_local_state", types.MethodType(_save_all_bootstraps_states(), strategy.algo))
+    # setattr(strategy.algo, "save_local_state", types.MethodType(_save_all_bootstraps_states(), strategy.algo.__class__))
+    # setattr(strategy.algo, "load_local_state", types.MethodType(_load_all_bootstraps_states(), strategy.algo))
+    # setattr(strategy.algo, "load_local_state", types.MethodType(_load_all_bootstraps_states(), strategy.algo.__class__))
+    # if not inplace:
+    #     return strategy
         
 
 
@@ -205,7 +267,7 @@ def _bootstrap_local_function(local_function, new_op_name, bootstrap_seeds_list)
             bootstrapped_data = datasamples.sample(datasamples.shape[0], replace=True, random_state=rng)
             # Loading the correct state into the current main algo
             if self.checkpoints_list[idx] is not None:
-                self.load_local_state(self.checkpoints_list[idx])
+                self.load_local_state_original(self.checkpoints_list[idx])
             if shared_state is None:
                 res = local_function(datasamples=bootstrapped_data, _skip=True)
             else:
@@ -294,14 +356,14 @@ def _load_all_bootstraps_states():
 
         # Note that at the end of this loop the main state is the one of the last
         # bootstrap
-        if (path / "bootstrap_0") in path.iterdir():
+        if (path.parent / "bootstrap_0") in path.parent.iterdir():
             for idx in range(self.n_bootstraps_bootstraper):
-                self.load_local_state_original.load(path / f"bootstrap_{idx}")
+                self.load_local_state_original(path / f"bootstrap_{idx}")
                 self.checkpoints_list[idx] = self.get_state_to_save()
         else:
             # This first call is needed when no bootstrap has been done
             # self.load_local_state_original(path)
-            raise ValueError("No bootstrap has been done yet we cannot load states")
+            self.load_local_state_original(path)
     return load_local_state
 
     
@@ -314,10 +376,13 @@ def _save_all_bootstraps_states():
         if hasattr(self, "checkpoints_list"):
             for idx, checkpt in enumerate(self.checkpoints_list):
                 # Get the model in the proper state
+                # TODO methods implictly use the self attribute
                 self.load_local_state_original(checkpt)
                 self.save_local_state_original(path=path / f"bootstrap_{idx}")
         else:
-            raise ValueError("Attribute checkpoints_list is not populated")
+            # First call of thiis function checkpoints_list doesn't exist
+            # we need to be able to load sthg
+            self.save_local_state_original(path=path)
         return self
     return save_local_state
 
@@ -389,7 +454,7 @@ if __name__ == "__main__":
 
     strategy = FedAvg(algo=TorchLogReg())
 
-    strategy = make_bootstrap_strategy(strategy, n_bootstraps=10)
+    btst_strategy = make_bootstrap_strategy(strategy, n_bootstraps=10)
     
 
     clients, train_data_nodes, test_data_nodes, _, _ = split_dataframe_across_clients(
@@ -409,9 +474,10 @@ if __name__ == "__main__":
     my_eval_strategy = EvaluationStrategy(test_data_nodes=test_data_nodes, eval_frequency=1)
     xp_dir = str(Path.cwd() / "tmp" / "experiment_summaries")
     os.makedirs(xp_dir, exist_ok=True)
+
     compute_plan = execute_experiment(
         client=clients[first_key],
-        strategy=strategy,
+        strategy=btst_strategy,
         train_data_nodes=train_data_nodes,
         evaluation_strategy=my_eval_strategy,
         aggregation_node=aggregation_node,
