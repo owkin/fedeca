@@ -268,9 +268,13 @@ def _bootstrap_local_function(local_function, new_op_name, bootstrap_seeds_list)
         for idx, seed in enumerate(bootstrap_seeds_list):
             rng = np.random.default_rng(seed)
             bootstrapped_data = datasamples.sample(datasamples.shape[0], replace=True, random_state=rng)
+
             # Loading the correct state into the current main algo
             if self.checkpoints_list[idx] is not None:
                 self._update_from_checkpoint(self.checkpoints_list[idx])
+            # We need this old state tto avoid side effects from the function
+            # on the instance
+            old_state = copy.deepcopy(self)
             if shared_state is None:
                 res = local_function(datasamples=bootstrapped_data, _skip=True)
             else:
@@ -278,6 +282,12 @@ def _bootstrap_local_function(local_function, new_op_name, bootstrap_seeds_list)
                         datasamples=bootstrapped_data, shared_state=shared_state[idx], _skip=True
                     )
             self.checkpoints_list[idx] = self._get_state_to_save()
+
+            # We restore the algo to its old state
+            for att_name, att in vars(self).items():
+                if att != old_state.__getattribute__(att_name):
+                    self.__setattr__(att_name, old_state.__getattribute__(att_name))
+
             results.append(res)
 
         return results
