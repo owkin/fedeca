@@ -142,9 +142,7 @@ def make_bootstrap_strategy(strategy: Strategy, n_bootstraps: Union[int, None] =
 
     btst_algo = BtstAlgo()
     class BtstStrategy(strategy.__class__):
-        def __init__(self):
-            kwargs = strategy.kwargs
-            kwargs["algo"] = btst_algo
+        def __init__(self, **kwargs):
             super().__init__(**kwargs)
             for local_name in local_functions_names["strategy"]:
                 setattr(self, local_name + "_original", getattr(self, local_name))
@@ -155,31 +153,13 @@ def make_bootstrap_strategy(strategy: Strategy, n_bootstraps: Union[int, None] =
                 f = types.MethodType(_aggregate_all_bootstraps(getattr(self, agg_name), agg_name), self)
                 setattr(self, agg_name, f)
 
-    return BtstStrategy()
-    #     # Very important we have to decorate AT THE CLASS LEVEL
-    #     # here we decorate both at the instance and at the class level
-    #     # but for actual deployments only class-level is important
-    #     # this stems from the algo reinstantiating itself using its class
-    #     # doing sthg like my_algo.__class__(**my_algo.kwargs)
-    #     for local_computation, local_name in zip(local_computations_fct[key], local_functions_names[key]):
-    #         setattr(obj_class, local_name, types.MethodType(local_computation, obj_class))
-    #         setattr(obj, local_name, types.MethodType(local_computation, obj))
+    strategy.kwargs.pop("algo")
+    return BtstStrategy(algo=btst_algo, **strategy.kwargs)        
 
-
-    #     for agg_fct, agg_name in zip(aggregations_fct[key], aggregations_names[key]):
-    #         setattr(obj, agg_name, types.MethodType(agg_fct, obj))
-    #         setattr(obj_class, agg_name, types.MethodType(agg_fct, obj_class))
-
-    # # We need to hook the load and save state methods to be able to save load
-    # # all bootstrapped states
-    # setattr(strategy.algo, "save_local_state", types.MethodType(_save_all_bootstraps_states(), strategy.algo))
-    # setattr(strategy.algo, "save_local_state", types.MethodType(_save_all_bootstraps_states(), strategy.algo.__class__))
-    # setattr(strategy.algo, "load_local_state", types.MethodType(_load_all_bootstraps_states(), strategy.algo))
-    # setattr(strategy.algo, "load_local_state", types.MethodType(_load_all_bootstraps_states(), strategy.algo.__class__))
-    # if not inplace:
-    #     return strategy
-        
-
+def _bootstrap_predict(predict):
+    def new_predict(self, predictions_path):
+        return self
+    return new_predict
 
 def _bootstrap_local_function(local_function, new_op_name, bootstrap_seeds_list):
     """Bootstrap the local functiion given.
@@ -369,7 +349,10 @@ def _save_all_bootstraps_states(save_local_state, bootstrap_seeds_list):
             paths_to_checkpoints = []
             for idx, checkpt in enumerate(self.checkpoints_list):
                 # Get the model in the proper state
-                self._update_from_checkpoint(checkpt)
+                try:
+                    self._update_from_checkpoint(checkpt)
+                except KeyError:
+                    pass
                 assert not checkpt
                 path_to_checkpoint = Path(tmpdirname) / f"bootstrap_{idx}"
                 self.save_local_state_original(path_to_checkpoint)
@@ -465,7 +448,7 @@ if __name__ == "__main__":
 
     dependencies = Dependency(pypi_dependencies=["numpy==1.24.3", "scikit-learn==1.3.1", "torch==2.0.1", "--extra-index-url https://download.pytorch.org/whl/cpu"])
     # Test at the end of every round
-    my_eval_strategy = EvaluationStrategy(test_data_nodes=test_data_nodes, eval_frequency=1)
+    my_eval_strategy = None #EvaluationStrategy(test_data_nodes=test_data_nodes, eval_frequency=1)
     xp_dir = str(Path.cwd() / "tmp" / "experiment_summaries")
     os.makedirs(xp_dir, exist_ok=True)
 
