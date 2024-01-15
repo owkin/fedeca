@@ -283,6 +283,7 @@ def _bootstrap_local_function(local_function, new_op_name, bootstrap_seeds_list)
                 res = getattr(self, name_decorated_function)(
                         datasamples=bootstrapped_data, shared_state=shared_state[idx], _skip=True
                     )
+
             self.checkpoints_list[idx] = copy.deepcopy(self._get_state_to_save())
 
             # We restore the algo to its old state
@@ -346,7 +347,7 @@ def _aggregate_all_bootstraps(aggregation_function, new_op_name):
         name_decorated_function = aggregation_function.__name__ + "_original"
         if shared_states is not None:
             # loop over the aggregation steps provided using _skip=True
-            for shared_state in shared_states:
+            for shared_state in zip(*shared_states):
                 res = getattr(self, name_decorated_function)(shared_states=shared_state, _skip=True)
                 results.append(res)
         else:
