@@ -349,10 +349,7 @@ def _save_all_bootstraps_states(save_local_state, bootstrap_seeds_list):
             paths_to_checkpoints = []
             for idx, checkpt in enumerate(self.checkpoints_list):
                 # Get the model in the proper state
-                try:
-                    self._update_from_checkpoint(checkpt)
-                except KeyError:
-                    pass
+                self._update_from_checkpoint(checkpt)
                 assert not checkpt
                 path_to_checkpoint = Path(tmpdirname) / f"bootstrap_{idx}"
                 self.save_local_state_original(path_to_checkpoint)
@@ -448,7 +445,7 @@ if __name__ == "__main__":
 
     dependencies = Dependency(pypi_dependencies=["numpy==1.24.3", "scikit-learn==1.3.1", "torch==2.0.1", "--extra-index-url https://download.pytorch.org/whl/cpu"])
     # Test at the end of every round
-    my_eval_strategy = None #EvaluationStrategy(test_data_nodes=test_data_nodes, eval_frequency=1)
+    my_eval_strategy = EvaluationStrategy(test_data_nodes=test_data_nodes, eval_frequency=1)
     xp_dir = str(Path.cwd() / "tmp" / "experiment_summaries")
     os.makedirs(xp_dir, exist_ok=True)
 
