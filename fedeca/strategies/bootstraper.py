@@ -68,6 +68,8 @@ def make_bootstrap_strategy(strategy: Strategy, n_bootstraps: Union[int, None] =
         method_args_dict = inspect.signature(getattr(obj, method_name)).parameters
         if not (("shared_states" in method_args_dict) or ("shared_state" in method_args_dict)) or (method_name in ["save_local_state", "load_local_state"]):
             continue
+        if "predictions_path" in method_args_dict:
+            continue
         # We create a copy of all methods with the original suffix to avoid name
         # collision and infinite recursion when decorating the old methods
 
@@ -120,8 +122,8 @@ def make_bootstrap_strategy(strategy: Strategy, n_bootstraps: Union[int, None] =
         ]
     # We have to overwrite the original methods at the class level
     class BtstAlgo(strategy.algo.__class__):
-        def __init__(self):
-            super().__init__(**strategy.algo.kwargs)
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
             for local_name in local_functions_names["algo"]:
                 setattr(self, local_name + "_original", getattr(self, local_name))
                 f = types.MethodType(_bootstrap_local_function(getattr(self, local_name), local_name, bootstrap_seeds_list), self)
@@ -132,15 +134,65 @@ def make_bootstrap_strategy(strategy: Strategy, n_bootstraps: Union[int, None] =
                 f = types.MethodType(_aggregate_all_bootstraps(getattr(self, agg_name), agg_name), self)
                 setattr(self, agg_name, f)
 
-            setattr(self, "save_local_state_original", self.save_local_state)
-            f = types.MethodType(_save_all_bootstraps_states(getattr(self, "save_local_state"), bootstrap_seeds_list), self)
-            setattr(self, "save_local_state", f)
+        def save_local_state(self, path: Path) -> "TorchAlgo":
+            # We save all bootstrapped states in different subfolders
+            # It assumes at this point checkpoints_list has been populated
+            # if it exists
 
-            setattr(self, "load_local_state_original", self.load_local_state)
-            f = types.MethodType(_load_all_bootstraps_states(getattr(self, "load_local_state")), self)
-            setattr(self, "load_local_state", f)
+            # The reason for the if is because of initialize functions which don't
+            # populate checkpoints_list
+            if hasattr(self, "checkpoints_list"):
+                pass
+            else:
+                self.checkpoints_list = [copy.deepcopy(self._get_state_to_save()) for _ in range(len(bootstrap_seeds_list))]
+            with tempfile.TemporaryDirectory() as tmpdirname:
+                paths_to_checkpoints = []
+                for idx, checkpt in enumerate(self.checkpoints_list):
+                    # Get the model in the proper state
+                    self._update_from_checkpoint(checkpt)
+                    assert not checkpt
+                    path_to_checkpoint = Path(tmpdirname) / f"bootstrap_{idx}"
+                    super(strategy.algo.__class__, self).save_local_state(path_to_checkpoint)
+                    paths_to_checkpoints.append(path_to_checkpoint)
+            
+                with zipfile.ZipFile(path, 'w') as f:        
+                    for chkpt in paths_to_checkpoints:
+                        f.write(chkpt, compress_type=zipfile.ZIP_DEFLATED)
+            return self
+        
+        def load_local_state(self, path: Path) -> "TorchAlgo":
+            """Load the stateful arguments of this class.
+            Child classes do not need to override that function.
 
-    btst_algo = BtstAlgo()
+            Args:
+                path (pathlib.Path): The path where the class has been saved.
+
+            Returns:
+                TorchAlgo: The class with the loaded elements.
+            """
+
+            # Note that at the end of this loop the main state is the one of the last
+            # bootstrap
+            archive = zipfile.ZipFile(path, 'r')
+            with tempfile.TemporaryDirectory() as tmpdirname:
+                archive.extractall(tmpdirname)
+                checkpoints_found = sorted([p for p in Path(tmpdirname).glob("**/bootstrap_*")])
+                self.checkpoints_list = [None] * len(checkpoints_found)
+                for idx, file in enumerate(checkpoints_found):
+                    super(strategy.algo.__class__, self).load_local_state(file)
+                    self.checkpoints_list[idx] = copy.deepcopy(self._get_state_to_save())
+            return self
+
+        @remote_data
+        def predict(self, datasamples, shared_state = None, predictions_path: os.PathLike = None):
+            predictions = []
+            for _, chckpt in enumerate(self.checkpoints_list):
+                self._update_from_checkpoint(chckpt)
+                pred_btst = super(strategy.algo.__class__, self).predict(datasamples=datasamples, shared_state=shared_state, predictions_path=predictions_path, _skip=True)
+                predictions.append(pred_btst)
+            return predictions
+
+    btst_algo = BtstAlgo(**strategy.algo.kwargs)
     class BtstStrategy(strategy.__class__):
         def __init__(self, **kwargs):
             super().__init__(**kwargs)
@@ -305,61 +357,6 @@ def _aggregate_all_bootstraps(aggregation_function, new_op_name):
     aggregation.__name__ = new_op_name
     return remote(aggregation)
 
-
-def _load_all_bootstraps_states(load_local_state):
-    def load_local_state(self, path: Path) -> "TorchAlgo":
-        """Load the stateful arguments of this class.
-        Child classes do not need to override that function.
-
-        Args:
-            path (pathlib.Path): The path where the class has been saved.
-
-        Returns:
-            TorchAlgo: The class with the loaded elements.
-        """
-
-        # Note that at the end of this loop the main state is the one of the last
-        # bootstrap
-        archive = zipfile.ZipFile(path, 'r')
-        with tempfile.TemporaryDirectory() as tmpdirname:
-            archive.extractall(tmpdirname)
-            checkpoints_found = sorted([p for p in Path(tmpdirname).glob("**/bootstrap_*")])
-            self.checkpoints_list = [None] * len(checkpoints_found)
-            for idx, file in enumerate(checkpoints_found):
-                self.load_local_state_original(file)
-                self.checkpoints_list[idx] = copy.deepcopy(self._get_state_to_save())
-        return self
-
-    return load_local_state
-
-    
-def _save_all_bootstraps_states(save_local_state, bootstrap_seeds_list):
-    def save_local_state(self, path: Path) -> "TorchAlgo":
-        # We save all bootstrapped states in different subfolders
-        # It assumes at this point checkpoints_list has been populated
-        # if it exists
-
-        # The reason for the if is because of initialize functions which don't
-        # populate checkpoints_list
-        if hasattr(self, "checkpoints_list"):
-            pass
-        else:
-            self.checkpoints_list = [copy.deepcopy(self._get_state_to_save()) for _ in range(len(bootstrap_seeds_list))]
-        with tempfile.TemporaryDirectory() as tmpdirname:
-            paths_to_checkpoints = []
-            for idx, checkpt in enumerate(self.checkpoints_list):
-                # Get the model in the proper state
-                self._update_from_checkpoint(checkpt)
-                assert not checkpt
-                path_to_checkpoint = Path(tmpdirname) / f"bootstrap_{idx}"
-                self.save_local_state_original(path_to_checkpoint)
-                paths_to_checkpoints.append(path_to_checkpoint)
-        
-            with zipfile.ZipFile(path, 'w') as f:        
-                for chkpt in paths_to_checkpoints:
-                    f.write(chkpt, compress_type=zipfile.ZIP_DEFLATED)
-        return self
-    return save_local_state
 
 if __name__ == "__main__":
     from substrafl.algorithms.pytorch import TorchFedAvgAlgo
