@@ -213,7 +213,7 @@ def make_bootstrap_strategy(strategy: Strategy, n_bootstraps: Union[int, None] =
                 setattr(self, agg_name, f)
 
     strategy.kwargs.pop("algo")
-    return BtstStrategy(algo=btst_algo, **strategy.kwargs)        
+    return BtstStrategy(algo=btst_algo, **strategy.kwargs), bootstrap_seeds_list       
 
 def _bootstrap_predict(predict):
     def new_predict(self, predictions_path):
@@ -365,6 +365,24 @@ def _aggregate_all_bootstraps(aggregation_function, new_op_name):
     aggregation.__name__ = new_op_name
     return remote(aggregation)
 
+def make_bootstrap_metric_function(metric_function):
+    def bootstraped_metric(datasamples, predictions_path):
+        list_of_metrics = []
+        if isinstance(predictions_path, str) or isinstance(predictions_path, Path):
+            archive = zipfile.ZipFile(predictions_path, 'r')
+            with tempfile.TemporaryDirectory() as tmpdirname:
+                archive.extractall(tmpdirname)
+                preds_found = sorted([p for p in Path(tmpdirname).glob("**/bootstrap_*")])
+                for pred_found in preds_found:
+                    list_of_metrics.append(metric_function(datasamples, pred_found))
+        else:
+            y_preds = predictions_path
+            for y_pred in y_preds:
+                list_of_metrics.append(metric_function(datasamples, y_pred))
+        return np.array(list_of_metrics).mean()
+     
+    return bootstraped_metric
+
 
 if __name__ == "__main__":
     from substrafl.algorithms.pytorch import TorchFedAvgAlgo
@@ -386,6 +404,7 @@ if __name__ == "__main__":
     from fedeca import LogisticRegressionTorch
     from fedeca.utils.survival_utils import CoxData
     import os
+    import pandas as pd
 
     seed = 42
     torch.manual_seed(seed)
@@ -424,6 +443,7 @@ if __name__ == "__main__":
             return_torch_tensors=True,
         )
     accuracy = make_accuracy_function("treatment")
+    accuracy_btst = make_bootstrap_metric_function(accuracy)
 
 
     class TorchLogReg(TorchFedAvgAlgo):
@@ -440,7 +460,7 @@ if __name__ == "__main__":
 
     strategy = FedAvg(algo=TorchLogReg())
 
-    btst_strategy = make_bootstrap_strategy(strategy, n_bootstraps=10)
+    btst_strategy, _ = make_bootstrap_strategy(strategy, n_bootstraps=10)
 
     clients, train_data_nodes, test_data_nodes, _, _ = split_dataframe_across_clients(
         df,
@@ -452,7 +472,7 @@ if __name__ == "__main__":
     )
 
     for node in test_data_nodes:
-        node.metric_functions = {accuracy.__name__: accuracy}
+        node.metric_functions = {accuracy_btst.__name__: accuracy_btst}
 
     first_key = list(clients.keys())[0]
 
@@ -476,3 +496,4 @@ if __name__ == "__main__":
         clean_models=False,
         name="FedECA",
     )
+    print(pd.DataFrame(clients[first_key].get_performances(compute_plan.key).dict()))
