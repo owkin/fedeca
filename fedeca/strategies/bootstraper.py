@@ -400,9 +400,15 @@ if __name__ == "__main__":
     # We remove the true propensity score
     df = df.drop(columns=["propensity_scores"], axis=1)
 
-    logreg_model = LogisticRegressionTorch(10)
+    
+    class UnifLogReg(LogisticRegressionTorch):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self.fc1.weight.data.uniform_(-1, 1)
+
+    logreg_model = UnifLogReg(ndim=10)
     optimizer = torch.optim.Adam(logreg_model.parameters(), lr=0.001)
-    criterion = torch.nn.CrossEntropyLoss()
+    criterion = torch.nn.BCELoss()
     
     logreg_dataset_class = make_substrafl_torch_dataset_class(
             ["treatment"],
