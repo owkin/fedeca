@@ -297,8 +297,31 @@ def _bootstrap_local_function(local_function, new_op_name, bootstrap_seeds_list)
             for att_name, att in vars(self).items():
                 if att_name == "checkpoints_list":
                     continue
-                if att != old_state.__getattribute__(att_name):
+
+                def equality_check(a, b):
+                    if type(a) != type(b):
+                        return False
+                    else:
+                        if isinstance(a, dict):
+                            for k in a.keys():
+                                if not equality_check(a[k], b[k]):
+                                    return False
+                            return True
+                        elif isinstance(a, list):
+                            for i in range(len(a)):
+                                if not equality_check(a[i], b[i]):
+                                    return False
+                            return True
+                        elif isinstance(a, np.ndarray):
+                            return np.all(a == b)
+                        elif isinstance(a, torch.Tensor):
+                            return torch.all(a == b)
+                        else:
+                            return a == b
+
+                if not equality_check(att, old_state.__getattribute__(att_name)):
                     self.__setattr__(att_name, old_state.__getattribute__(att_name))
+
             results.append(res)
         return results
 
@@ -385,10 +408,10 @@ def make_bootstrap_metric_function(metric_function):
 
 
 if __name__ == "__main__":
-    from substrafl.algorithms.pytorch import TorchFedAvgAlgo
+    from substrafl.algorithms.pytorch import TorchFedAvgAlgo, TorchNewtonRaphsonAlgo
     from substrafl.index_generator import NpIndexGenerator
     import torch
-    from substrafl.strategies import FedAvg
+    from substrafl.strategies import FedAvg, NewtonRaphson
     from fedeca.utils.data_utils import split_dataframe_across_clients
     from substrafl.experiment import execute_experiment
     from fedeca.utils.survival_utils import CoxData
@@ -420,7 +443,7 @@ if __name__ == "__main__":
     )
 
     # Let's generate 1000 data samples with 10 covariates
-    data = CoxData(seed=42, n_samples=1000, ndim=10)
+    data = CoxData(seed=42, n_samples=1000, ndim=50, propensity="linear")
     df = data.generate_dataframe()
 
     # We remove the true propensity score
@@ -432,7 +455,7 @@ if __name__ == "__main__":
             super().__init__(*args, **kwargs)
             self.fc1.weight.data.uniform_(-1, 1)
 
-    logreg_model = UnifLogReg(ndim=10)
+    logreg_model = UnifLogReg(ndim=50)
     optimizer = torch.optim.Adam(logreg_model.parameters(), lr=0.001)
     criterion = torch.nn.BCELoss()
     
@@ -446,19 +469,29 @@ if __name__ == "__main__":
     accuracy_btst = make_bootstrap_metric_function(accuracy)
 
 
-    class TorchLogReg(TorchFedAvgAlgo):
+    # class TorchLogReg(TorchFedAvgAlgo):
+    #     def __init__(self):
+    #         super().__init__(
+    #             model=logreg_model,
+    #             criterion=criterion,
+    #             optimizer=optimizer,
+    #             index_generator=index_generator,
+    #             dataset=logreg_dataset_class,
+    #             seed=seed,
+    #             use_gpu=False,
+    #         )
+    class TorchLogReg(TorchNewtonRaphsonAlgo):
         def __init__(self):
             super().__init__(
                 model=logreg_model,
                 criterion=criterion,
-                optimizer=optimizer,
-                index_generator=index_generator,
+                batch_size=32,
                 dataset=logreg_dataset_class,
                 seed=seed,
                 use_gpu=False,
             )
 
-    strategy = FedAvg(algo=TorchLogReg())
+    strategy = NewtonRaphson(algo=TorchLogReg(), damping_factor=0.1)
 
     btst_strategy, _ = make_bootstrap_strategy(strategy, n_bootstraps=10)
 
@@ -490,7 +523,7 @@ if __name__ == "__main__":
         train_data_nodes=train_data_nodes,
         evaluation_strategy=my_eval_strategy,
         aggregation_node=aggregation_node,
-        num_rounds=3,
+        num_rounds=10,
         experiment_folder=xp_dir,
         dependencies=dependencies,
         clean_models=False,
