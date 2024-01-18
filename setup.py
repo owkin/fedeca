@@ -6,6 +6,7 @@ tests = ["pytest", "coverage"]
 docs = [
     "jupyter",
     "Sphinx==7.2.6",
+    "sphinx-rtd-theme==0.4.2",
     "gitpython>=3.1.27",
 ]
 all_extra = deps + tests + docs
