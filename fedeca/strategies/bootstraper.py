@@ -1,5 +1,6 @@
 import copy
 import inspect
+import os
 import re
 import tempfile
 import types
@@ -489,8 +490,6 @@ def make_bootstrap_metric_function(metric_function):
 
 
 if __name__ == "__main__":
-    import os
-
     import pandas as pd
     import torch
     from substrafl.algorithms.pytorch import TorchFedAvgAlgo  # , TorchNewtonRaphsonAlgo

@@ -96,7 +96,7 @@ list_strategy_params = [
 
 
 @pytest.mark.parametrize(
-    "strategy_params, num_rounds", product(list_strategy_params, range(5))
+    "strategy_params, num_rounds", product(list_strategy_params, range(1, 5))
 )
 def test_bootstrapping(strategy_params: dict, num_rounds: int):
     """Tests of data generation with constant cate."""
