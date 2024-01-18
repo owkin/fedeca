@@ -115,7 +115,9 @@ def test_bootstrapping(strategy_params: dict, num_rounds: int):
     )
 
     btst_strategy, _ = make_bootstrap_strategy(
-        strategy, bootstrap_seeds=bootstrap_seeds_list
+        strategy,
+        bootstrap_seeds=bootstrap_seeds_list,
+        inplace=False,
     )
 
     # inefficient bootstrap
@@ -126,7 +128,7 @@ def test_bootstrapping(strategy_params: dict, num_rounds: int):
         clients_indices_list = uniform_split(df, N_CLIENTS)
         dfs = [df.iloc[clients_indices_list[i]] for i in range(N_CLIENTS)]
         dfs = [df.sample(df.shape[0], replace=True, random_state=rng) for df in dfs]
-        breakpoint()
+
         size_dfs = [len(df.index) for df in dfs]
         bootstrapped_df = pd.concat(dfs, ignore_index=True).reset_index(drop=True)
 
@@ -164,9 +166,12 @@ def test_bootstrapping(strategy_params: dict, num_rounds: int):
                 "--extra-index-url https://download.pytorch.org/whl/cpu",
             ]
         )
+        import copy
+
+        current_strategy = copy.deepcopy(strategy)
         compute_plan = execute_experiment(
             client=clients[first_key],
-            strategy=strategy,
+            strategy=current_strategy,
             train_data_nodes=train_data_nodes,
             evaluation_strategy=my_eval_strategy,
             aggregation_node=aggregation_node,
