@@ -348,6 +348,9 @@ def _bootstrap_local_function(local_function, new_op_name, bootstrap_seeds_list)
             bootstrapped_data = datasamples.sample(
                 datasamples.shape[0], replace=True, random_state=rng
             )
+            from remote_pdb import RemotePdb
+
+            RemotePdb("127.0.0.1", 4444).set_trace()
             # Loading the correct state into the current main algo
             if self.checkpoints_list[idx] is not None:
                 self._update_from_checkpoint(self.checkpoints_list[idx])

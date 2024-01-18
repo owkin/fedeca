@@ -5,6 +5,7 @@ from itertools import product
 from pathlib import Path
 
 import numpy as np
+import pandas as pd
 import pytest
 import torch
 from substrafl.algorithms.pytorch import TorchFedAvgAlgo, TorchNewtonRaphsonAlgo
@@ -18,7 +19,7 @@ from substrafl.strategies import FedAvg, NewtonRaphson
 from fedeca import LogisticRegressionTorch
 from fedeca.strategies import make_bootstrap_strategy  # make_bootstrap_metric_function
 from fedeca.utils import make_accuracy_function, make_substrafl_torch_dataset_class
-from fedeca.utils.data_utils import split_dataframe_across_clients
+from fedeca.utils.data_utils import split_dataframe_across_clients, uniform_split
 from fedeca.utils.survival_utils import CoxData
 
 logreg_dataset_class = make_substrafl_torch_dataset_class(
@@ -121,11 +122,28 @@ def test_bootstrapping(strategy_params: dict, num_rounds: int):
     bootstrapped_models_gt = []
     for idx, seed in enumerate(bootstrap_seeds_list):
         rng = np.random.default_rng(seed)
-        bootstrapped_df = df.sample(df.shape[0], replace=True, random_state=rng)
+        # We need to mimic the bootstrap sampling of the data which is per-client
+        clients_indices_list = uniform_split(df, N_CLIENTS)
+        dfs = [df.iloc[clients_indices_list[i]] for i in range(N_CLIENTS)]
+        dfs = [df.sample(df.shape[0], replace=True, random_state=rng) for df in dfs]
+        breakpoint()
+        size_dfs = [len(df.index) for df in dfs]
+        bootstrapped_df = pd.concat(dfs, ignore_index=True).reset_index(drop=True)
+
+        def trivial_split(df, n_clients):
+            start = 0
+            end = 0
+            clients_indices_list = []
+            for i in range(n_clients):
+                end += size_dfs[i]
+                clients_indices_list.append(range(start, end))
+                start = end
+            return clients_indices_list
+
         clients, train_data_nodes, _, _, _ = split_dataframe_across_clients(
             bootstrapped_df,
             n_clients=N_CLIENTS,
-            split_method="uniform",
+            split_method=trivial_split,
             split_method_kwargs=None,
             data_path="./data",
             backend_type="subprocess",
@@ -211,7 +229,7 @@ def test_bootstrapping(strategy_params: dict, num_rounds: int):
         compute_plan_key=compute_plan.key,
         round_idx=strategy_params["get_true_nb_rounds"](num_rounds),
     )
-    breakpoint()
+
     bootstrapped_models_efficient = [
         UnifLogReg(ndim=50) for _ in range(len(bootstrap_seeds_list))
     ]
