@@ -8,7 +8,7 @@ docs = [
     "sphinx<7",
     "sphinx-rtd-theme==0.4.2",
     "gitpython>=3.1.27",
-    "myst_parser==2.0.0",
+    "myst_parser",
     "sphinx_autodoc_typehints==1.25.2",
     "sphinxcontrib.bibtex==2.6.2",
 ]
