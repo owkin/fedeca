@@ -5,19 +5,7 @@ deps = ["docformatter"]
 tests = ["pytest", "coverage"]
 docs = [
     "jupyter",
-    "sphinx==4.4.0",
-    "sphinx_rtd_theme==1.0.0",
-    "sphinx-autobuild==2020.9.1",
-    "texttable==1.6.3",
-    "myst-parser==0.16.1",
-    # Sphinx 3.3.1 does not require a specific version of docutils
-    # but docutils 0.17 changed the output html markup, breaking the RTD theme
-    # original issue: https://github.com/sphinx-doc/sphinx/issues/9051
-    "docutils==0.16",
-    "sphinx_click==3.1.0",
-    # "sphinx_gallery==0.11.1",
-    "sphinx_autodoc_typehints",
-    "sphinxcontrib-bibtex==2.5.0",
+    "Sphinx==7.2.6",
     "gitpython>=3.1.27",
 ]
 all_extra = deps + tests + docs
