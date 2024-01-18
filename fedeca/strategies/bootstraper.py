@@ -535,6 +535,8 @@ if __name__ == "__main__":
     df = df.drop(columns=["propensity_scores"], axis=1)
 
     class UnifLogReg(LogisticRegressionTorch):
+        """Spawns FedECA logreg model with uniform weights."""
+
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
             self.fc1.weight.data.uniform_(-1, 1)
@@ -553,6 +555,8 @@ if __name__ == "__main__":
     accuracy_btst = make_bootstrap_metric_function(accuracy)
 
     class TorchLogReg(TorchFedAvgAlgo):
+        """Spawns FedECA algo with logreg model with uniform weights."""
+
         def __init__(self):
             super().__init__(
                 model=logreg_model,
