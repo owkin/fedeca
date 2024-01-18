@@ -1,3 +1,4 @@
+"""Bootstrap substra strategy in an efficient fashion."""
 import copy
 import inspect
 import os
@@ -46,6 +47,7 @@ def make_bootstrap_strategy(
         of both allways use bootstrap_seeds.
     inplace : bool, optional
         Whether to modify the strategy inplace or not, by default False.
+
     Returns
     -------
     Strategy
@@ -206,16 +208,21 @@ def make_bootstrap_strategy(
             return self
 
         def load_local_state(self, path: Path) -> "TorchAlgo":
-            """Load the stateful arguments of this class. Child classes do not need to
+            """Load the stateful arguments of this class.
+
+            Child classes do not need to
             override that function.
 
-            Args:
-                path (pathlib.Path): The path where the class has been saved.
+            Parameters
+            ----------
+                path : pathlib.Path
+                    The path where the class has been saved.
 
-            Returns:
-                TorchAlgo: The class with the loaded elements.
+            Returns
+            -------
+                TorchAlgo
+                    The class with the loaded elements.
             """
-
             # Note that at the end of this loop the main state is the one of the last
             # bootstrap
             archive = zipfile.ZipFile(path, "r")
@@ -278,13 +285,6 @@ def make_bootstrap_strategy(
 
     strategy.kwargs.pop("algo")
     return BtstStrategy(algo=btst_algo, **strategy.kwargs), bootstrap_seeds_list
-
-
-def _bootstrap_predict(predict):
-    def new_predict(self, predictions_path):
-        return self
-
-    return new_predict
 
 
 def _bootstrap_local_function(local_function, new_op_name, bootstrap_seeds_list):
@@ -433,6 +433,7 @@ def _aggregate_all_bootstraps(aggregation_function, new_op_name):
         ----------
         self : MergedStrategy
             The mergedStrategy instance.
+
         shared_states : List
             List of lists of results returned by local_computation ran at
             previous step.
@@ -470,6 +471,14 @@ def _aggregate_all_bootstraps(aggregation_function, new_op_name):
 
 
 def make_bootstrap_metric_function(metric_function):
+    """Averages metric on each bootstrapped versions of the models.
+
+    Parameters
+    ----------
+    metric_function : list
+        The metric function to hook.
+    """
+
     def bootstraped_metric(datasamples, predictions_path):
         list_of_metrics = []
         if isinstance(predictions_path, str) or isinstance(predictions_path, Path):
