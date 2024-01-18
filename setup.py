@@ -5,7 +5,7 @@ deps = ["docformatter"]
 tests = ["pytest", "coverage"]
 docs = [
     "jupyter",
-    "Sphinx==7.2.6",
+    "sphinx<7",
     "sphinx-rtd-theme==0.4.2",
     "gitpython>=3.1.27",
     "myst_parser==2.0.0",
