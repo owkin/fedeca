@@ -373,7 +373,7 @@ def _bootstrap_local_function(local_function, new_op_name, bootstrap_seeds_list)
                     continue
 
                 def equality_check(a, b):
-                    if type(a) != type(b):  # noqa: E731
+                    if type(a) != type(b):  # noqa: E721
                         return False
                     else:
                         if isinstance(a, dict):
