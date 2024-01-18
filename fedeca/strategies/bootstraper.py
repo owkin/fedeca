@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Union
 
 import numpy as np
+import torch
 from substrafl.algorithms.pytorch.torch_base_algo import TorchAlgo
 from substrafl.remote import remote, remote_data
 from substrafl.strategies.strategy import Strategy
@@ -491,7 +492,6 @@ def make_bootstrap_metric_function(metric_function):
 
 if __name__ == "__main__":
     import pandas as pd
-    import torch
     from substrafl.algorithms.pytorch import TorchFedAvgAlgo  # , TorchNewtonRaphsonAlgo
     from substrafl.dependency import Dependency
     from substrafl.evaluation_strategy import EvaluationStrategy
