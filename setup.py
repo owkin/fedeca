@@ -9,8 +9,8 @@ docs = [
     "sphinx-rtd-theme==0.4.2",
     "gitpython>=3.1.27",
     "myst_parser",
-    "sphinx_autodoc_typehints==1.25.2",
-    "sphinxcontrib.bibtex==2.6.2",
+    "sphinx_autodoc_typehints",
+    "sphinxcontrib.bibtex",
 ]
 all_extra = deps + tests + docs
 
