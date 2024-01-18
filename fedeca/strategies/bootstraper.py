@@ -443,7 +443,7 @@ if __name__ == "__main__":
     )
 
     # Let's generate 1000 data samples with 10 covariates
-    data = CoxData(seed=42, n_samples=1000, ndim=50, propensity="linear")
+    data = CoxData(seed=42, n_samples=1000, ndim=50, overlap=10., propensity="linear")
     df = data.generate_dataframe()
 
     # We remove the true propensity score
@@ -456,7 +456,7 @@ if __name__ == "__main__":
             self.fc1.weight.data.uniform_(-1, 1)
 
     logreg_model = UnifLogReg(ndim=50)
-    optimizer = torch.optim.Adam(logreg_model.parameters(), lr=0.001)
+    optimizer = torch.optim.Adam(logreg_model.parameters(), lr=0.01)
     criterion = torch.nn.BCELoss()
     
     logreg_dataset_class = make_substrafl_torch_dataset_class(
@@ -469,29 +469,29 @@ if __name__ == "__main__":
     accuracy_btst = make_bootstrap_metric_function(accuracy)
 
 
-    # class TorchLogReg(TorchFedAvgAlgo):
-    #     def __init__(self):
-    #         super().__init__(
-    #             model=logreg_model,
-    #             criterion=criterion,
-    #             optimizer=optimizer,
-    #             index_generator=index_generator,
-    #             dataset=logreg_dataset_class,
-    #             seed=seed,
-    #             use_gpu=False,
-    #         )
-    class TorchLogReg(TorchNewtonRaphsonAlgo):
+    class TorchLogReg(TorchFedAvgAlgo):
         def __init__(self):
             super().__init__(
                 model=logreg_model,
                 criterion=criterion,
-                batch_size=32,
+                optimizer=optimizer,
+                index_generator=index_generator,
                 dataset=logreg_dataset_class,
                 seed=seed,
                 use_gpu=False,
             )
+    # class TorchLogReg(TorchNewtonRaphsonAlgo):
+    #     def __init__(self):
+    #         super().__init__(
+    #             model=logreg_model,
+    #             criterion=criterion,
+    #             batch_size=32,
+    #             dataset=logreg_dataset_class,
+    #             seed=seed,
+    #             use_gpu=False,
+    #         )
 
-    strategy = NewtonRaphson(algo=TorchLogReg(), damping_factor=0.1)
+    strategy = FedAvg(algo=TorchLogReg())
 
     btst_strategy, _ = make_bootstrap_strategy(strategy, n_bootstraps=10)
 
