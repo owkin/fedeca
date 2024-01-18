@@ -555,7 +555,7 @@ if __name__ == "__main__":
     accuracy_btst = make_bootstrap_metric_function(accuracy)
 
     class TorchLogReg(TorchFedAvgAlgo):
-        """Spawns FedECA algo with logreg model with uniform weights."""
+        """Spawns FedAvg algo with logreg model with uniform weights."""
 
         def __init__(self):
             super().__init__(

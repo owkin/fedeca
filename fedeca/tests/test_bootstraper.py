@@ -33,6 +33,8 @@ accuracy = make_accuracy_function("treatment")
 
 
 class UnifLogReg(LogisticRegressionTorch):
+    """Spawns FedECA logreg model with uniform weights."""
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fc1.weight.data.uniform_(-1, 1)
@@ -54,6 +56,8 @@ index_generator = NpIndexGenerator(
 
 
 class TorchLogRegFedAvgAlgo(TorchFedAvgAlgo):
+    """Spawns FedAvg algo with logreg model with uniform weights."""
+
     def __init__(self):
         super().__init__(
             model=logreg_model,
@@ -67,6 +71,8 @@ class TorchLogRegFedAvgAlgo(TorchFedAvgAlgo):
 
 
 class TorchLogRegNRAlgo(TorchNewtonRaphsonAlgo):
+    """Spawns NR algo with logreg model with uniform weights."""
+
     def __init__(self):
         super().__init__(
             model=logreg_model,
