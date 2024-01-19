@@ -583,31 +583,32 @@ class FedECA(Experiment, BaseSurvivalEstimator):
 
         if robust is not None and robust != self.robust:
             self.robust = robust
-            if robust:
 
-                class MockAlgo:
-                    def __init__(self):
-                        self.strategies = ["Robust Cox Variance"]
+        if self.robust:
 
-                mock_algo = MockAlgo()
-                self.strategies.append(
-                    RobustCoxVariance(
-                        algo=mock_algo,
-                    )
+            class MockAlgo:
+                def __init__(self):
+                    self.strategies = ["Robust Cox Variance"]
+
+            mock_algo = MockAlgo()
+            self.strategies.append(
+                RobustCoxVariance(
+                    algo=mock_algo,
                 )
-                # We put WebDisco in "robust" mode in the sense that we ask it
-                # to store all needed quantities for robust variance estimation
-                self.strategies[
-                    1
-                ].algo._robust = True  # not sufficient for serialization
-                # possible only because we added robust as a kwargs
-                self.strategies[1].algo.kwargs.update({"robust": True})
-                # We need those two lines for the zip to consider all 3
-                # strategies
-                self.metrics_dicts_list.append({})
-                self.num_rounds_list.append(sys.maxsize)
-            else:
-                self.strategies = self.strategies[:2]
+            )
+            # We put WebDisco in "robust" mode in the sense that we ask it
+            # to store all needed quantities for robust variance estimation
+            self.strategies[
+                1
+            ].algo._robust = True  # not sufficient for serialization
+            # possible only because we added robust as a kwargs
+            self.strategies[1].algo.kwargs.update({"robust": True})
+            # We need those two lines for the zip to consider all 3
+            # strategies
+            self.metrics_dicts_list.append({})
+            self.num_rounds_list.append(sys.maxsize)
+        else:
+            self.strategies = self.strategies[:2]
 
         self.run(targets=targets)
         self.propensity_scores_, self.weights_ = self.compute_propensity_scores(data)
