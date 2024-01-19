@@ -581,7 +581,7 @@ class FedECA(Experiment, BaseSurvivalEstimator):
             self.strategies[0] = self.propensity_model_strategy
             self.strategies[1] = self.webdisco_strategy
 
-        if robust != self.robust:
+        if robust is not None and robust != self.robust:
             self.robust = robust
             if robust:
 
