@@ -29,7 +29,7 @@ setup(
     ],
     install_requires=[
         # We cannot use the git+https syntax here because of docker build issues
-        "substrafl @ https://github.com/Substra/substrafl/archive/refs/heads/feat/substrafl-simu-mode.zip",  # noqa: E501
+        "substrafl @ https://github.com/Substra/substrafl/archive/refs/heads/feat/substrafl-simu-mode.zip#sha1=968917c3979be3dd4d402b5f73aef35a604d425e",  # noqa: E501
         "argparse",
         "numpy",
         "pandas",
@@ -42,7 +42,7 @@ setup(
         "build",
         "torch==1.13.1",
         "scikit-learn==1.2.1",
-        "pydantic<2.0",  # Need to be updated to > 2.0 to use latest Substra
+        "pydantic",  # Need to be updated to > 2.0 to use latest Substra
         "indcomp==0.2.1",
         "hydra-core",
     ],
