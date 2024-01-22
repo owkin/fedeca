@@ -105,7 +105,7 @@ list_strategy_params = [
 
 
 @pytest.mark.parametrize(
-    "strategy_params, num_rounds", product([list_strategy_params[0]], range(1, 2))
+    "strategy_params, num_rounds", product(list_strategy_params, range(1, 5))
 )
 def test_bootstrapping(strategy_params: dict, num_rounds: int):
     """Tests of data generation with constant cate."""
@@ -130,20 +130,21 @@ def test_bootstrapping(strategy_params: dict, num_rounds: int):
     )
 
     # inefficient bootstrap
+    splits = {}
     bootstrapped_models_gt = []
     for idx, seed in enumerate(bootstrap_seeds_list):
-        rng = np.random.default_rng(seed)
         # We need to mimic the bootstrap sampling of the data which is per-client
         clients_indices_list = uniform_split(original_df, N_CLIENTS)
         dfs = [original_df.iloc[clients_indices_list[i]] for i in range(N_CLIENTS)]
-        dfs = [df.sample(df.shape[0], replace=True, random_state=rng) for df in dfs]
-        # print(seed)
-        # print(rng)
-        # for df in dfs:
-        #     import pandas as pd
-        #     import hashlib
-        #     print(df.head())
-        #     print(hashlib.sha1(pd.util.hash_pandas_object(df).values).hexdigest())
+        # Rng needs to be defined within the loop so that it's not updated by the
+        # sampling
+        dfs = [
+            df.sample(
+                df.shape[0], replace=True, random_state=np.random.default_rng(seed)
+            )
+            for df in dfs
+        ]
+
         size_dfs = [len(df.index) for df in dfs]
         bootstrapped_df = pd.concat(dfs, ignore_index=True).reset_index(drop=True)
 
@@ -157,7 +158,7 @@ def test_bootstrapping(strategy_params: dict, num_rounds: int):
                 start = end
             return clients_indices_list
 
-        clients, train_data_nodes, _, _, _ = split_dataframe_across_clients(
+        clients, train_data_nodes, _, current_dfs, _ = split_dataframe_across_clients(
             bootstrapped_df,
             n_clients=N_CLIENTS,
             split_method=trivial_split,
@@ -165,6 +166,8 @@ def test_bootstrapping(strategy_params: dict, num_rounds: int):
             data_path="./data",
             backend_type="subprocess",
         )
+        splits[seed] = current_dfs
+
         first_key = list(clients.keys())[0]
         my_eval_strategy = None
         aggregation_node = AggregationNode(
@@ -209,8 +212,7 @@ def test_bootstrapping(strategy_params: dict, num_rounds: int):
         shutil.rmtree("./data")
 
     # efficient bootstrap
-
-    clients, train_data_nodes, _, _, _ = split_dataframe_across_clients(
+    clients, train_data_nodes, _, efficient_dfs, _ = split_dataframe_across_clients(
         original_df,
         n_clients=N_CLIENTS,
         split_method="uniform",
@@ -218,6 +220,22 @@ def test_bootstrapping(strategy_params: dict, num_rounds: int):
         data_path="./data",
         backend_type="subprocess",
     )
+    eff_splits = {}
+    for seed in bootstrap_seeds_list:
+        eff_splits[seed] = [
+            eff_df.sample(
+                eff_df.shape[0], replace=True, random_state=np.random.default_rng(seed)
+            )
+            for eff_df in efficient_dfs
+        ]
+    for seed in bootstrap_seeds_list:
+        assert all(
+            [
+                np.allclose(np.asarray(l1), np.asarray(l2))
+                for l1, l2 in zip(eff_splits[seed], splits[seed])
+            ]
+        )
+
     first_key = list(clients.keys())[0]
     my_eval_strategy = None
     aggregation_node = AggregationNode(
