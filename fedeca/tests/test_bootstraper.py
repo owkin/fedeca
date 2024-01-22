@@ -260,7 +260,7 @@ def test_bootstrapping(strategy_params: dict, num_rounds: int):
         bootstrap_seeds=bootstrap_seeds_list,
         inplace=False,
     )
-    print(f"Efficient Bootstrap")
+    print("Efficient Bootstrap")
     compute_plan = execute_experiment(
         client=clients[first_key],
         strategy=btst_strategy,
