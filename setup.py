@@ -28,7 +28,8 @@ setup(
         "Programming Language :: Python :: 3",
     ],
     install_requires=[
-        # We cannot use the git+https syntax here because of docker build issues
+        # We cannot use the git+https / git+ssh syntax here because of docker build issues
+        # related to git not being installed
         "substrafl @ https://github.com/Substra/substrafl/archive/968917c3979be3dd4d402b5f73aef35a604d425e.zip",  # noqa: E501
         "argparse",
         "numpy",
