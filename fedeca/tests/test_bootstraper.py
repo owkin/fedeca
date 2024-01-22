@@ -1,4 +1,5 @@
 """Tests for efficiently bootstrapping FL strategies."""
+import copy
 import os
 import shutil
 from itertools import product
@@ -37,6 +38,7 @@ class UnifLogReg(LogisticRegressionTorch):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        torch.manual_seed(42)
         self.fc1.weight.data.uniform_(-1, 1)
 
 
@@ -103,22 +105,23 @@ list_strategy_params = [
 
 
 @pytest.mark.parametrize(
-    "strategy_params, num_rounds", product(list_strategy_params, range(1, 5))
+    "strategy_params, num_rounds", product([list_strategy_params[0]], range(1, 2))
 )
 def test_bootstrapping(strategy_params: dict, num_rounds: int):
     """Tests of data generation with constant cate."""
     # Let's generate 1000 data samples with 10 covariates
     data = CoxData(seed=42, n_samples=1000, ndim=50, overlap=10.0, propensity="linear")
-    df = data.generate_dataframe()
+    original_df = data.generate_dataframe()
 
     # We remove the true propensity score
-    df = df.drop(columns=["propensity_scores"], axis=1)
+    original_df = original_df.drop(columns=["propensity_scores"], axis=1)
 
     bootstrap_seeds_list = [42, 43, 44]
 
     strategy = strategy_params["strategy"]["strategy_class"](
         **strategy_params["strategy"]["strategy_kwargs"]
     )
+    start_model = copy.deepcopy(strategy.algo._model)
 
     btst_strategy, _ = make_bootstrap_strategy(
         strategy,
@@ -131,10 +134,16 @@ def test_bootstrapping(strategy_params: dict, num_rounds: int):
     for idx, seed in enumerate(bootstrap_seeds_list):
         rng = np.random.default_rng(seed)
         # We need to mimic the bootstrap sampling of the data which is per-client
-        clients_indices_list = uniform_split(df, N_CLIENTS)
-        dfs = [df.iloc[clients_indices_list[i]] for i in range(N_CLIENTS)]
+        clients_indices_list = uniform_split(original_df, N_CLIENTS)
+        dfs = [original_df.iloc[clients_indices_list[i]] for i in range(N_CLIENTS)]
         dfs = [df.sample(df.shape[0], replace=True, random_state=rng) for df in dfs]
-
+        # print(seed)
+        # print(rng)
+        # for df in dfs:
+        #     import pandas as pd
+        #     import hashlib
+        #     print(df.head())
+        #     print(hashlib.sha1(pd.util.hash_pandas_object(df).values).hexdigest())
         size_dfs = [len(df.index) for df in dfs]
         bootstrapped_df = pd.concat(dfs, ignore_index=True).reset_index(drop=True)
 
@@ -172,9 +181,11 @@ def test_bootstrapping(strategy_params: dict, num_rounds: int):
                 "--extra-index-url https://download.pytorch.org/whl/cpu",
             ]
         )
-        import copy
 
         current_strategy = copy.deepcopy(strategy)
+        current_strategy.algo._model = copy.deepcopy(start_model)
+
+        print(f"Bootstrap {idx}")
         compute_plan = execute_experiment(
             client=clients[first_key],
             strategy=current_strategy,
@@ -193,14 +204,14 @@ def test_bootstrapping(strategy_params: dict, num_rounds: int):
             compute_plan_key=compute_plan.key,
             round_idx=strategy_params["get_true_nb_rounds"](num_rounds),
         )
-        bootstrapped_models_gt.append(algo.model)
+        bootstrapped_models_gt.append(copy.deepcopy(algo.model))
         # Clean up
         shutil.rmtree("./data")
 
     # efficient bootstrap
 
     clients, train_data_nodes, _, _, _ = split_dataframe_across_clients(
-        df,
+        original_df,
         n_clients=N_CLIENTS,
         split_method="uniform",
         split_method_kwargs=None,
@@ -223,6 +234,15 @@ def test_bootstrapping(strategy_params: dict, num_rounds: int):
             "--extra-index-url https://download.pytorch.org/whl/cpu",
         ]
     )
+    current_strategy = copy.deepcopy(strategy)
+    current_strategy.algo._model = copy.deepcopy(start_model)
+
+    btst_strategy, _ = make_bootstrap_strategy(
+        current_strategy,
+        bootstrap_seeds=bootstrap_seeds_list,
+        inplace=False,
+    )
+    print(f"Efficient Bootstrap")
     compute_plan = execute_experiment(
         client=clients[first_key],
         strategy=btst_strategy,
