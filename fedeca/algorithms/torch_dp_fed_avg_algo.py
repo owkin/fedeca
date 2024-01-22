@@ -371,26 +371,23 @@ class TorchDPFedAvgAlgo(TorchFedAvgAlgo):
 
         return checkpoint
 
-    def _update_from_checkpoint(self, path) -> dict:
+    def _update_from_checkpoint(self, checkpoint: dict) -> None:
         """Set self attributes using saved values.
 
         Parameters
         ----------
-        path : Path
-            Path towards the checkpoint to use.
+        checkpoint : dict
+            Checkpoint to load.
 
         Returns
         -------
         dict
             The emptied checkpoint.
         """
-        # One cannot simply call checkpoint = super()._update_from_checkpoint(path)
+        # One cannot simply call checkpoint = super()._update_from_checkpoint(chkpt)
         # because we have to change the model class if it should be changed
         # (and optimizer) aka if we find a specific key in the checkpoint
-        assert (
-            path.is_file()
-        ), f'Cannot load the model - does not exist {list(path.parent.glob("*"))}'
-        checkpoint = torch.load(path, map_location=self._device)
+
         # For some reason substrafl save and load client before calling train
         if "privacy_accountant_state_dict" in checkpoint:
             self.accountant = RDPAccountant()
@@ -447,4 +444,4 @@ class TorchDPFedAvgAlgo(TorchFedAvgAlgo):
         for attr in attr_names:
             setattr(self, attr, checkpoint.pop(attr))
 
-        return checkpoint
+        return

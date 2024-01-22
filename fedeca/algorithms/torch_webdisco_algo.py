@@ -3,7 +3,6 @@ import copy
 import os
 from copy import deepcopy
 from math import sqrt
-from pathlib import Path
 from typing import Any, List, Optional
 
 # hello
@@ -547,23 +546,18 @@ class TorchWebDiscoAlgo(TorchAlgo):
         checkpoint.update({"global_moments": self.global_moments})
         return checkpoint
 
-    def _update_from_checkpoint(self, path: Path) -> dict:
+    def _update_from_checkpoint(self, checkpoint: dict) -> None:
         """Load the local state from the checkpoint.
 
         Parameters
         ----------
-        path : pathlib.Path
-            Path where the checkpoint is saved
-
-        Returns
-        -------
-        dict
-            Checkpoint
+        checkpoint : dict
+            The checkpoint to load.
         """
-        checkpoint = super()._update_from_checkpoint(path=path)
+        super()._update_from_checkpoint(checkpoint=checkpoint)
         self.server_state = checkpoint.pop("server_state")
         self.global_moments = checkpoint.pop("global_moments")
-        return checkpoint
+        return
 
     def summary(self):
         """Summary of the class to be exposed in the experiment summary file.
