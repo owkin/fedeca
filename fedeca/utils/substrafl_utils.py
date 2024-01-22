@@ -1,4 +1,5 @@
 """Utils functions for Substra."""
+import logging
 import os
 import pickle
 import tempfile
@@ -34,6 +35,8 @@ from substrafl.model_loading import (
     REQUIRED_KEYS,
     _check_environment_compatibility,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class Experiment:
@@ -108,11 +111,11 @@ class Experiment:
             if metrics_dicts_list and not all(
                 [len(t.metric_functions) == 0 for t in self.test_data_nodes]
             ):
-                print(
+                logger.warning(
                     """WARNING: you are passing metrics to test data nodes with existing
                     metric_functions this will overwrite them"""
                 )
-                print(
+                logger.warning(
                     [
                         (f"Client {i}", t.metric_functions)
                         for i, t in enumerate(self.test_data_nodes)
@@ -253,7 +256,7 @@ class Experiment:
 
         # If no AggregationNode is given we take the first one
         if self.aggregation_node is None:
-            print("Using the first client as a server.")
+            logger.info("Using the first client as a server.")
             kwargs_agg_node = {
                 "organization_id": self.train_data_nodes[0].organization_id
             }
@@ -315,12 +318,12 @@ class Experiment:
                 scores = [t.scores for t in self.test_data_nodes]
                 robust_cox_variance = False
                 for idx, s in enumerate(scores):
-                    print(f"====Client {idx}====")
+                    logger.info(f"====Client {idx}====")
                     try:
-                        print(s[-1])
+                        logger.info(s[-1])
                     except IndexError:
                         robust_cox_variance = True
-                        print("No metric")
+                        logger.info("No metric")
                 # TODO Check that it is well formatted it's probably not
                 self.performances_strategies.append(pd.DataFrame(xp_output))
                 # Hacky hacky hack
@@ -515,7 +518,9 @@ def make_substrafl_torch_dataset_class(
         [t in [event_col, duration_col] for t in target_cols]
     )
     if len(target_cols) == 1:
-        print(f"Making a dataset class to fit a model to predict {target_cols[0]}")
+        logger.info(
+            f"Making a dataset class to fit a model to predict {target_cols[0]}"
+        )
         columns_to_drop = [event_col, duration_col]
     elif len(target_cols) == 2:
         assert set(target_cols) == set(

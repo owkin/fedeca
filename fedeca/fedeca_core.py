@@ -1,4 +1,5 @@
 """Federate causal inference on distributed data."""
+import logging
 import sys
 import time
 from collections.abc import Callable
@@ -33,6 +34,8 @@ from fedeca.utils import (
 from fedeca.utils.data_utils import split_dataframe_across_clients
 from fedeca.utils.substrafl_utils import get_outmodel_function
 from fedeca.utils.survival_utils import BaseSurvivalEstimator, CoxPHModelTorch
+
+logger = logging.getLogger(__name__)
 
 
 class FedECA(Experiment, BaseSurvivalEstimator):
@@ -308,7 +311,7 @@ class FedECA(Experiment, BaseSurvivalEstimator):
             model_name = "Robust Variance"
             training_type = "estimation"
 
-        print(f"Waiting on {model_name} {training_type} to finish...")
+        logger.info(f"Waiting on {model_name} {training_type} to finish...")
         t1 = time.time()
         t2 = t1
         while (t2 - t1) < self.timeout:
@@ -316,7 +319,7 @@ class FedECA(Experiment, BaseSurvivalEstimator):
                 self.compute_plan_keys[idx].key
             ).status
             if status == ComputePlanStatus.done:
-                print(
+                logger.info(
                     f"""Compute plan {self.compute_plan_keys[0].key} of {model_name} has
                     finished !"""
                 )
@@ -336,7 +339,7 @@ class FedECA(Experiment, BaseSurvivalEstimator):
             ):
                 pass
             else:
-                print(
+                logger.warning(
                     f"""Compute plan status is {status}, this shouldn't happen, sleeping
                     {self.time_sleep} and retrying until timeout {self.timeout}"""
                 )
@@ -518,7 +521,7 @@ class FedECA(Experiment, BaseSurvivalEstimator):
         if backend_type != "remote" and (
             urls is not None or server_org_id is not None or tokens is not None
         ):
-            print(
+            logger.warning(
                 "urls, server_org_id and tokens are ignored if backend_type is "
                 "not remote; Make sure that you launched the fit with the right"
                 " combination of parameters."
@@ -598,9 +601,7 @@ class FedECA(Experiment, BaseSurvivalEstimator):
             )
             # We put WebDisco in "robust" mode in the sense that we ask it
             # to store all needed quantities for robust variance estimation
-            self.strategies[
-                1
-            ].algo._robust = True  # not sufficient for serialization
+            self.strategies[1].algo._robust = True  # not sufficient for serialization
             # possible only because we added robust as a kwargs
             self.strategies[1].algo.kwargs.update({"robust": True})
             # We need those two lines for the zip to consider all 3
@@ -616,9 +617,9 @@ class FedECA(Experiment, BaseSurvivalEstimator):
     def run(self, targets: Union[pd.DataFrame, None] = None):
         """Run the federated iptw algorithms."""
         del targets
-        print("Careful for now the argument target is ignored completely")
+        logger.info("Careful for now the argument target is ignored completely")
         # We first run the propensity model
-        print("Fitting the propensity model...")
+        logger.info("Fitting the propensity model...")
         t1 = time.time()
         super().run(1)
 
@@ -629,11 +630,11 @@ class FedECA(Experiment, BaseSurvivalEstimator):
             )
         else:
             self.performances_propensity_model = self.performances_strategies[0]
-            print(self.performances_propensity_model)
+            logger.info(self.performances_propensity_model)
         t2 = time.time()
         self.propensity_model_fit_time = t2 - t1
-        print(f"Time to fit Propensity model {self.propensity_model_fit_time}s")
-        print("Finished, recovering the final propensity model from substra")
+        logger.info(f"Time to fit Propensity model {self.propensity_model_fit_time}s")
+        logger.info("Finished, recovering the final propensity model from substra")
         # TODO to add the opportunity to use the targets you have to either:
         # give the full targets to every client as a kwargs of their Algo
         # so effectively one would need to reinstantiate algos objects or to
@@ -665,7 +666,7 @@ class FedECA(Experiment, BaseSurvivalEstimator):
         for t in self.train_data_nodes:
             t.keep_intermediate_states = True
 
-        print("Fitting propensity weighted Cox model...")
+        logger.info("Fitting propensity weighted Cox model...")
         t1 = time.time()
         super().run(1)
 
@@ -673,8 +674,8 @@ class FedECA(Experiment, BaseSurvivalEstimator):
             self.check_cp_status(idx=1)
         t2 = time.time()
         self.webdisco_fit_time = t2 - t1
-        print(f"Time to fit WebDisco {self.webdisco_fit_time}s")
-        print("Finished fitting weighted Cox model.")
+        logger.info(f"Time to fit WebDisco {self.webdisco_fit_time}s")
+        logger.info("Finished fitting weighted Cox model.")
         self.total_fit_time = self.propensity_model_fit_time + self.webdisco_fit_time
         self.print_summary()
 
@@ -683,19 +684,19 @@ class FedECA(Experiment, BaseSurvivalEstimator):
         assert (
             len(self.compute_plan_keys) == 2
         ), "You need to run the run method before getting the summary"
-        print("Evolution of performance of propensity model:")
-        print(self.performances_propensity_model)
-        print("Checking if the Cox model has converged:")
+        logger.info("Evolution of performance of propensity model:")
+        logger.info(self.performances_propensity_model)
+        logger.info("Checking if the Cox model has converged:")
         self.get_final_cox_model()
-        print("Computing summary...")
+        logger.info("Computing summary...")
         self.compute_summary()
-        print("Final partial log-likelihood:")
-        print(self.ll)
-        print(self.results_)
+        logger.info("Final partial log-likelihood:")
+        logger.info(self.ll)
+        logger.info(self.results_)
 
     def get_final_cox_model(self):
         """Retrieve final cox model."""
-        print("Retrieving final hessian and log-likelihood")
+        logger.info("Retrieving final hessian and log-likelihood")
         if not self.simu_mode:
             cp = self.compute_plan_keys[1].key
         else:
