@@ -26,12 +26,12 @@ models:
   FedECA_robust:
     ndim: ${data.ndim}
     num_rounds_list: [10, 10]
-    fedeca_path: "/home/owkin/federated-eca-code/"
+    fedeca_path: "/home/owkin/fedeca/"
     robust: True
   FedECA_naive:
     ndim: ${data.ndim}
     num_rounds_list: [10, 10]
-    fedeca_path: "/home/owkin/federated-eca-code/"
+    fedeca_path: "/home/owkin/fedeca/"
     robust: False
 
 # config fit FedECA
