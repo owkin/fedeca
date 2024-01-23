@@ -1,4 +1,5 @@
 """Federate causal inference on distributed data."""
+import copy
 import logging
 import sys
 import time
@@ -181,7 +182,8 @@ class FedECA(Experiment, BaseSurvivalEstimator):
         self.l1_ratio = l1_ratio
         self.initial_step_size = initial_step_size
         self.learning_rate_strategy = learning_rate_strategy
-        self.num_rounds_list = num_rounds_list
+        # Careful about mutable default args
+        self.num_rounds_list = copy.deepcopy(num_rounds_list)
         self.timeout = timeout
         self.sleep_time = sleep_time
         self.damping_factor_nr = damping_factor_nr
