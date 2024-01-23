@@ -390,6 +390,7 @@ class TorchDPFedAvgAlgo(TorchFedAvgAlgo):
 
         # For some reason substrafl save and load client before calling train
         if "privacy_accountant_state_dict" in checkpoint:
+
             self.accountant = RDPAccountant()
             self.accountant.load_state_dict(
                 checkpoint.pop("privacy_accountant_state_dict")
@@ -427,9 +428,9 @@ class TorchDPFedAvgAlgo(TorchFedAvgAlgo):
         self._index_generator = checkpoint.pop("index_generator")
 
         if self._device == torch.device("cpu"):
-            torch.set_rng_state(checkpoint.pop("rng_state").to(self._device))
+            torch.set_rng_state(checkpoint.pop("torch_rng_state").to(self._device))
         else:
-            torch.cuda.set_rng_state(checkpoint.pop("rng_state").to("cpu"))
+            torch.cuda.set_rng_state(checkpoint.pop("torch_rng_state").to("cpu"))
 
         attr_names = [
             "dp_max_grad_norm",
