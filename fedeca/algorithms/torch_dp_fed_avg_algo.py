@@ -1,5 +1,6 @@
 """Differentially private algorithm to be used with FedAvg strategy."""
 import logging
+import random
 from typing import Any, Optional
 
 import numpy as np
@@ -426,6 +427,9 @@ class TorchDPFedAvgAlgo(TorchFedAvgAlgo):
             self._scheduler.load_state_dict(checkpoint.pop("scheduler_state_dict"))
 
         self._index_generator = checkpoint.pop("index_generator")
+
+        random.setstate(checkpoint.pop("random_rng_state"))
+        np.random.set_state(checkpoint.pop("numpy_rng_state"))
 
         if self._device == torch.device("cpu"):
             torch.set_rng_state(checkpoint.pop("torch_rng_state").to(self._device))
