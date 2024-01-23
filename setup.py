@@ -5,20 +5,12 @@ deps = ["docformatter"]
 tests = ["pytest", "coverage"]
 docs = [
     "jupyter",
-    "sphinx==4.4.0",
-    "sphinx_rtd_theme==1.0.0",
-    "sphinx-autobuild==2020.9.1",
-    "texttable==1.6.3",
-    "myst-parser==0.16.1",
-    # Sphinx 3.3.1 does not require a specific version of docutils
-    # but docutils 0.17 changed the output html markup, breaking the RTD theme
-    # original issue: https://github.com/sphinx-doc/sphinx/issues/9051
-    "docutils==0.16",
-    "sphinx_click==3.1.0",
-    # "sphinx_gallery==0.11.1",
-    "sphinx_autodoc_typehints",
-    "sphinxcontrib-bibtex==2.5.0",
+    "sphinx<7",
+    "sphinx-rtd-theme==0.4.2",
     "gitpython>=3.1.27",
+    "myst_parser",
+    "sphinx_autodoc_typehints",
+    "sphinxcontrib.bibtex",
 ]
 all_extra = deps + tests + docs
 
@@ -36,8 +28,9 @@ setup(
         "Programming Language :: Python :: 3",
     ],
     install_requires=[
-        # We cannot use the git+https syntax here because of docker build issues
-        "substrafl @ https://github.com/Substra/substrafl/archive/refs/heads/feat/substrafl-simu-mode.zip",  # noqa: E501
+        # We cannot use the git+https / git+ssh syntax here because of docker build issues
+        # related to git not being installed
+        "substrafl @ https://github.com/Substra/substrafl/archive/968917c3979be3dd4d402b5f73aef35a604d425e.zip",  # noqa: E501
         "argparse",
         "numpy",
         "pandas",
@@ -50,7 +43,7 @@ setup(
         "build",
         "torch==1.13.1",
         "scikit-learn==1.2.1",
-        "pydantic<2.0",  # Need to be updated to > 2.0 to use latest Substra
+        "pydantic",  # Need to be updated to > 2.0 to use latest Substra
         "indcomp==0.2.1",
         "hydra-core",
     ],

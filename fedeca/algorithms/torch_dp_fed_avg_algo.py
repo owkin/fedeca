@@ -1,5 +1,6 @@
 """Differentially private algorithm to be used with FedAvg strategy."""
 import logging
+import random
 from typing import Any, Optional
 
 import numpy as np
@@ -371,28 +372,26 @@ class TorchDPFedAvgAlgo(TorchFedAvgAlgo):
 
         return checkpoint
 
-    def _update_from_checkpoint(self, path) -> dict:
+    def _update_from_checkpoint(self, checkpoint: dict) -> None:
         """Set self attributes using saved values.
 
         Parameters
         ----------
-        path : Path
-            Path towards the checkpoint to use.
+        checkpoint : dict
+            Checkpoint to load.
 
         Returns
         -------
         dict
             The emptied checkpoint.
         """
-        # One cannot simply call checkpoint = super()._update_from_checkpoint(path)
+        # One cannot simply call checkpoint = super()._update_from_checkpoint(chkpt)
         # because we have to change the model class if it should be changed
         # (and optimizer) aka if we find a specific key in the checkpoint
-        assert (
-            path.is_file()
-        ), f'Cannot load the model - does not exist {list(path.parent.glob("*"))}'
-        checkpoint = torch.load(path, map_location=self._device)
+
         # For some reason substrafl save and load client before calling train
         if "privacy_accountant_state_dict" in checkpoint:
+
             self.accountant = RDPAccountant()
             self.accountant.load_state_dict(
                 checkpoint.pop("privacy_accountant_state_dict")
@@ -429,10 +428,13 @@ class TorchDPFedAvgAlgo(TorchFedAvgAlgo):
 
         self._index_generator = checkpoint.pop("index_generator")
 
+        random.setstate(checkpoint.pop("random_rng_state"))
+        np.random.set_state(checkpoint.pop("numpy_rng_state"))
+
         if self._device == torch.device("cpu"):
-            torch.set_rng_state(checkpoint.pop("rng_state").to(self._device))
+            torch.set_rng_state(checkpoint.pop("torch_rng_state").to(self._device))
         else:
-            torch.cuda.set_rng_state(checkpoint.pop("rng_state").to("cpu"))
+            torch.cuda.set_rng_state(checkpoint.pop("torch_rng_state").to("cpu"))
 
         attr_names = [
             "dp_max_grad_norm",
@@ -447,4 +449,4 @@ class TorchDPFedAvgAlgo(TorchFedAvgAlgo):
         for attr in attr_names:
             setattr(self, attr, checkpoint.pop(attr))
 
-        return checkpoint
+        return
