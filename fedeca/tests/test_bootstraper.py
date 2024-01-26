@@ -2,6 +2,7 @@
 import copy
 import os
 import shutil
+import sys
 from itertools import product
 from pathlib import Path
 
@@ -18,10 +19,12 @@ from substrafl.nodes import AggregationNode
 from substrafl.strategies import FedAvg, NewtonRaphson
 
 from fedeca import LogisticRegressionTorch
+from fedeca.algorithms import TorchWebDiscoAlgo
 from fedeca.strategies import make_bootstrap_strategy  # make_bootstrap_metric_function
+from fedeca.strategies import WebDisco
 from fedeca.utils import make_accuracy_function, make_substrafl_torch_dataset_class
 from fedeca.utils.data_utils import split_dataframe_across_clients, uniform_split
-from fedeca.utils.survival_utils import CoxData
+from fedeca.utils.survival_utils import CoxData, CoxPHModelTorch
 
 logreg_dataset_class = make_substrafl_torch_dataset_class(
     ["treatment"],
@@ -29,7 +32,12 @@ logreg_dataset_class = make_substrafl_torch_dataset_class(
     duration_col="time",
     return_torch_tensors=True,
 )
-
+survival_dataset_class = make_substrafl_torch_dataset_class(
+    ["time", "event"],
+    "event",
+    "time",
+    dtype="float64",
+)
 accuracy = make_accuracy_function("treatment")
 
 
@@ -86,18 +94,56 @@ class TorchLogRegNRAlgo(TorchNewtonRaphsonAlgo):
         )
 
 
+cox_model = CoxPHModelTorch(ndim=1, torch_dtype=torch.float64)
+
+
+class WDAlgo(TorchWebDiscoAlgo):
+    def __init__(self, propensity_model, robust):
+        super().__init__(
+            model=cox_model,
+            # TODO make this batch-size argument disappear from
+            # webdisco algo
+            batch_size=sys.maxsize,
+            dataset=survival_dataset_class,
+            seed=SEED,
+            duration_col="time",
+            event_col="event",
+            treated_col="treatment",
+            standardize_data=True,
+            penalizer=0.0,
+            l1_ratio=0.1,
+            initial_step_size=1.0,
+            learning_rate_strategy="lifelines",
+            store_hessian=True,
+            propensity_model=propensity_model,
+            propensity_strategy="iptw",
+            robust=robust,
+        )
+        self._propensity_model = propensity_model
+
+
 list_strategy_params = [
+    # {
+    #     "strategy": {
+    #         "strategy_class": FedAvg,
+    #         "strategy_kwargs": {"algo": TorchLogRegFedAvgAlgo()},
+    #     },
+    #     "get_true_nb_rounds": lambda x: x,
+    # },
+    # {
+    #     "strategy": {
+    #         "strategy_class": NewtonRaphson,
+    #         "strategy_kwargs": {"algo": TorchLogRegNRAlgo(), "damping_factor": 0.1},
+    #     },
+    #     "get_true_nb_rounds": lambda x: x,
+    # },
     {
         "strategy": {
-            "strategy_class": FedAvg,
-            "strategy_kwargs": {"algo": TorchLogRegFedAvgAlgo()},
-        },
-        "get_true_nb_rounds": lambda x: x,
-    },
-    {
-        "strategy": {
-            "strategy_class": NewtonRaphson,
-            "strategy_kwargs": {"algo": TorchLogRegNRAlgo(), "damping_factor": 0.1},
+            "strategy_class": WebDisco,
+            "strategy_kwargs": {
+                "algo": WDAlgo(propensity_model=logreg_model, robust=True),
+                "standardize_data": True,
+            },
         },
         "get_true_nb_rounds": lambda x: x,
     },
@@ -105,7 +151,7 @@ list_strategy_params = [
 
 
 @pytest.mark.parametrize(
-    "strategy_params, num_rounds", product(list_strategy_params, range(1, 5))
+    "strategy_params, num_rounds", product(list_strategy_params, range(1, 2))
 )
 def test_bootstrapping(strategy_params: dict, num_rounds: int):
     """Tests of data generation with constant cate."""

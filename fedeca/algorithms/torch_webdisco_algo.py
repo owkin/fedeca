@@ -88,7 +88,7 @@ class TorchWebDiscoAlgo(TorchAlgo):
         use_gpu : bool, optional
             Whether to use GPU for training. Defaults to True.
         robust : bool, optional
-            Whether or not to store quantities specificallyy needed for robust
+            Whether or not to store quantities specifically needed for robust
             estimation.
         """
         assert "optimizer" not in kwargs, "WebDisco strategy does not uses optimizers"

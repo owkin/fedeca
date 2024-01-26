@@ -92,6 +92,8 @@ def make_bootstrap_strategy(
             continue
         if "predictions_path" in method_args_dict:
             continue
+        if not hasattr(getattr(obj, method_name), "__wrapped__"):
+            continue
         # We create a copy of all methods with the original suffix to avoid name
         # collision and infinite recursion when decorating the old methods
 
