@@ -396,7 +396,7 @@ def _bootstrap_local_function(local_function, new_op_name, bootstrap_seeds_list)
                             return np.all(a == b)
                         elif isinstance(a, torch.Tensor):
                             return torch.all(a == b)
-                        elif isinstance(a, pd.DataFrame):
+                        elif isinstance(a, pd.DataFrame) or isinstance(a, pd.Series):
                             return a.equals(b)
                         else:
                             return a == b
