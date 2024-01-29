@@ -353,6 +353,7 @@ def _bootstrap_local_function(local_function, new_op_name, bootstrap_seeds_list)
             # Loading the correct state into the current main algo
             if self.checkpoints_list[idx] is not None:
                 self._update_from_checkpoint(self.checkpoints_list[idx])
+
             # We need this old state to avoid side effects from the function
             # on the instance
             old_state = copy.deepcopy(self)
@@ -380,6 +381,8 @@ def _bootstrap_local_function(local_function, new_op_name, bootstrap_seeds_list)
                     else:
                         if isinstance(a, dict):
                             for k in a.keys():
+                                if k not in b.keys():
+                                    return False
                                 if not equality_check(a[k], b[k]):
                                     return False
                             return True
@@ -392,6 +395,8 @@ def _bootstrap_local_function(local_function, new_op_name, bootstrap_seeds_list)
                             return np.all(a == b)
                         elif isinstance(a, torch.Tensor):
                             return torch.all(a == b)
+                        elif isinstance(a, pd.DataFrame):
+                            return a.equals(b)
                         else:
                             return a == b
 
