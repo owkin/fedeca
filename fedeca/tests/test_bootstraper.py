@@ -123,20 +123,20 @@ class WDAlgo(TorchWebDiscoAlgo):
 
 
 list_strategy_params = [
-    # {
-    #     "strategy": {
-    #         "strategy_class": FedAvg,
-    #         "strategy_kwargs": {"algo": TorchLogRegFedAvgAlgo()},
-    #     },
-    #     "get_true_nb_rounds": lambda x: x,
-    # },
-    # {
-    #     "strategy": {
-    #         "strategy_class": NewtonRaphson,
-    #         "strategy_kwargs": {"algo": TorchLogRegNRAlgo(), "damping_factor": 0.1},
-    #     },
-    #     "get_true_nb_rounds": lambda x: x,
-    # },
+    {
+        "strategy": {
+            "strategy_class": FedAvg,
+            "strategy_kwargs": {"algo": TorchLogRegFedAvgAlgo()},
+        },
+        "get_true_nb_rounds": lambda x: x,
+    },
+    {
+        "strategy": {
+            "strategy_class": NewtonRaphson,
+            "strategy_kwargs": {"algo": TorchLogRegNRAlgo(), "damping_factor": 0.1},
+        },
+        "get_true_nb_rounds": lambda x: x,
+    },
     {
         "strategy": {
             "strategy_class": WebDisco,
@@ -325,13 +325,8 @@ def test_bootstrapping(strategy_params: dict, num_rounds: int):
         round_idx=strategy_params["get_true_nb_rounds"](num_rounds),
     )
 
-    bootstrapped_models_efficient = [
-        UnifLogReg(ndim=50) for _ in range(len(bootstrap_seeds_list))
-    ]
-    [
-        m.load_state_dict(chkpt["model_state_dict"])
-        for m, chkpt in zip(bootstrapped_models_efficient, algo.checkpoints_list)
-    ]
+    bootstrapped_models_efficient = [alg._model for alg in algo.individual_algos]
+
     for model1, model2 in zip(bootstrapped_models_gt, bootstrapped_models_efficient):
         for p1, p2 in zip(model1.parameters(), model2.parameters()):
             if p1.data.ne(p2.data).sum() > 0:
