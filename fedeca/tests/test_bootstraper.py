@@ -167,7 +167,6 @@ def test_bootstrapping(strategy_params: dict, num_rounds: int):
     strategy = strategy_params["strategy"]["strategy_class"](
         **strategy_params["strategy"]["strategy_kwargs"]
     )
-    start_model = copy.deepcopy(strategy.algo._model)
 
     btst_strategy, _ = make_bootstrap_strategy(
         strategy,
@@ -178,6 +177,7 @@ def test_bootstrapping(strategy_params: dict, num_rounds: int):
     # inefficient bootstrap
     splits = {}
     bootstrapped_models_gt = []
+
     for idx, seed in enumerate(bootstrap_seeds_list):
         # We need to mimic the bootstrap sampling of the data which is per-client
         clients_indices_list = uniform_split(original_df, N_CLIENTS)
@@ -232,7 +232,6 @@ def test_bootstrapping(strategy_params: dict, num_rounds: int):
         )
 
         current_strategy = copy.deepcopy(strategy)
-        current_strategy.algo._model = copy.deepcopy(start_model)
 
         print(f"Bootstrap {idx}")
         compute_plan = execute_experiment(
@@ -298,8 +297,8 @@ def test_bootstrapping(strategy_params: dict, num_rounds: int):
             "--extra-index-url https://download.pytorch.org/whl/cpu",
         ]
     )
+
     current_strategy = copy.deepcopy(strategy)
-    current_strategy.algo._model = copy.deepcopy(start_model)
 
     btst_strategy, _ = make_bootstrap_strategy(
         current_strategy,
@@ -319,6 +318,7 @@ def test_bootstrapping(strategy_params: dict, num_rounds: int):
         clean_models=False,
         name="FedECA-all-bootstraps",
     )
+
     algo = download_algo_state(
         client=clients[first_key],
         compute_plan_key=compute_plan.key,

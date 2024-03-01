@@ -201,9 +201,8 @@ def make_bootstrap_strategy(
             self.seeds = bootstrap_seeds_list
             self.individual_algos = []
             for _ in self.seeds:
-                # We have to make sure they are independent and new
                 self.individual_algos.append(
-                    strategy.algo.__class__(**strategy.algo.kwargs)
+                    copy.deepcopy(strategy.algo.__class__(**strategy.algo.kwargs))
                 )
             # Now we have to overwrite the original methods
             # to be calling their local version on each individual algo
@@ -298,7 +297,7 @@ def make_bootstrap_strategy(
             self.individual_strategies = []
             for _ in self.seeds:
                 # We have to make sure they are independent and new
-                self.individual_strategies.append(strategy.__class__(**kwargs))
+                self.individual_strategies.append(copy.deepcopy(strategy))
             for local_name in local_functions_names["strategy"]:
                 f = types.MethodType(
                     _bootstrap_local_function(local_name, task_type="strategy"),
