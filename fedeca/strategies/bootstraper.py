@@ -104,19 +104,12 @@ def make_bootstrap_strategy(
             continue
         if not hasattr(getattr(obj, method_name), "__wrapped__"):
             continue
-        # Disclaimer this is real ugly.
-        # Now that we know that if we are here the method is either aggregation
-        # or local computation.
-        # We create a copy of all methods with the '_original' suffix to avoid name
-        # collision and infinite recursion when decorating the old methods.
-        # this will become clearer later.
-
-        setattr(obj, method_name + "_original", getattr(obj, method_name))
 
         # f(shared_state, data_samples) looks like a local computation !
 
         if ("shared_state" in method_args_dict) and ("datasamples" in method_args_dict):
             local_functions_names[key].append(method_name)
+
         # f(shared_states) looks like an aggregation !
         elif "shared_states" in method_args_dict:
             assert (
@@ -144,47 +137,19 @@ def make_bootstrap_strategy(
             ), "bootstrap_seeds must have the same length as n_bootstraps"
         bootstrap_seeds_list = bootstrap_seeds
 
-    # We go from names to actual methods handles and put all that in a dict
-    orig_local_fcts = {}
-    orig_aggregations = {}
-    for key in ["strategy", "algo"]:
-        if key == "strategy":
-            obj = strategy
-        else:
-            obj = strategy.algo
-        orig_local_fcts[key] = [
-            getattr(obj, name) for name in local_functions_names[key]
-        ]
-        orig_aggregations[key] = [
-            getattr(obj, name) for name in aggregations_names[key]
-        ]
-
-    # Below is where everything happens.
+    # Below is where the magic happens.
     # As a reminder we are trying to hook all caught methods above to make them
     # execute n_bootstraps times on bootstrapped data and then aggregate the
     # n_bootstraps results independently.
-    # There are two major difficulties here: first of all ties new methods to
-    # the proper object which is the new bootstrapped strategy and algo.
-    # To deal with first we will use the versatility of MethodType.
-    # TODO use __func__
+    # There are two major difficulties here: first of all we have to tie new
+    # methods to the proper object which is the new bootstrapped strategy and
+    # algo. To deal with this first issue, we will use the versatility of
+    # MethodType.
     # Second in substrafl objects reinstantiate themselves using their class
     # and their kwargs attributes:
     # new_my_object = my_object.__class__(**my_object.kwargs).
     # This is mainly legacy and was done for serialization issues.
-    # But this is why we need to overwrite the original class and not the instance.
-
-    local_computations_fct = {}
-    aggregations_fct = {}
-    # Define the merged methods using the functions defined above.
-    for key in ["strategy", "algo"]:
-        # most important line as substrafl will never use instances themselves
-        # but classes reinstantiating themselves.
-        local_computations_fct[key] = [
-            _bootstrap_local_function(name) for name in local_functions_names[key]
-        ]
-        aggregations_fct[key] = [
-            _aggregate_all_bootstraps(name) for name in aggregations_names[key]
-        ]
+    # So we will need to overwrite the original class and not the instance.
 
     # We have to overwrite the original methods at the class level
     class BtstAlgo(strategy.algo.__class__):

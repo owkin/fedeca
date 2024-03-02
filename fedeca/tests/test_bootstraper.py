@@ -173,7 +173,6 @@ def test_bootstrapping(strategy_params: dict, num_rounds: int):
     btst_strategy, _ = make_bootstrap_strategy(
         strategy,
         bootstrap_seeds=bootstrap_seeds_list,
-        inplace=False,
     )
 
     # inefficient bootstrap
@@ -305,7 +304,6 @@ def test_bootstrapping(strategy_params: dict, num_rounds: int):
     btst_strategy, _ = make_bootstrap_strategy(
         current_strategy,
         bootstrap_seeds=bootstrap_seeds_list,
-        inplace=False,
     )
     print("Efficient Bootstrap")
     compute_plan = execute_experiment(
