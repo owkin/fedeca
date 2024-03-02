@@ -21,7 +21,6 @@ def make_bootstrap_strategy(
     strategy: Strategy,
     n_bootstraps: Union[int, None] = None,
     bootstrap_seeds: Union[list[int], None] = None,
-    inplace: bool = False,
 ):
     """Bootstrap a substrafl strategy wo impacting the number of compute tasks.
 
@@ -46,18 +45,12 @@ def make_bootstrap_strategy(
         The list of seeds used for bootstrapping random states.
         If None will generate n_bootstraps randomly, in the presence
         of both allways use bootstrap_seeds.
-    inplace : bool, optional
-        Whether to modify the strategy inplace or not, by default False.
 
     Returns
     -------
     Strategy
         The resulting efficiently bootstrapped strategy
     """
-
-    if not inplace:
-        strategy = copy.deepcopy(strategy)
-
     # We dynamically get all methods from strategy and algo except 'magic'
     # methods that have dunderscores
     orig_strat_methods_names = [

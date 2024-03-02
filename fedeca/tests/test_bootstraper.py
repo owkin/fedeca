@@ -98,6 +98,8 @@ cox_model = CoxPHModelTorch(ndim=1, torch_dtype=torch.float64)
 
 
 class WDAlgo(TorchWebDiscoAlgo):
+    """Spawns WebDisco algo with cox model."""
+
     def __init__(self, propensity_model, robust):
         super().__init__(
             model=cox_model,
