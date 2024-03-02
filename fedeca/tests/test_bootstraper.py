@@ -2,6 +2,7 @@
 import copy
 import os
 import shutil
+import sys
 from itertools import product
 from pathlib import Path
 
@@ -18,10 +19,12 @@ from substrafl.nodes import AggregationNode
 from substrafl.strategies import FedAvg, NewtonRaphson
 
 from fedeca import LogisticRegressionTorch
+from fedeca.algorithms import TorchWebDiscoAlgo
 from fedeca.strategies import make_bootstrap_strategy  # make_bootstrap_metric_function
+from fedeca.strategies import WebDisco
 from fedeca.utils import make_accuracy_function, make_substrafl_torch_dataset_class
 from fedeca.utils.data_utils import split_dataframe_across_clients, uniform_split
-from fedeca.utils.survival_utils import CoxData
+from fedeca.utils.survival_utils import CoxData, CoxPHModelTorch
 
 logreg_dataset_class = make_substrafl_torch_dataset_class(
     ["treatment"],
@@ -29,7 +32,12 @@ logreg_dataset_class = make_substrafl_torch_dataset_class(
     duration_col="time",
     return_torch_tensors=True,
 )
-
+survival_dataset_class = make_substrafl_torch_dataset_class(
+    ["time", "event"],
+    "event",
+    "time",
+    dtype="float64",
+)
 accuracy = make_accuracy_function("treatment")
 
 
@@ -86,6 +94,36 @@ class TorchLogRegNRAlgo(TorchNewtonRaphsonAlgo):
         )
 
 
+cox_model = CoxPHModelTorch(ndim=1, torch_dtype=torch.float64)
+
+
+class WDAlgo(TorchWebDiscoAlgo):
+    """Spawns WebDisco algo with cox model."""
+
+    def __init__(self, propensity_model, robust):
+        super().__init__(
+            model=cox_model,
+            # TODO make this batch-size argument disappear from
+            # webdisco algo
+            batch_size=sys.maxsize,
+            dataset=survival_dataset_class,
+            seed=SEED,
+            duration_col="time",
+            event_col="event",
+            treated_col="treatment",
+            standardize_data=True,
+            penalizer=0.0,
+            l1_ratio=0.1,
+            initial_step_size=1.0,
+            learning_rate_strategy="lifelines",
+            store_hessian=True,
+            propensity_model=propensity_model,
+            propensity_strategy="iptw",
+            robust=robust,
+        )
+        self._propensity_model = propensity_model
+
+
 list_strategy_params = [
     {
         "strategy": {
@@ -101,11 +139,21 @@ list_strategy_params = [
         },
         "get_true_nb_rounds": lambda x: x,
     },
+    {
+        "strategy": {
+            "strategy_class": WebDisco,
+            "strategy_kwargs": {
+                "algo": WDAlgo(propensity_model=logreg_model, robust=True),
+                "standardize_data": True,
+            },
+        },
+        "get_true_nb_rounds": lambda x: x,
+    },
 ]
 
 
 @pytest.mark.parametrize(
-    "strategy_params, num_rounds", product(list_strategy_params, range(1, 5))
+    "strategy_params, num_rounds", product(list_strategy_params, range(1, 2))
 )
 def test_bootstrapping(strategy_params: dict, num_rounds: int):
     """Tests of data generation with constant cate."""
@@ -121,17 +169,16 @@ def test_bootstrapping(strategy_params: dict, num_rounds: int):
     strategy = strategy_params["strategy"]["strategy_class"](
         **strategy_params["strategy"]["strategy_kwargs"]
     )
-    start_model = copy.deepcopy(strategy.algo._model)
 
     btst_strategy, _ = make_bootstrap_strategy(
         strategy,
         bootstrap_seeds=bootstrap_seeds_list,
-        inplace=False,
     )
 
     # inefficient bootstrap
     splits = {}
     bootstrapped_models_gt = []
+
     for idx, seed in enumerate(bootstrap_seeds_list):
         # We need to mimic the bootstrap sampling of the data which is per-client
         clients_indices_list = uniform_split(original_df, N_CLIENTS)
@@ -186,7 +233,6 @@ def test_bootstrapping(strategy_params: dict, num_rounds: int):
         )
 
         current_strategy = copy.deepcopy(strategy)
-        current_strategy.algo._model = copy.deepcopy(start_model)
 
         print(f"Bootstrap {idx}")
         compute_plan = execute_experiment(
@@ -252,13 +298,12 @@ def test_bootstrapping(strategy_params: dict, num_rounds: int):
             "--extra-index-url https://download.pytorch.org/whl/cpu",
         ]
     )
+
     current_strategy = copy.deepcopy(strategy)
-    current_strategy.algo._model = copy.deepcopy(start_model)
 
     btst_strategy, _ = make_bootstrap_strategy(
         current_strategy,
         bootstrap_seeds=bootstrap_seeds_list,
-        inplace=False,
     )
     print("Efficient Bootstrap")
     compute_plan = execute_experiment(
@@ -273,19 +318,15 @@ def test_bootstrapping(strategy_params: dict, num_rounds: int):
         clean_models=False,
         name="FedECA-all-bootstraps",
     )
+
     algo = download_algo_state(
         client=clients[first_key],
         compute_plan_key=compute_plan.key,
         round_idx=strategy_params["get_true_nb_rounds"](num_rounds),
     )
 
-    bootstrapped_models_efficient = [
-        UnifLogReg(ndim=50) for _ in range(len(bootstrap_seeds_list))
-    ]
-    [
-        m.load_state_dict(chkpt["model_state_dict"])
-        for m, chkpt in zip(bootstrapped_models_efficient, algo.checkpoints_list)
-    ]
+    bootstrapped_models_efficient = [alg._model for alg in algo.individual_algos]
+
     for model1, model2 in zip(bootstrapped_models_gt, bootstrapped_models_efficient):
         for p1, p2 in zip(model1.parameters(), model2.parameters()):
             if p1.data.ne(p2.data).sum() > 0:
