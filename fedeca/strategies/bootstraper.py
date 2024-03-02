@@ -98,7 +98,7 @@ def make_bootstrap_strategy(
         ) or (method_name in ["save_local_state", "load_local_state"]):
             continue
         # We are dealing with the predict method this is also a method
-        # we need to change but it's common for all strattegies so we will
+        # we need to change but as it's common for all strategies we will
         # handle it separately later.
         if "predictions_path" in method_args_dict:
             continue
@@ -269,8 +269,9 @@ def make_bootstrap_strategy(
                 )
                 setattr(self, agg_name, f)
 
-    strategy.kwargs.pop("algo")
-    return BtstStrategy(algo=btst_algo, **strategy.kwargs), bootstrap_seeds_list
+    strategy_kwargs_wo_algo = copy.deepcopy(strategy.kwargs)
+    strategy_kwargs_wo_algo.pop("algo")
+    return BtstStrategy(algo=btst_algo, **strategy_kwargs_wo_algo), bootstrap_seeds_list
 
 
 def _bootstrap_local_function(local_name, task_type: str = "algo"):
