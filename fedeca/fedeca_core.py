@@ -678,8 +678,8 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
                     ]
                     if any(is_btst_strategy) and not all(is_btst_strategy):
                         assert (
-                            "Only one of the strategy is a bootstrap strategy"
-                            "this should not happen"
+                            "One of the strategy is a bootstrap strategy the"
+                            "other is a regular strategy this should not happen"
                         )
                     if not any(is_btst_strategy):
                         self.strategies = [
