@@ -6,6 +6,7 @@ import re
 import tempfile
 import types
 import zipfile
+from functools import partial
 from pathlib import Path
 from typing import Union
 
@@ -16,11 +17,14 @@ from substrafl.algorithms.pytorch.torch_base_algo import TorchAlgo
 from substrafl.remote import remote, remote_data
 from substrafl.strategies.strategy import Strategy
 
+from fedeca.utils.survival_utils import BootstrapMixin
+
 
 def make_bootstrap_strategy(
     strategy: Strategy,
     n_bootstraps: Union[int, None] = None,
     bootstrap_seeds: Union[list[int], None] = None,
+    bootstrap_function: Union[function, None] = None,
 ):
     """Bootstrap a substrafl strategy wo impacting the number of compute tasks.
 
@@ -45,6 +49,12 @@ def make_bootstrap_strategy(
         The list of seeds used for bootstrapping random states.
         If None will generate n_bootstraps randomly, in the presence
         of both allways use bootstrap_seeds.
+    bootstrap_function : Union[function, None]
+        A function with signature f(datasamples, seed) that returns a bootstrapped
+        version of the data.
+        If None, use the BootstrapMixin function.
+        Note that this can be used to provide splits/cross-validation capabilities
+        as well where seed would be the fold number in a flattened list of folds.
 
     Returns
     -------
@@ -166,7 +176,9 @@ def make_bootstrap_strategy(
             # to be calling their local version on each individual algo
             for local_name in local_functions_names["algo"]:
                 f = types.MethodType(
-                    _bootstrap_local_function(local_name),
+                    _bootstrap_local_function(
+                        local_name, bootstrap_function=bootstrap_function
+                    ),
                     self,
                 )
                 setattr(self, local_name, f)
@@ -258,7 +270,11 @@ def make_bootstrap_strategy(
                 self.individual_strategies.append(copy.deepcopy(strategy))
             for local_name in local_functions_names["strategy"]:
                 f = types.MethodType(
-                    _bootstrap_local_function(local_name, task_type="strategy"),
+                    _bootstrap_local_function(
+                        local_name,
+                        task_type="strategy",
+                        bootstrap_function=bootstrap_function,
+                    ),
                     self,
                 )
                 setattr(self, local_name, f)
@@ -274,7 +290,9 @@ def make_bootstrap_strategy(
     return BtstStrategy(algo=btst_algo, **strategy_kwargs_wo_algo), bootstrap_seeds_list
 
 
-def _bootstrap_local_function(local_name, task_type: str = "algo"):
+def _bootstrap_local_function(
+    local_name, task_type: str = "algo", bootstrap_function=None
+):
     """Bootstrap the local functiion given.
 
     Create a new function that bootstrap the given local function given as parameter.
@@ -288,6 +306,13 @@ def _bootstrap_local_function(local_name, task_type: str = "algo"):
     task_type : str
         The type of task to be bootstrapped, either 'algo' or 'strategy'.
 
+    bootstrap_function : function | None
+        A function with signature f(datasamples, seed) that returns a bootstrapped
+        version of the data.
+        If None, use the BootstrapMixin function.
+        Note that this can be used to provide splits/cross-validation capabilities
+        as well where seed would be the fold number in a flattened list of folds.
+
     Returns
     -------
     function
@@ -300,6 +325,12 @@ def _bootstrap_local_function(local_name, task_type: str = "algo"):
     individual_task_type = (
         "individual_algos" if task_type == "algo" else "individual_strategies"
     )
+    if bootstrap_function is None:
+        # TODO make it cleaner by making bootstrap_sample a function in utils and
+        # not a method of BootstrapMixin
+        bootstrap_function = partial(
+            BootstrapMixin.bootstrap_sample.__func__, self=None
+        )
 
     def local_computation(self, datasamples, shared_state=None) -> list:
         """Execute all the parallel local computations of merged strategies.
@@ -327,10 +358,7 @@ def _bootstrap_local_function(local_name, task_type: str = "algo"):
         results = []
 
         for idx, seed in enumerate(self.seeds):
-            rng = np.random.default_rng(seed)
-            bootstrapped_data = datasamples.sample(
-                datasamples.shape[0], replace=True, random_state=rng
-            )
+            bootstrapped_data = bootstrap_function(datasamples, seed=seed)
             if shared_state is None:
                 res = getattr(getattr(self, individual_task_type)[idx], local_name)(
                     datasamples=bootstrapped_data, _skip=True

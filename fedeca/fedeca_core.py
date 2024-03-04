@@ -280,8 +280,13 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
         self.webdisco_strategy = WebDisco(
             algo=self.webdisco_algo, standardize_data=self.standardize_data
         )
+        strategies_to_run = [self.propensity_model_strategy, self.webdisco_strategy]
+        if self.variance_method == "bootstrap":
+            strategies_to_run = [
+                make_bootstrap_strategy(strat) for strat in strategies_to_run
+            ]
 
-        kwargs["strategies"] = [self.propensity_model_strategy, self.webdisco_strategy]
+        kwargs["strategies"] = strategies_to_run
         if self.robust:
             # We prepare robust estimation
             class MockAlgo:
