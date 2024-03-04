@@ -67,7 +67,7 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
         dtype: float = "float64",
         propensity_strategy="iptw",
         variance_method: str = "naïve",
-        n_bootstraps: Union[int, None] = None,
+        n_bootstrap: Union[int, None] = None,
         bootstrap_seeds: Union[list[int], None] = None,
         dp_target_epsilon: Union[float, None] = None,
         dp_target_delta: Union[float, None] = None,

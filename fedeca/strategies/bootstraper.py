@@ -22,7 +22,7 @@ from fedeca.utils.survival_utils import BootstrapMixin
 
 def make_bootstrap_strategy(
     strategy: Strategy,
-    n_bootstraps: Union[int, None] = None,
+    n_bootstrap: Union[int, None] = None,
     bootstrap_seeds: Union[list[int], None] = None,
     bootstrap_function: Union[function, None] = None,
 ):
@@ -30,9 +30,9 @@ def make_bootstrap_strategy(
 
     In order to reduce the bottleneck of substra when bootstraping a strategy
     we need to go over the strategy compute plan and modifies each local atomic
-    task to execute n_bootstraps times on bootstraped data. Each modified task
+    task to execute n_bootstrap times on bootstraped data. Each modified task
     returns a list of n_bootstraps original outputs obtained on each bootstrap.
-    Each aggregation task is then modified to aggregate the n_bootstraps outputs
+    Each aggregation task is then modified to aggregate the n_bootstrap outputs
     independently.
     This code heavily uses some code patterns invented by Arthur Pignet.
 
@@ -40,14 +40,14 @@ def make_bootstrap_strategy(
     ----------
     strategy : Strategy
         The strategy to bootstrap.
-    n_bootstraps : Union[int, None]
+    n_bootstrap : Union[int, None]
         Number of bootstrap to be performed. If None will use
         len(bootstrap_seeds) instead. If bootstrap_seeds is given
         seeds those seeds will be used for the generation
         otherwise seeds are generated randomly.
     bootstrap_seeds : Union[list[int], None]
         The list of seeds used for bootstrapping random states.
-        If None will generate n_bootstraps randomly, in the presence
+        If None will generate n_bootstrap randomly, in the presence
         of both allways use bootstrap_seeds.
     bootstrap_function : Union[function, None]
         A function with signature f(datasamples, seed) that returns a bootstrapped
@@ -139,18 +139,18 @@ def make_bootstrap_strategy(
     # strategy and algo.
     # first let's seed the bootstrappping
     if bootstrap_seeds is None:
-        bootstrap_seeds_list = np.random.randint(0, 2**32, n_bootstraps)
+        bootstrap_seeds_list = np.random.randint(0, 2**32, n_bootstrap)
     else:
-        if n_bootstraps is not None:
+        if n_bootstrap is not None:
             assert (
-                len(bootstrap_seeds) == n_bootstraps
-            ), "bootstrap_seeds must have the same length as n_bootstraps"
+                len(bootstrap_seeds) == n_bootstrap
+            ), "bootstrap_seeds must have the same length as n_bootstrap"
         bootstrap_seeds_list = bootstrap_seeds
 
     # Below is where the magic happens.
     # As a reminder we are trying to hook all caught methods above to make them
-    # execute n_bootstraps times on bootstrapped data and then aggregate the
-    # n_bootstraps results independently.
+    # execute n_bootstrap times on bootstrapped data and then aggregate the
+    # n_bootstrap results independently.
     # There are two major difficulties here: first of all we have to tie new
     # methods to the proper object which is the new bootstrapped strategy and
     # algo. To deal with this first issue, we will use the versatility of
@@ -565,7 +565,7 @@ if __name__ == "__main__":
 
     strategy = FedAvg(algo=TorchLogReg())
 
-    btst_strategy, _ = make_bootstrap_strategy(strategy, n_bootstraps=10)
+    btst_strategy, _ = make_bootstrap_strategy(strategy, n_bootstrap=10)
 
     clients, train_data_nodes, test_data_nodes, _, _ = split_dataframe_across_clients(
         df,
