@@ -297,14 +297,16 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
         strategies_to_run = [self.propensity_model_strategy, self.webdisco_strategy]
 
         if self.variance_method == "bootstrap":
+            # We only bootstrap the first strategy because
+            # for the glue to work for the second one we need to
+            # do it later and there is no 3rd one with bootstrap
             strategies_to_run = [
                 make_bootstrap_strategy(
-                    strat,
+                    strategies_to_run[0],
                     n_bootstrap=self.n_bootstrap,
                     bootstrap_seeds=self.bootstrap_seeds,
                 )
-                for strat in strategies_to_run
-            ]
+            ] + strategies_to_run[1:]
 
         kwargs["strategies"] = strategies_to_run
         if self.robust:
@@ -682,14 +684,16 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
                             "other is a regular strategy this should not happen"
                         )
                     if not any(is_btst_strategy):
+                        # We only bootstrap the first strategy because
+                        # for the glue to work for the second one we need to
+                        # do it later and there is no 3rd one with bootstrap
                         self.strategies = [
                             make_bootstrap_strategy(
-                                strat,
+                                self.strategies[0],
                                 n_bootstrap=n_bootstrap,
                                 bootstrap_seeds=bootstrap_seeds,
                             )
-                            for strat in self.strategies
-                        ]
+                        ] + self.strategies[1:]
 
         self.run(targets=targets)
         self.propensity_scores_, self.weights_ = self.compute_propensity_scores(data)
@@ -738,13 +742,32 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
                 self.propensity_model = algo
         else:
             # The algos are stored in the nodes
-            self.propensity_model = self.train_data_nodes[0].algo.model
+            if self.variance_method != "bootstrap":
+                self.propensity_model = self.train_data_nodes[0].algo.model
+            else:
+                self.propensity_models = algo
+
         # TODO check with webdisco as well
         # Do not touch the two lines below this is dark dark magic
+
         self.strategies[1].algo._propensity_model = self.propensity_model
         self.strategies[1].algo.kwargs.update(
             {"propensity_model": self.propensity_model}
         )
+        if self.variance_method == "bootstrap":
+            # Since kwargs are updated it will work but everyone will have the first
+            # propensity model : (, we will need to fix it
+            self.strategies[1] = make_bootstrap_strategy(
+                self.strategies[1],
+                n_bootstrap=self.n_bootstrap,
+                bootstrap_seeds=self.bootstrap_seeds,
+            )
+            # we fix it by passing the right model to the kwargs of each strategy
+            [
+                algo.kwargs.update({"propensity_model": self.propensity_models[idx]})
+                for idx, algo in enumerate(self.strategies[1].algo.individual_algos)
+            ]
+
         # We need to save intermediate outputs now
         for t in self.train_data_nodes:
             t.keep_intermediate_states = True

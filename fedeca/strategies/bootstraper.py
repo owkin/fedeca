@@ -164,14 +164,26 @@ def make_bootstrap_strategy(
 
     # We have to overwrite the original methods at the class level
     class BtstAlgo(strategy.algo.__class__):
-        def __init__(self, *args, **kwargs):
-
+        def __init__(self, *args, bootstrap_specific_kwargs=None, **kwargs):
             super().__init__(*args, **kwargs)
+            if bootstrap_specific_kwargs is not None:
+                assert len(bootstrap_seeds_list) == len(bootstrap_specific_kwargs), (
+                    "bootstrap_specific_kwargs must have the same length as"
+                    "bootstrap_seeds_list"
+                )
+                self.bootstrap_specific_kwargs = bootstrap_specific_kwargs
+                self.kwargs.update(
+                    "bootstrap_specific_kwargs", bootstrap_specific_kwargs
+                )
+
             self.seeds = bootstrap_seeds_list
             self.individual_algos = []
-            for _ in self.seeds:
+            for idx in range(len(self.seeds)):
+                current_kwargs = copy.deepcopy(strategy.algo.kwargs)
+                if self.bootstrap_specific_kwargs is not None:
+                    current_kwargs.update(**self.bootstrap_specific_kwargs[idx])
                 self.individual_algos.append(
-                    copy.deepcopy(strategy.algo.__class__(**strategy.algo.kwargs))
+                    copy.deepcopy(strategy.algo.__class__(**current_kwargs))
                 )
             # Now we have to overwrite the original methods
             # to be calling their local version on each individual algo
