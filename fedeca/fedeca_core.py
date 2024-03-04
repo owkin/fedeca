@@ -34,12 +34,16 @@ from fedeca.utils import (
 )
 from fedeca.utils.data_utils import split_dataframe_across_clients
 from fedeca.utils.substrafl_utils import get_outmodel_function
-from fedeca.utils.survival_utils import BaseSurvivalEstimator, CoxPHModelTorch
+from fedeca.utils.survival_utils import (
+    BaseSurvivalEstimator,
+    BootstrapMixin,
+    CoxPHModelTorch,
+)
 
 logger = logging.getLogger(__name__)
 
 
-class FedECA(Experiment, BaseSurvivalEstimator):
+class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
     """FedECA class tthat performs Federated IPTW."""
 
     def __init__(
@@ -61,7 +65,7 @@ class FedECA(Experiment, BaseSurvivalEstimator):
         learning_rate_strategy: str = "lifelines",
         dtype: float = "float64",
         propensity_strategy="iptw",
-        robust: bool = False,
+        variance_method: str = "naïve",
         dp_target_epsilon: Union[float, None] = None,
         dp_target_delta: Union[float, None] = None,
         dp_max_grad_norm: Union[float, None] = None,
@@ -120,10 +124,17 @@ class FedECA(Experiment, BaseSurvivalEstimator):
             Data type for the model, by default "float64".
         propensity_strategy: str, optional
             The propensity strategy to use.
-        robust: bool, optional
-            Whether or not to use robust estimator of variance as in [1] and
-            lifelines.
-            Defauts to False.
+        variance_method : `{"naive", "robust", "bootstrap"}`
+            Method for estimating the variance, and therefore the p-value of the
+            estimated treatment effect.
+            * "naive": Inverse of the Fisher information.
+            * "robust": The robust sandwich estimator [1] computed in FL thanks
+                to FedECA. Useful when samples are reweighted.
+            * "bootstrap": Bootstrap the given data by sampling each patient
+              with replacement, each time estimate the treatment effect, then
+              use all repeated estimations to compute the variance. The implementation
+              is efficient in substra and shouldn't induce too much overhead.
+            Defauts to naïve.
             [1] David A Binder. Fitting cox’s proportional hazards models from survey data. Biometrika, 79(1):139–147, 1992.  # noqa: E501
         dp_target_epsilon: float
             The target epsilon for (epsilon, delta)-differential
@@ -189,7 +200,8 @@ class FedECA(Experiment, BaseSurvivalEstimator):
         self.damping_factor_nr = damping_factor_nr
         self.l2_coeff_nr = l2_coeff_nr
         self.propensity_strategy = propensity_strategy
-        self.robust = robust
+        self.variance_method = variance_method
+        self.robust = variance_method == "robust"
         self.dp_target_delta = dp_target_delta
         self.dp_target_epsilon = dp_target_epsilon
         self.dp_max_grad_norm = dp_max_grad_norm
