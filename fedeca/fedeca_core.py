@@ -214,7 +214,7 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
         self.propensity_strategy = propensity_strategy
         self.variance_method = variance_method
         self.robust = variance_method == "robust"
-        self.n_bootstraps = n_bootstraps
+        self.n_bootstrap = n_bootstrap
         self.bootstrap_seeds = bootstrap_seeds
         self.dp_target_delta = dp_target_delta
         self.dp_target_epsilon = dp_target_epsilon
@@ -300,7 +300,7 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
             strategies_to_run = [
                 make_bootstrap_strategy(
                     strat,
-                    n_bootstraps=self.n_bootstraps,
+                    n_bootstrap=self.n_bootstrap,
                     bootstrap_seeds=self.bootstrap_seeds,
                 )
                 for strat in strategies_to_run
@@ -488,7 +488,9 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
         split_method: Union[Callable, None] = None,
         split_method_kwargs: Union[Callable, None] = None,
         data_path: Union[str, None] = None,
-        robust: Union[bool, None] = None,
+        variance_estimation: Union[str, None] = None,
+        n_bootstrap: Union[int, None] = None,
+        bootstrap_seeds: Union[list[int], None] = None,
         dp_target_epsilon: Union[float, None] = None,
         dp_target_delta: Union[float, None] = None,
         dp_max_grad_norm: Union[float, None] = None,
@@ -520,11 +522,27 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
             Argument of the function used to split data, by default None
         data_path : Union[str, None]
             Where to store the data on disk when backend is not remote.
-        robust: Union[None, bool], optional
-            Whether or not to use robust estimator of variance as in [1] and
-            lifelines.
-            Defauts to False.
+        variance_method : `{"naive", "robust", "bootstrap"}`
+            Method for estimating the variance, and therefore the p-value of the
+            estimated treatment effect.
+            * "naive": Inverse of the Fisher information.
+            * "robust": The robust sandwich estimator [1] computed in FL thanks
+                to FedECA. Useful when samples are reweighted.
+            * "bootstrap": Bootstrap the given data by sampling each patient
+              with replacement, each time estimate the treatment effect, then
+              use all repeated estimations to compute the variance. The implementation
+              is efficient in substra and shouldn't induce too much overhead.
+            Defauts to naïve.
             [1] David A Binder. Fitting cox’s proportional hazards models from survey data. Biometrika, 79(1):139–147, 1992.  # noqa: E501
+        n_bootstraps : Union[int, None]
+            Number of bootstrap to be performed. If None will use
+            len(bootstrap_seeds) instead. If bootstrap_seeds is given
+            seeds those seeds will be used for the generation
+            otherwise seeds are generated randomly.
+        bootstrap_seeds : Union[list[int], None]
+            The list of seeds used for bootstrapping random states.
+            If None will generate n_bootstraps randomly, in the presence
+            of both allways use bootstrap_seeds.
         dp_target_epsilon: float
             The target epsilon for (epsilon, delta)-differential
             private guarantee. Defaults to None.
@@ -623,32 +641,55 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
             self.strategies[0] = self.propensity_model_strategy
             self.strategies[1] = self.webdisco_strategy
 
-        if robust is not None and robust != self.robust:
-            self.robust = robust
+        if variance_estimation is not None:
+            robust = variance_estimation == "robust"
+            if robust is not None and robust != self.robust:
+                self.robust = robust
 
-        if self.robust:
+            if self.robust:
 
-            class MockAlgo:
-                def __init__(self):
-                    self.strategies = ["Robust Cox Variance"]
+                class MockAlgo:
+                    def __init__(self):
+                        self.strategies = ["Robust Cox Variance"]
 
-            mock_algo = MockAlgo()
-            self.strategies.append(
-                RobustCoxVariance(
-                    algo=mock_algo,
+                mock_algo = MockAlgo()
+                self.strategies.append(
+                    RobustCoxVariance(
+                        algo=mock_algo,
+                    )
                 )
-            )
-            # We put WebDisco in "robust" mode in the sense that we ask it
-            # to store all needed quantities for robust variance estimation
-            self.strategies[1].algo._robust = True  # not sufficient for serialization
-            # possible only because we added robust as a kwargs
-            self.strategies[1].algo.kwargs.update({"robust": True})
-            # We need those two lines for the zip to consider all 3
-            # strategies
-            self.metrics_dicts_list.append({})
-            self.num_rounds_list.append(sys.maxsize)
-        else:
-            self.strategies = self.strategies[:2]
+                # We put WebDisco in "robust" mode in the sense that we ask it
+                # to store all needed quantities for robust variance estimation
+                self.strategies[
+                    1
+                ].algo._robust = True  # not sufficient for serialization
+                # possible only because we added robust as a kwargs
+                self.strategies[1].algo.kwargs.update({"robust": True})
+                # We need those two lines for the zip to consider all 3
+                # strategies
+                self.metrics_dicts_list.append({})
+                self.num_rounds_list.append(sys.maxsize)
+            else:
+                self.strategies = self.strategies[:2]
+                if variance_estimation == "bootstrap":
+                    is_btst_strategy = [
+                        hasattr(strat, "individual_strategies")
+                        for strat in self.strategies
+                    ]
+                    if any(is_btst_strategy) and not all(is_btst_strategy):
+                        assert (
+                            "Only one of the strategy is a bootstrap strategy"
+                            "this should not happen"
+                        )
+                    if not any(is_btst_strategy):
+                        self.strategies = [
+                            make_bootstrap_strategy(
+                                strat,
+                                n_bootstrap=n_bootstrap,
+                                bootstrap_seeds=bootstrap_seeds,
+                            )
+                            for strat in self.strategies
+                        ]
 
         self.run(targets=targets)
         self.propensity_scores_, self.weights_ = self.compute_propensity_scores(data)

@@ -396,7 +396,7 @@ def test_bootstrapping_end2end():
             treated_col="treatment",
             duration_col="time",
             event_col="event",
-            robust=False,
+            variance_method="naive",
         )
         print(f"Bootstrap {idx}")
         fed_iptw.run()
@@ -428,8 +428,7 @@ def test_bootstrapping_end2end():
         treated_col="treatment",
         duration_col="time",
         event_col="event",
-        robust=False,
-        bootstrap=True,
+        variance_estimation="bootstrap",
         bootstrap_seeds=bootstrap_seeds_list,
     )
     print(f"Efficient bootstrap")

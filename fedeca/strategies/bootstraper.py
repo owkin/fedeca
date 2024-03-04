@@ -6,6 +6,7 @@ import re
 import tempfile
 import types
 import zipfile
+from collections.abc import Callable
 from functools import partial
 from pathlib import Path
 from typing import Union
@@ -24,7 +25,7 @@ def make_bootstrap_strategy(
     strategy: Strategy,
     n_bootstrap: Union[int, None] = None,
     bootstrap_seeds: Union[list[int], None] = None,
-    bootstrap_function: Union[function, None] = None,
+    bootstrap_function: Union[Callable, None] = None,
 ):
     """Bootstrap a substrafl strategy wo impacting the number of compute tasks.
 
@@ -49,7 +50,7 @@ def make_bootstrap_strategy(
         The list of seeds used for bootstrapping random states.
         If None will generate n_bootstrap randomly, in the presence
         of both allways use bootstrap_seeds.
-    bootstrap_function : Union[function, None]
+    bootstrap_function : Union[Callable, None]
         A function with signature f(datasamples, seed) that returns a bootstrapped
         version of the data.
         If None, use the BootstrapMixin function.
@@ -291,7 +292,9 @@ def make_bootstrap_strategy(
 
 
 def _bootstrap_local_function(
-    local_name, task_type: str = "algo", bootstrap_function=None
+    local_name: str,
+    task_type: str = "algo",
+    bootstrap_function: Union[None, Callable] = None,
 ):
     """Bootstrap the local functiion given.
 
@@ -306,7 +309,7 @@ def _bootstrap_local_function(
     task_type : str
         The type of task to be bootstrapped, either 'algo' or 'strategy'.
 
-    bootstrap_function : function | None
+    bootstrap_function : Union[None, Callable]
         A function with signature f(datasamples, seed) that returns a bootstrapped
         version of the data.
         If None, use the BootstrapMixin function.
@@ -315,7 +318,7 @@ def _bootstrap_local_function(
 
     Returns
     -------
-    function
+    Callable
         The @remote_data function, that has been renamed,
         and will be used as method.
     """
@@ -395,7 +398,7 @@ def _aggregate_all_bootstraps(aggregation_function_name, task_type: str = "algo"
 
     Returns
     -------
-    function
+    Callable
         The @remote function, that has been renamed,
         and will be used as method.
     """
