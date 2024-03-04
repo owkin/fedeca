@@ -22,6 +22,7 @@ from fedeca.algorithms import TorchWebDiscoAlgo
 from fedeca.algorithms.torch_dp_fed_avg_algo import TorchDPFedAvgAlgo
 from fedeca.analytics import RobustCoxVariance, RobustCoxVarianceAlgo
 from fedeca.strategies import WebDisco
+from fedeca.strategies.bootstraper import make_bootstrap_strategy
 from fedeca.strategies.webdisco_utils import (
     compute_summary_function,
     get_final_cox_model_function,
@@ -66,6 +67,8 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
         dtype: float = "float64",
         propensity_strategy="iptw",
         variance_method: str = "naïve",
+        n_bootstraps: Union[int, None] = None,
+        bootstrap_seeds: Union[list[int], None] = None,
         dp_target_epsilon: Union[float, None] = None,
         dp_target_delta: Union[float, None] = None,
         dp_max_grad_norm: Union[float, None] = None,
@@ -136,6 +139,15 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
               is efficient in substra and shouldn't induce too much overhead.
             Defauts to naïve.
             [1] David A Binder. Fitting cox’s proportional hazards models from survey data. Biometrika, 79(1):139–147, 1992.  # noqa: E501
+        n_bootstraps : Union[int, None]
+            Number of bootstrap to be performed. If None will use
+            len(bootstrap_seeds) instead. If bootstrap_seeds is given
+            seeds those seeds will be used for the generation
+            otherwise seeds are generated randomly.
+        bootstrap_seeds : Union[list[int], None]
+            The list of seeds used for bootstrapping random states.
+            If None will generate n_bootstraps randomly, in the presence
+            of both allways use bootstrap_seeds.
         dp_target_epsilon: float
             The target epsilon for (epsilon, delta)-differential
             private guarantee. Defaults to None.
@@ -202,6 +214,8 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
         self.propensity_strategy = propensity_strategy
         self.variance_method = variance_method
         self.robust = variance_method == "robust"
+        self.n_bootstraps = n_bootstraps
+        self.bootstrap_seeds = bootstrap_seeds
         self.dp_target_delta = dp_target_delta
         self.dp_target_epsilon = dp_target_epsilon
         self.dp_max_grad_norm = dp_max_grad_norm
@@ -281,9 +295,15 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
             algo=self.webdisco_algo, standardize_data=self.standardize_data
         )
         strategies_to_run = [self.propensity_model_strategy, self.webdisco_strategy]
+
         if self.variance_method == "bootstrap":
             strategies_to_run = [
-                make_bootstrap_strategy(strat) for strat in strategies_to_run
+                make_bootstrap_strategy(
+                    strat,
+                    n_bootstraps=self.n_bootstraps,
+                    bootstrap_seeds=self.bootstrap_seeds,
+                )
+                for strat in strategies_to_run
             ]
 
         kwargs["strategies"] = strategies_to_run
