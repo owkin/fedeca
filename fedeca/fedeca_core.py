@@ -305,7 +305,7 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
                     strategies_to_run[0],
                     n_bootstrap=self.n_bootstrap,
                     bootstrap_seeds=self.bootstrap_seeds,
-                )
+                )[0]
             ] + strategies_to_run[1:]
 
         kwargs["strategies"] = strategies_to_run
@@ -692,7 +692,7 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
                                 self.strategies[0],
                                 n_bootstrap=n_bootstrap,
                                 bootstrap_seeds=bootstrap_seeds,
-                            )
+                            )[0]
                         ] + self.strategies[1:]
 
         self.run(targets=targets)
@@ -763,7 +763,7 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
                 bootstrap_specific_kwargs=[
                     {"propensity_model": model} for model in self.propensity_models
                 ],
-            )
+            )[0]
 
         # We need to save intermediate outputs now
         for t in self.train_data_nodes:

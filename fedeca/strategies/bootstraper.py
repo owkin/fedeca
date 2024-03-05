@@ -52,7 +52,7 @@ def make_bootstrap_strategy(
         If None will generate n_bootstrap randomly, in the presence
         of both allways use bootstrap_seeds.
     bootstrap_function : Union[Callable, None]
-        A function with signature f(datasamples, seed) that returns a bootstrapped
+        A function with signature f(data, seed) that returns a bootstrapped
         version of the data.
         If None, use the BootstrapMixin function.
         Note that this can be used to provide splits/cross-validation capabilities
@@ -332,7 +332,7 @@ def _bootstrap_local_function(
         The type of task to be bootstrapped, either 'algo' or 'strategy'.
 
     bootstrap_function : Union[None, Callable]
-        A function with signature f(datasamples, seed) that returns a bootstrapped
+        A function with signature f(data, seed) that returns a bootstrapped
         version of the data.
         If None, use the BootstrapMixin function.
         Note that this can be used to provide splits/cross-validation capabilities
@@ -381,7 +381,7 @@ def _bootstrap_local_function(
         results = []
 
         for idx, seed in enumerate(self.seeds):
-            bootstrapped_data = bootstrap_function(datasamples, seed=seed)
+            bootstrapped_data = bootstrap_function(data=datasamples, seed=seed)
             if shared_state is None:
                 res = getattr(getattr(self, individual_task_type)[idx], local_name)(
                     datasamples=bootstrapped_data, _skip=True
