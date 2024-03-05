@@ -70,7 +70,7 @@ class TestFedECAEnd2End(TestTempDir):
             split_method="split_control_over_centers",
             split_method_kwargs={"treatment_info": cls._treated_col},
             backend_type="subprocess",
-            robust=cls.robust,
+            variance_method="robust" if cls.robust else "naive",
             data_path=cls.test_dir,
         )
         cls.fed_iptw_results = cls.fed_iptw.results_

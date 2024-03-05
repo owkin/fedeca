@@ -397,6 +397,7 @@ def test_bootstrapping_end2end():
             duration_col="time",
             event_col="event",
             variance_method="naive",
+            num_rounds_list=[2, 3],
         )
         print(f"Bootstrap {idx}")
         fed_iptw.run()
@@ -429,6 +430,7 @@ def test_bootstrapping_end2end():
         event_col="event",
         variance_method="bootstrap",
         bootstrap_seeds=bootstrap_seeds_list,
+        num_rounds_list=[2, 3],
     )
     print("Efficient bootstrap")
     fed_iptw.run()
