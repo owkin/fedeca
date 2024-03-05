@@ -353,9 +353,7 @@ def _bootstrap_local_function(
     if bootstrap_function is None:
         # TODO make it cleaner by making bootstrap_sample a function in utils and
         # not a method of BootstrapMixin
-        bootstrap_function = partial(
-            BootstrapMixin.bootstrap_sample.__func__, self=None
-        )
+        bootstrap_function = partial(BootstrapMixin.bootstrap_sample, self=None)
 
     def local_computation(self, datasamples, shared_state=None) -> list:
         """Execute all the parallel local computations of merged strategies.
