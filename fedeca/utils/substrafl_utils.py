@@ -8,16 +8,14 @@ from pathlib import Path
 from typing import Union
 
 import lifelines
-import numpy as np
 import pandas as pd
-import substra
 import torch
 from sklearn.metrics import accuracy_score
 from substrafl.dependency import Dependency
 from substrafl.evaluation_strategy import EvaluationStrategy
-from substrafl.experiment import execute_experiment as execute_experiment_substra
+from substrafl.experiment import execute_experiment, simulate_experiment
 from substrafl.nodes import AggregationNode, TestDataNode, TrainDataNode
-from substrafl.nodes.node import OutputIdentifiers
+from substrafl.nodes.schemas import OutputIdentifiers
 
 from fedeca.utils.data_utils import split_dataframe_across_clients
 
@@ -48,7 +46,6 @@ class Experiment:
         num_rounds_list: list[int],
         ds_client=None,
         train_data_nodes: Union[list[TrainDataNode], None] = None,
-        metrics_dicts_list: Union[list[dict], None] = None,
         test_data_nodes: Union[list[TestDataNode], None] = None,
         aggregation_node: Union[AggregationNode, None] = None,
         evaluation_frequency: Union[int, None] = None,
@@ -70,8 +67,6 @@ class Experiment:
             directly.
         num_rounds_list : list
             List of number of rounds for each strategy.
-        metrics_dicts_list : list[dict], optional
-            Dict of metric functions, by default None.
         test_data_nodes : list, optional
             List of data nodes for testing, by default None.
         aggregation_node : fl.data.DataNode, optional
@@ -87,11 +82,9 @@ class Experiment:
         algo_dependencies : list, optional
             List of algorithm dependencies, by default [].
         """
-        if metrics_dicts_list is not None:
-            assert len(strategies) == len(metrics_dicts_list)
+
         assert len(num_rounds_list) == len(strategies)
         self.strategies = strategies
-        self.metrics_dicts_list = metrics_dicts_list
         self.num_rounds_list = num_rounds_list
         self.ds_client = ds_client
         self.train_data_nodes = train_data_nodes
@@ -99,28 +92,15 @@ class Experiment:
         self.simu_mode = False
 
         if self.test_data_nodes is None:
-            assert metrics_dicts_list is not None
             if self.train_data_nodes is not None:
                 self.test_data_nodes = [
                     TestDataNode(
-                        t.organization_id, t.data_manager_key, t.data_sample_keys, []
+                        t.organization_id,
+                        t.data_manager_key,
+                        t.data_sample_keys,
                     )
                     for t in self.train_data_nodes
                 ]
-        else:
-            if metrics_dicts_list and not all(
-                [len(t.metric_functions) == 0 for t in self.test_data_nodes]
-            ):
-                logger.warning(
-                    """WARNING: you are passing metrics to test data nodes with existing
-                    metric_functions this will overwrite them"""
-                )
-                logger.warning(
-                    [
-                        (f"Client {i}", t.metric_functions)
-                        for i, t in enumerate(self.test_data_nodes)
-                    ]
-                )
 
         self.evaluation_frequency = evaluation_frequency
 
@@ -276,21 +256,12 @@ class Experiment:
         strategies = self.strategies[
             self.run_strategies : (self.run_strategies + num_strategies_to_run)
         ]  # noqa: E203
-        metrics_dicts_list = self.metrics_dicts_list[
-            self.run_strategies : (
-                self.run_strategies + num_strategies_to_run
-            )  # noqa: E203
-        ]
         num_rounds_list = self.num_rounds_list[
             self.run_strategies : (
                 self.run_strategies + num_strategies_to_run
             )  # noqa: E203
         ]
-        for i, (strategy, metrics_dict, num_rounds) in enumerate(
-            zip(strategies, metrics_dicts_list, num_rounds_list)
-        ):
-            for t in self.test_data_nodes:
-                t.metric_functions = metrics_dict
+        for i, (strategy, num_rounds) in enumerate(zip(strategies, num_rounds_list)):
 
             current_kwargs = self.experiment_kwargs
             current_kwargs["strategy"] = strategy
@@ -310,14 +281,20 @@ class Experiment:
                     eval_frequency=self.evaluation_frequency[i],
                 )
             current_kwargs["evaluation_strategy"] = evaluation_strategy
-            current_kwargs["simu_mode"] = self.simu_mode
             current_kwargs["name"] = f"Fedeca: {strategy.__class__.__name__}"
-            xp_output = execute_experiment(**current_kwargs)
 
-            if self.simu_mode:
-                scores = [t.scores for t in self.test_data_nodes]
+            if not self.simu_mode:
+                xp_output = execute_experiment(**current_kwargs)
+            else:
+                (
+                    scores,
+                    intermediate_state_train,
+                    intermediate_state_agg,
+                ) = simulate_experiment(**current_kwargs)
+                xp_output = scores
+
                 robust_cox_variance = False
-                for idx, s in enumerate(scores):
+                for idx, s in enumerate(list(scores.values())):
                     logger.info(f"====Client {idx}====")
                     try:
                         logger.info(s[-1])
@@ -433,7 +410,7 @@ class SubstraflTorchDataset(torch.utils.data.Dataset):
 
     def __init__(
         self,
-        datasamples,
+        data_from_opener,
         is_inference: bool,
         target_columns=["T", "E"],
         columns_to_drop=[],
@@ -444,7 +421,7 @@ class SubstraflTorchDataset(torch.utils.data.Dataset):
 
         Parameters
         ----------
-        datasamples : pandas.DataFrame
+        data_from_opener : pandas.DataFrame
             Data samples.
         is_inference : bool
             Flag indicating if the dataset is for inference.
@@ -460,7 +437,7 @@ class SubstraflTorchDataset(torch.utils.data.Dataset):
             and doesn't explicitly call torch.from_numpy. This is different from
             say NewtonRaphson and WebDisco which are numpy-based. Defaults to False.
         """
-        self.data = datasamples
+        self.data = data_from_opener
         self.is_inference = is_inference
         self.target_columns = target_columns
         self.columns_to_drop = list(set(columns_to_drop + self.target_columns))
@@ -531,9 +508,9 @@ def make_substrafl_torch_dataset_class(
         columns_to_drop = []
 
     class MySubstraflTorchDataset(SubstraflTorchDataset):
-        def __init__(self, datasamples, is_inference):
+        def __init__(self, data_from_opener, is_inference):
             super().__init__(
-                datasamples=datasamples,
+                data_from_opener=data_from_opener,
                 is_inference=is_inference,
                 target_columns=target_cols,
                 columns_to_drop=columns_to_drop,
@@ -555,13 +532,11 @@ def make_c_index_function(duration_col: str, event_col: str):
         Column name for the event.
     """
 
-    def c_index(datasamples, predictions_path):
-        times_true = datasamples[duration_col]
-        events = datasamples[event_col]
-        if isinstance(predictions_path, str) or isinstance(predictions_path, Path):
-            y_pred = np.load(predictions_path)
-        else:
-            y_pred = predictions_path
+    def c_index(data_from_opener, predictions):
+        times_true = data_from_opener[duration_col]
+        events = data_from_opener[event_col]
+
+        y_pred = predictions
 
         c_index = lifelines.utils.concordance_index(times_true, -y_pred, events)
         return c_index
@@ -578,12 +553,9 @@ def make_accuracy_function(treatment_col: str):
         Column name for the treatment allocation.
     """
 
-    def accuracy(datasamples, predictions_path):
-        y_true = datasamples[treatment_col]
-        if isinstance(predictions_path, str) or isinstance(predictions_path, Path):
-            y_pred = np.load(predictions_path)
-        else:
-            y_pred = predictions_path
+    def accuracy(data_from_opener, predictions):
+        y_true = data_from_opener[treatment_col]
+        y_pred = predictions
         return accuracy_score(y_true, y_pred > 0.5)
 
     return accuracy
@@ -629,25 +601,3 @@ def download_train_task_models_by_round(
     metadata_path = folder / METADATA_FILE
     metadata_path.write_text(json.dumps(metadata))
     return model_file
-
-
-def execute_experiment(
-    *args,
-    **kwargs,
-) -> substra.sdk.models.ComputePlan:
-    """Execute experiment with fedeca client.
-
-    This allows to infer the simu mode using the backend_type of the client.
-
-    Returns
-    -------
-    substra.sdk.models.ComputePlan
-        A compute plan
-    """
-    if len(args) > 0:
-        client_arg = args[0]
-    else:
-        client_arg = kwargs["client"]
-    if hasattr(client_arg, "is_simu"):
-        kwargs["simu_mode"] = client_arg.is_simu
-    return execute_experiment_substra(*args, **kwargs)

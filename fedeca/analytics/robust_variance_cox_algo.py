@@ -151,16 +151,16 @@ class RobustCoxVarianceAlgo(TorchWebDiscoAlgo):
         self.global_moments = global_moments
 
     @remote_data
-    def local_q_computation(self, datasamples: pd.DataFrame, shared_state=None):
+    def local_q_computation(self, data_from_opener: pd.DataFrame, shared_state=None):
         """Compute Qk.
 
         Parameters
         ----------
-        datasamples : pd.DataFrame
+        data_from_opener : pd.DataFrame
             Pandas dataframe provided by the opener.
         shared_state : None
             Unused here as this function only
-            use local information already present in the datasamples.
+            use local information already present in the data_from_opener.
             Defaults to None.
 
         Returns
@@ -171,7 +171,7 @@ class RobustCoxVarianceAlgo(TorchWebDiscoAlgo):
             shared to an AggregationNode in order to compute the aggregation
             of the different analytics.
         """
-        df = datasamples
+        df = data_from_opener
 
         distinct_event_times = self.global_robust_statistics["distinct_event_times"]
         weights_counts_on_events = self.global_robust_statistics[

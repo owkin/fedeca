@@ -132,11 +132,12 @@ class TestDPPropensityEnd2End(TestTempDir):
                     )
 
             dp_algo = DPLogRegAlgo()
-            dp_fedavg_strategy = FedAvg(algo=dp_algo)
+            dp_fedavg_strategy = FedAvg(
+                algo=dp_algo, metric_functions=accuracy_metrics_dict
+            )
             dp_xp = Experiment(
                 strategies=[dp_fedavg_strategy],
                 num_rounds_list=[num_rounds],
-                metrics_dicts_list=[accuracy_metrics_dict],
             )
             cls.dp_trainings.append(dp_xp)
 

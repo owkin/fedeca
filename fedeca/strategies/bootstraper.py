@@ -113,23 +113,20 @@ def make_bootstrap_strategy(
             or ("shared_state" in method_args_dict)
         ) or (method_name in ["save_local_state", "load_local_state"]):
             continue
-        # We are dealing with the predict method this is also a method
-        # we need to change but as it's common for all strategies we will
-        # handle it separately later.
-        if "predictions_path" in method_args_dict:
-            continue
         if not hasattr(getattr(obj, method_name), "__wrapped__"):
             continue
 
         # f(shared_state, data_samples) looks like a local computation !
 
-        if ("shared_state" in method_args_dict) and ("datasamples" in method_args_dict):
+        if ("shared_state" in method_args_dict) and (
+            "data_from_opener" in method_args_dict
+        ):
             local_functions_names[key].append(method_name)
 
         # f(shared_states) looks like an aggregation !
         elif "shared_states" in method_args_dict:
             assert (
-                "datasamples" not in method_args_dict
+                "data_from_opener" not in method_args_dict
             ), "This method's signature is not valid"
             aggregations_names[key].append(method_name)
         else:
@@ -263,26 +260,14 @@ def make_bootstrap_strategy(
 
             return self
 
-        @remote_data
-        def predict(
-            self, datasamples, shared_state=None, predictions_path: os.PathLike = None
-        ):
+        def predict(self, data_from_opener, shared_state=None):
             predictions = []
-            with tempfile.TemporaryDirectory() as tmpdirname:
-                paths_to_preds = []
-                for idx, algo in enumerate(self.individual_algos):
-                    path_to_pred = Path(tmpdirname) / f"bootstrap_{idx}"
-                    algo.predict(
-                        datasamples=datasamples,
-                        shared_state=shared_state,
-                        predictions_path=path_to_pred,
-                        _skip=True,
-                    )
-                    paths_to_preds.append(path_to_pred)
-                with zipfile.ZipFile(predictions_path, "w") as f:
-                    for pred in paths_to_preds:
-                        f.write(pred, compress_type=zipfile.ZIP_DEFLATED)
-
+            for algo in self.individual_algos:
+                prediction = algo.predict(
+                    data_from_opener=data_from_opener,
+                    shared_state=shared_state,
+                )
+                predictions.append(prediction)
             return predictions
 
     btst_kwargs = copy.deepcopy(strategy.algo.kwargs)
@@ -362,7 +347,7 @@ def _bootstrap_local_function(
         # not a method of BootstrapMixin
         bootstrap_function = partial(BootstrapMixin.bootstrap_sample, self=None)
 
-    def local_computation(self, datasamples, shared_state=None) -> list:
+    def local_computation(self, data_from_opener, shared_state=None) -> list:
         """Execute all the parallel local computations of merged strategies.
 
         This method is transformed by the decorator to meet Substra API,
@@ -372,7 +357,7 @@ def _bootstrap_local_function(
         ----------
         self : MergedStrategy
             The mergedStrategy instance.
-        datasamples : pd.DataFrame
+        data_from_opener : pd.DataFrame
             Dataframe returned by the opener.
         shared_state : None, optional
             Given by the aggregation node, so here it is a list of
@@ -388,14 +373,14 @@ def _bootstrap_local_function(
         results = []
 
         for idx, seed in enumerate(self.seeds):
-            bootstrapped_data = bootstrap_function(data=datasamples, seed=seed)
+            bootstrapped_data = bootstrap_function(data=data_from_opener, seed=seed)
             if shared_state is None:
                 res = getattr(getattr(self, individual_task_type)[idx], local_name)(
-                    datasamples=bootstrapped_data, _skip=True
+                    data_from_opener=bootstrapped_data, _skip=True
                 )
             else:
                 res = getattr(getattr(self, individual_task_type)[idx], local_name)(
-                    datasamples=bootstrapped_data,
+                    data_from_opener=bootstrapped_data,
                     shared_state=shared_state[idx],
                     _skip=True,
                 )
@@ -494,21 +479,11 @@ def make_bootstrap_metric_function(metric_function):
         The metric function to hook.
     """
 
-    def bootstraped_metric(datasamples, predictions_path):
+    def bootstraped_metric(data_from_opener, predictions):
         list_of_metrics = []
-        if isinstance(predictions_path, str) or isinstance(predictions_path, Path):
-            archive = zipfile.ZipFile(predictions_path, "r")
-            with tempfile.TemporaryDirectory() as tmpdirname:
-                archive.extractall(tmpdirname)
-                preds_found = sorted(
-                    [p for p in Path(tmpdirname).glob("**/bootstrap_*")]
-                )
-                for pred_found in preds_found:
-                    list_of_metrics.append(metric_function(datasamples, pred_found))
-        else:
-            y_preds = predictions_path
-            for y_pred in y_preds:
-                list_of_metrics.append(metric_function(datasamples, y_pred))
+        y_preds = predictions
+        for y_pred in y_preds:
+            list_of_metrics.append(metric_function(data_from_opener, y_pred))
         return np.array(list_of_metrics).mean()
 
     return bootstraped_metric
@@ -593,7 +568,9 @@ if __name__ == "__main__":
     #             use_gpu=False,
     #         )
 
-    strategy = FedAvg(algo=TorchLogReg())
+    strategy = FedAvg(
+        algo=TorchLogReg(), metric_functions={accuracy_btst.__name__: accuracy_btst}
+    )
 
     btst_strategy, _ = make_bootstrap_strategy(strategy, n_bootstrap=10)
 
@@ -605,9 +582,6 @@ if __name__ == "__main__":
         data_path="./data",
         backend_type="subprocess",
     )
-
-    for node in test_data_nodes:
-        node.metric_functions = {accuracy_btst.__name__: accuracy_btst}
 
     first_key = list(clients.keys())[0]
 

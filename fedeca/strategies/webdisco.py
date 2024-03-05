@@ -1,7 +1,7 @@
 """File for webdisco strategy."""
 from copy import deepcopy
 from enum import Enum
-from typing import List, Optional
+from typing import Callable, Dict, List, Optional, Union
 
 import numpy as np
 from substrafl.algorithms.algo import Algo
@@ -71,6 +71,9 @@ class WebDisco(Strategy):
     def __init__(
         self,
         algo: Algo,
+        metric_functions: Optional[
+            Union[Dict[str, Callable], List[Callable], Callable]
+        ] = None,
         standardize_data: bool = True,
         tol: float = 1e-16,
     ):
@@ -80,6 +83,12 @@ class WebDisco(Strategy):
         ----------
         algo: Algo
             Algorithm needed to perform the optimization.
+        metric_functions (Optional[Union[Dict, List, Callable]]):
+            list of Functions that implement the different metrics.
+            If a Dict is given, the keys will be used to register
+            the result of the associated function. If a Function or
+            a List is given, function.__name__ will be used to store
+            the result.
         standardize_data: bool,
             Whether or not to standardize each features
             (if True involves more tasks in order to compute
@@ -92,6 +101,7 @@ class WebDisco(Strategy):
         # function so that kwargs is instantiated with the correct arguments !!!
         super().__init__(
             algo=algo,
+            metric_functions=metric_functions,
             standardize_data=standardize_data,
             tol=tol,
         )
@@ -164,7 +174,7 @@ class WebDisco(Strategy):
             )
 
             if evaluation_strategy is not None and next(evaluation_strategy):
-                self.perform_predict(
+                self.perform_evaluation(
                     train_data_nodes=train_data_nodes,
                     test_data_nodes=evaluation_strategy.test_data_nodes,
                     round_idx=round_idx,
@@ -647,13 +657,14 @@ class WebDisco(Strategy):
         results.update({"total_n_samples": n_samples})
         return results
 
-    def perform_predict(
+    def perform_evaluation(
         self,
         test_data_nodes: List[TestDataNode],
         train_data_nodes: List[TrainDataNode],
         round_idx: int,
     ):
-        """Predict function for test_data_nodes on which the model have been trained on.
+        """Evaluate function for test_data_nodes on which the model have been trained
+        on.
 
         Parameters
         ----------
@@ -686,9 +697,9 @@ class WebDisco(Strategy):
             local_state = self._local_states[node_index]
 
             test_data_node.update_states(
-                operation=self.algo.predict(
-                    data_samples=test_data_node.test_data_sample_keys,
-                    _algo_name=f"Testing with {self.algo.__class__.__name__}",
+                operation=self.evaluate(
+                    data_samples=test_data_node.data_sample_keys,
+                    _algo_name=f"Evaluating with {self.algo.__class__.__name__}",
                 ),
                 traintask_id=local_state.key,
                 round_idx=round_idx,

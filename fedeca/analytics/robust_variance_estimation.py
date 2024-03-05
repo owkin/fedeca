@@ -1,5 +1,5 @@
 """Estimate the variance for mispecified Cox models."""
-from typing import List
+from typing import List, Optional
 
 import numpy as np
 from substrafl.nodes import AggregationNode, TrainDataNode
@@ -10,21 +10,27 @@ from substrafl.strategies.strategy import Strategy
 class RobustCoxVariance(Strategy):
     """Launch robust variance estimation for cox models."""
 
-    def __init__(self, algo):
+    def __init__(self, algo, metric_functions: Optional = None):
         """Init robust cox variance estimation.
 
         Parameters
         ----------
         algo : RobustCoxVarianceAlgo
             An instance of RobustCoxVarianceAlgo.
+        metric_functions (Optional[Union[Dict, List, Callable]]):
+            list of Functions that implement the different metrics.
+            If a Dict is given, the keys will be used to register
+            the result of the associated function. If a Function
+            or a List is given, function.__name__ will be used
+            to store the result.
         """
-        super().__init__(algo=algo)
+        super().__init__(algo=algo, metric_functions=metric_functions)
 
         # States
         self._local_states: Optional[List[LocalStateRef]] = None
         self._shared_states: Optional[List[SharedStateRef]] = None
 
-    # We have to have instantiated name, perform_predict and performm_round
+    # We have to have instantiated name, perform_evaluation and performm_round
     @property
     def name(self):
         """Set strategy name.
@@ -36,7 +42,7 @@ class RobustCoxVariance(Strategy):
         """
         return "Robust Cox Variance"
 
-    def perform_predict(self):
+    def perform_evaluation(self):
         """Do nothing.
 
         Only there so that the strategy is recognized as such by substrafl.

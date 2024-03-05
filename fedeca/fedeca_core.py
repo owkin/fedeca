@@ -242,10 +242,6 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
                 event_col=self.event_col, duration_col=self.duration_col
             )
         }
-        self.metrics_dicts_list = [
-            self.accuracy_metrics_dict,
-            self.cindex_metrics_dict,
-        ]
 
         # Note that we don't use self attributes because substrafl classes are messed up
         # and we don't want confusion
@@ -296,7 +292,9 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
 
         self.webdisco_algo = WDAlgo(propensity_model=None, robust=self.robust)
         self.webdisco_strategy = WebDisco(
-            algo=self.webdisco_algo, standardize_data=self.standardize_data
+            algo=self.webdisco_algo,
+            standardize_data=self.standardize_data,
+            metric_functions=self.cindex_metrics_dict,
         )
         strategies_to_run = [self.propensity_model_strategy, self.webdisco_strategy]
 
@@ -326,16 +324,12 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
 
             mock_algo = MockAlgo()
             kwargs["strategies"].append(
-                RobustCoxVariance(
-                    algo=mock_algo,
-                )
+                RobustCoxVariance(algo=mock_algo, metric_functions={})
             )
-            # We need those two lines for the zip to consider all 3
+            # We need this line for the zip to consider all 3
             # strategies
-            self.metrics_dicts_list.append({})
             self.num_rounds_list.append(sys.maxsize)
 
-        kwargs["metrics_dicts_list"] = self.metrics_dicts_list
         kwargs["ds_client"] = ds_client
         kwargs["train_data_nodes"] = train_data_nodes
         kwargs["aggregation_node"] = aggregation_node
@@ -458,7 +452,9 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
                     )
 
             self.dp_algo = DPLogRegAlgo()
-            self.dp_strategy = FedAvg(algo=self.dp_algo)
+            self.dp_strategy = FedAvg(
+                algo=self.dp_algo, metric_functions=self.accuracy_metrics_dict
+            )
             self.propensity_model_strategy = self.dp_strategy
         else:
             # no self attributes in this class
@@ -481,7 +477,9 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
 
             self.nr_algo = NRAlgo()
             self.nr_strategy = NewtonRaphson(
-                damping_factor=self.damping_factor_nr, algo=self.nr_algo
+                damping_factor=self.damping_factor_nr,
+                algo=self.nr_algo,
+                metric_functions=self.accuracy_metrics_dict,
             )
             self.propensity_model_strategy = self.nr_strategy
 
@@ -670,6 +668,7 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
                 self.strategies.append(
                     RobustCoxVariance(
                         algo=mock_algo,
+                        metric_functions={},
                     )
                 )
                 # We put WebDisco in "robust" mode in the sense that we ask it
