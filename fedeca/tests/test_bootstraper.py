@@ -430,7 +430,7 @@ def test_bootstrapping_end2end():
         variance_method="bootstrap",
         bootstrap_seeds=bootstrap_seeds_list,
     )
-    print(f"Efficient bootstrap")
+    print("Efficient bootstrap")
     fed_iptw.run()
     beta_efficient = fed_iptw.final_params_array
 
