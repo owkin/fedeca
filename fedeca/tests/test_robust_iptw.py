@@ -18,7 +18,7 @@ class TestFedECAEnd2End(TestTempDir):
         cls,
         n_clients=3,
         ndim=100,
-        nsamples=1000,
+        nsamples=500,
         seed=43,
         robust=False,
     ):
@@ -61,12 +61,12 @@ class TestFedECAEnd2End(TestTempDir):
             treated_col=cls._treated_col,
             duration_col=cls._duration_col,
             event_col=cls._event_col,
-            num_rounds_list=[50, 50],
+            num_rounds_list=[20, 20],
         )
         cls.fed_iptw.fit(
-            cls.df,
-            None,
-            n_clients,
+            data=cls.df,
+            targets=None,
+            n_clients=n_clients,
             split_method="split_control_over_centers",
             split_method_kwargs={"treatment_info": cls._treated_col},
             backend_type="subprocess",

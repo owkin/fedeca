@@ -866,7 +866,7 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
                 beta = self.final_params_list[0]
                 variance_matrix = self.variance_matrix
                 global_robust_statistics = self.global_robust_statistics
-                propensity_model = (self.propensity_model,)
+                propensity_model = self.propensity_model
                 duration_col = self.duration_col
                 event_col = self.event_col
                 treated_col = self.treated_col
