@@ -858,8 +858,8 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
             Confidence level for computing CIs
         """
         if not (self.is_bootstrap):
-            self.variance_matrix = -inv(self.hessian) / np.outer(
-                self.computed_stds, self.computed_stds
+            self.variance_matrix = -inv(self.hessians[0]) / np.outer(
+                self.computed_stds_list[0], self.computed_stds_list[0]
             )
             if self.robust:
                 assert self.global_robust_statistics

@@ -344,7 +344,7 @@ def test_bootstrapping_end2end():
     # We remove the true propensity score
     original_df = original_df.drop(columns=["propensity_scores"], axis=1)
 
-    bootstrap_seeds_list = [42, 43, 44]
+    bootstrap_seeds_list = [42, 43, 44, 44]
 
     # inefficient bootstrap
     splits = {}
@@ -400,7 +400,7 @@ def test_bootstrapping_end2end():
         )
         print(f"Bootstrap {idx}")
         fed_iptw.run()
-        btst_results.append(fed_iptw._results)
+        btst_results.append(fed_iptw.results_)
         # Clean up
         shutil.rmtree("./data")
 
@@ -429,11 +429,9 @@ def test_bootstrapping_end2end():
         event_col="event",
         variance_method="bootstrap",
         bootstrap_seeds=bootstrap_seeds_list,
-        num_rounds_list=[2, 3],
     )
     print(f"Efficient bootstrap")
     fed_iptw.run()
     beta_efficient = fed_iptw.final_params_array
-    # beta_efficient_var = fed_iptw.variance_matrix
 
-    assert np.allclose(beta_inefficient.numpy(), beta_efficient, atol=1e-5)
+    assert np.allclose(beta_inefficient.to_numpy(), beta_efficient.flatten())
