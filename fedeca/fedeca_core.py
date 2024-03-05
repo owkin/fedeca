@@ -750,26 +750,19 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
                 compute_plan_key=self.compute_plan_keys[0].key,
                 round_idx=None,
             )
-            if self.variance_method != "bootstrap":
-                self.propensity_model = algo.model
-            else:
-                breakpoint()
-                self.propensity_model = algo
         else:
-            # The algos are stored in the nodes
-            if self.variance_method != "bootstrap":
-                self.propensity_model = self.train_data_nodes[0].algo.model
-            else:
-                self.propensity_models = algo
+            algo = self.train_data_nodes[0].algo
 
-        # TODO check with webdisco as well
-        # Do not touch the two lines below this is dark dark magic
-
-        self.strategies[1].algo._propensity_model = self.propensity_model
-        self.strategies[1].algo.kwargs.update(
-            {"propensity_model": self.propensity_model}
-        )
-        if self.variance_method == "bootstrap":
+        if self.variance_method != "bootstrap":
+            self.propensity_model = algo.model
+            # We give the trained model to WebDisco
+            self.strategies[1].algo._propensity_model = self.propensity_model
+            self.strategies[1].algo.kwargs.update(
+                {"propensity_model": self.propensity_model}
+            )
+        else:
+            self.propensity_models = [algo.model for algo in algo.individual_algos]
+            # We give the trained modelS to WebDisco
             # Now we can create the bootstrap strategy as we have all the
             # propensity models
             self.strategies[1] = make_bootstrap_strategy(
