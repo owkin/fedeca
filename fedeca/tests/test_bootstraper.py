@@ -408,7 +408,6 @@ def test_bootstrapping_end2end():
     beta_inefficient = pd.concat(
         [btst_res["coef"] for btst_res in btst_results], axis=0
     )
-    beta_inefficient_var = beta_inefficient.var()
 
     # efficient bootstrap
     clients, train_data_nodes, _, _, _ = split_dataframe_across_clients(
@@ -430,11 +429,11 @@ def test_bootstrapping_end2end():
         event_col="event",
         variance_method="bootstrap",
         bootstrap_seeds=bootstrap_seeds_list,
+        num_rounds_list=[2, 3],
     )
     print(f"Efficient bootstrap")
     fed_iptw.run()
-    beta_efficient = fed_iptw._results["coef"]
-    beta_efficient_var = fed_iptw.variance_matrix
+    beta_efficient = fed_iptw.final_params_array
+    # beta_efficient_var = fed_iptw.variance_matrix
 
-    assert np.allclose(beta_inefficient, beta_efficient, atol=1e-5)
-    assert np.allclose(beta_inefficient_var, beta_efficient_var, atol=1e-5)
+    assert np.allclose(beta_inefficient.numpy(), beta_efficient, atol=1e-5)

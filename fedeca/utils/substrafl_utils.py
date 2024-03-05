@@ -312,7 +312,6 @@ class Experiment:
             current_kwargs["evaluation_strategy"] = evaluation_strategy
             current_kwargs["simu_mode"] = self.simu_mode
             current_kwargs["name"] = f"Fedeca: {strategy.__class__.__name__}"
-            breakpoint()
             xp_output = execute_experiment(**current_kwargs)
 
             if self.simu_mode:
