@@ -758,7 +758,7 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
                 round_idx=None,
             )
         else:
-            algo = self.train_data_nodes[0].algo
+            algo = self.compute_plan_keys[0][1].state[-1].algo
 
         if self.variance_method != "bootstrap":
             self.propensity_model = algo.model

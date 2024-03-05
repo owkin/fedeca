@@ -286,28 +286,11 @@ class Experiment:
             if not self.simu_mode:
                 xp_output = execute_experiment(**current_kwargs)
             else:
-                (
-                    scores,
-                    intermediate_state_train,
-                    intermediate_state_agg,
-                ) = simulate_experiment(**current_kwargs)
-                xp_output = scores
+                xp_output = simulate_experiment(**current_kwargs)
+                scores, intermediate_state_train, intermediate_state_agg = xp_output
 
-                robust_cox_variance = False
-                for idx, s in enumerate(list(scores.values())):
-                    logger.info(f"====Client {idx}====")
-                    try:
-                        logger.info(s[-1])
-                    except IndexError:
-                        robust_cox_variance = True
-                        logger.info("No metric")
                 # TODO Check that it is well formatted it's probably not
-                self.performances_strategies.append(pd.DataFrame(xp_output))
-                # Hacky hacky hack
-                if robust_cox_variance:
-                    xp_output = self.train_data_nodes
-                else:
-                    xp_output = self.train_data_nodes[0]
+                self.performances_strategies.append(pd.DataFrame(xp_output[0]))
 
             self.compute_plan_keys.append(xp_output)
 
