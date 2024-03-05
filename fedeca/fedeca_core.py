@@ -22,7 +22,10 @@ from fedeca.algorithms import TorchWebDiscoAlgo
 from fedeca.algorithms.torch_dp_fed_avg_algo import TorchDPFedAvgAlgo
 from fedeca.analytics import RobustCoxVariance, RobustCoxVarianceAlgo
 from fedeca.strategies import WebDisco
-from fedeca.strategies.bootstraper import make_bootstrap_strategy
+from fedeca.strategies.bootstraper import (
+    make_bootstrap_metric_function,
+    make_bootstrap_strategy,
+)
 from fedeca.strategies.webdisco_utils import (
     compute_summary_function,
     get_final_cox_model_function,
@@ -307,6 +310,11 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
                     bootstrap_seeds=self.bootstrap_seeds,
                 )[0]
             ] + strategies_to_run[1:]
+            # We need to prepare the metrics for the bootstrap
+            self.metrics_dicts_list = [
+                {k: make_bootstrap_metric_function(v) for k, v in metric_dict.items()}
+                for metric_dict in self.metrics_dicts_list
+            ]
 
         kwargs["strategies"] = strategies_to_run
         if self.robust:
@@ -694,6 +702,13 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
                                 bootstrap_seeds=bootstrap_seeds,
                             )[0]
                         ] + self.strategies[1:]
+                        self.metrics_dicts_list = [
+                            {
+                                k: make_bootstrap_metric_function(v)
+                                for k, v in metric_dict.items()
+                            }
+                            for metric_dict in self.metrics_dicts_list
+                        ]
 
         self.run(targets=targets)
         self.propensity_scores_, self.weights_ = self.compute_propensity_scores(data)
