@@ -23,7 +23,10 @@ def get_final_cox_model_function(
     simu_mode: bool = False,
     robust: bool = False,
 ):
-    """Retreive first converged Cox model and corresponding hessian.
+    """Retrieve first converged Cox model and corresponding hessian.
+
+    In case of bootstrapping retrieves the first converged Cox models for each
+    seed.
 
     Parameters
     ----------
@@ -50,8 +53,48 @@ def get_final_cox_model_function(
     tuple
         Returns hessian, log-likelihood, Cox model's weights, global moments
     """
-    found_params = False
-    found_hessian = False
+    # We retrieve the end task of the first round to see if it is bootstrapped or
+    # not
+    actual_round = get_last_algo_from_round_count(0, standardize_data, simu_mode)
+    if not simu_mode:
+        # We have to use a custom function instead of download_algo_state
+        # to bypass substrafl limitation on number of local tasks per
+        # round
+        with tempfile.TemporaryDirectory() as temp_dir:
+            download_train_task_models_by_round(
+                client=client,
+                dest_folder=temp_dir,
+                compute_plan_key=compute_plan_key,
+                round_idx=actual_round,
+            )
+            algo = _load_from_files(input_folder=temp_dir)
+    else:
+        algo = compute_plan_key.intermediate_states[actual_round]
+
+    if hasattr(algo, "individual_algos"):
+        num_seeds = len(algo.individual_algos)
+
+        def test_convergence(algo_arg):
+            return [
+                (indiv_algo, indiv_algo.server_state["success"])
+                for indiv_algo in algo_arg.individual_algos
+            ]
+
+    else:
+        num_seeds = 1
+
+        def test_convergence(algo_arg):
+            return [(algo_arg, algo_arg.server_state["success"])]
+
+    found_params_dict = {}
+    found_hessian_dict = {}
+    algo_params = {}
+    algo_hessian = {}
+    for i in range(num_seeds):
+        found_params_dict[i] = False
+        found_hessian_dict[i] = False
+        algo_params[i] = None
+        algo_hessian[i] = None
 
     for i in range(0, num_rounds):
         actual_round = get_last_algo_from_round_count(i, standardize_data, simu_mode)
@@ -70,64 +113,91 @@ def get_final_cox_model_function(
         else:
             algo = compute_plan_key.intermediate_states[actual_round]
 
-        if algo.server_state["success"]:
-            if not found_params:
-                found_params = True
-                algo_params = algo
-            # Unfortunately finding params is only half of the job as we
-            # need the hessian computed on those params
-            else:
-                found_hessian = True
-                algo_hessian = algo
-                break
+        convergence_of_algos = test_convergence(algo)
 
-        if i == max(num_rounds - 2, 0) and not found_params:
-            print(
-                """Cox model did not converge ! Taking params from the before final
-                round"""
-            )
-            found_params = True
-            algo_params = algo
+        for j in range(num_seeds):
+            if convergence_of_algos[j][1]:
+                if not found_params_dict[j]:
+                    found_params_dict[j] = True
+                    algo_params[j] = convergence_of_algos[j][0]
+                # Unfortunately finding params is only half of the job as we
+                # need the hessian computed on those params
+                else:
+                    found_hessian_dict[j] = True
+                    algo_hessian[j] = convergence_of_algos[j][0]
 
-        if i == (num_rounds - 1):
-            if algo.server_state["success"]:
-                print("You are one round short to get the true final hessian !")
-            found_hessian = True
-            algo_hessian = algo
+        # we only break if all hessians have been found across seeds
+        if all(found_hessian_dict.values()):
+            break
 
-    assert (
-        found_params and found_hessian
-    ), """Do more rounds it needs to converge and then do one more round
-        to get the final hessian"""
+        for j in range(num_seeds):
+            if i == max(num_rounds - 2, 0) and not found_params_dict[j]:
+                print(
+                    f"""Cox model did not converge for seed {j} ! Taking params
+                    from the before final round"""
+                )
+                found_params_dict[j] = True
+                algo_params[j] = convergence_of_algos[j][0]
 
-    model = algo_params.model
-    hessian = algo_hessian.server_state["hessian"]
-    ll = algo_hessian.server_state["past_ll"]
+            if i == (num_rounds - 1):
+                if convergence_of_algos[j][1]:
+                    print(
+                        f"For seed {j} You are one round short to get the"
+                        " true final hessian !"
+                    )
+                found_hessian_dict[j] = True
+                algo_hessian[j] = convergence_of_algos[j][0]
+
+    assert all([list(found_params_dict.values())]) and all(
+        [list(found_hessian_dict.values())]
+    ), """Do more rounds all seeds have not converged and then do one more round
+        after convergence to to get the final hessian"""
+
+    # For each seed we extract the final quantities
+    models = [algo_p.model for algo_p in algo_params.values()]
+    hessians = [algo_h.server_state["hessian"] for algo_h in algo_hessian.values()]
+    lls = [algo_h.server_state["past_ll"] for algo_h in algo_hessian.values()]
 
     if standardize_data:
 
-        global_moments = algo.global_moments
-        computed_vars = global_moments["vars"]
-        # We need to match pandas standardization
-        bias_correction = global_moments["bias_correction"]
+        global_moments_list = [algo_p.global_moments for algo_p in algo_params.values()]
+        computed_vars_list = [g["vars"] for g in global_moments_list]
+        # We need to match pandas standardization across seeds
+        bias_correction_list = [g["bias_correction"] for g in global_moments_list]
+        computed_stds_list = [
+            computed_v.transform(lambda x: sqrt(x * bias_c + 1e-16))
+            for computed_v, bias_c in zip(computed_vars_list, bias_correction_list)
+        ]
 
-        computed_stds = computed_vars.transform(
-            lambda x: sqrt(x * bias_correction + 1e-16)
-        )
     else:
-        computed_stds = pd.Series(np.ones((model.fc1.weight.shape)).squeeze())
-        global_moments = {}
+        computed_stds_list = [
+            pd.Series(np.ones((models[0].fc1.weight.shape)).squeeze())
+            for _ in range(num_seeds)
+        ]
+        global_moments_list = [{} for _ in range(num_seeds)]
 
-    # We unstandardize the weights
-    final_params = model.fc1.weight.data.numpy().squeeze() / computed_stds.to_numpy()
+    # We unstandardize the weights across seeds
+    final_params_list = [
+        model.fc1.weight.data.numpy().squeeze() / computed_stds.to_numpy()
+        for model, computed_stds in zip(models, computed_stds_list)
+    ]
 
     # Robust estimation
     global_robust_statistics = {}
     if robust:
-        global_robust_statistics = algo_hessian.server_state["global_robust_statistics"]
-        global_robust_statistics["global_moments"] = global_moments
+        assert num_seeds == 1, "cannot use robust in combination with bootstrapping"
+        global_robust_statistics = algo_hessian[0].server_state[
+            "global_robust_statistics"
+        ]
+        global_robust_statistics["global_moments"] = global_moments_list[0]
 
-    return hessian, ll, final_params, computed_stds, global_robust_statistics
+    return (
+        hessians,
+        lls,
+        final_params_list,
+        computed_stds_list,
+        global_robust_statistics,
+    )
 
 
 def compute_summary_function(final_params, variance_matrix, alpha=0.05):

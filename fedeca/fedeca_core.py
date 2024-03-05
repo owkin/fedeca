@@ -22,6 +22,10 @@ from fedeca.algorithms import TorchWebDiscoAlgo
 from fedeca.algorithms.torch_dp_fed_avg_algo import TorchDPFedAvgAlgo
 from fedeca.analytics import RobustCoxVariance, RobustCoxVarianceAlgo
 from fedeca.strategies import WebDisco
+from fedeca.strategies.bootstraper import (
+    make_bootstrap_metric_function,
+    make_bootstrap_strategy,
+)
 from fedeca.strategies.webdisco_utils import (
     compute_summary_function,
     get_final_cox_model_function,
@@ -34,12 +38,16 @@ from fedeca.utils import (
 )
 from fedeca.utils.data_utils import split_dataframe_across_clients
 from fedeca.utils.substrafl_utils import get_outmodel_function
-from fedeca.utils.survival_utils import BaseSurvivalEstimator, CoxPHModelTorch
+from fedeca.utils.survival_utils import (
+    BaseSurvivalEstimator,
+    BootstrapMixin,
+    CoxPHModelTorch,
+)
 
 logger = logging.getLogger(__name__)
 
 
-class FedECA(Experiment, BaseSurvivalEstimator):
+class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
     """FedECA class tthat performs Federated IPTW."""
 
     def __init__(
@@ -61,7 +69,9 @@ class FedECA(Experiment, BaseSurvivalEstimator):
         learning_rate_strategy: str = "lifelines",
         dtype: float = "float64",
         propensity_strategy="iptw",
-        robust: bool = False,
+        variance_method: str = "naïve",
+        n_bootstrap: Union[int, None] = None,
+        bootstrap_seeds: Union[list[int], None] = None,
         dp_target_epsilon: Union[float, None] = None,
         dp_target_delta: Union[float, None] = None,
         dp_max_grad_norm: Union[float, None] = None,
@@ -120,11 +130,27 @@ class FedECA(Experiment, BaseSurvivalEstimator):
             Data type for the model, by default "float64".
         propensity_strategy: str, optional
             The propensity strategy to use.
-        robust: bool, optional
-            Whether or not to use robust estimator of variance as in [1] and
-            lifelines.
-            Defauts to False.
+        variance_method : `{"naive", "robust", "bootstrap"}`
+            Method for estimating the variance, and therefore the p-value of the
+            estimated treatment effect.
+            * "naive": Inverse of the Fisher information.
+            * "robust": The robust sandwich estimator [1] computed in FL thanks
+                to FedECA. Useful when samples are reweighted.
+            * "bootstrap": Bootstrap the given data by sampling each patient
+              with replacement, each time estimate the treatment effect, then
+              use all repeated estimations to compute the variance. The implementation
+              is efficient in substra and shouldn't induce too much overhead.
+            Defauts to naïve.
             [1] David A Binder. Fitting cox’s proportional hazards models from survey data. Biometrika, 79(1):139–147, 1992.  # noqa: E501
+        n_bootstraps : Union[int, None]
+            Number of bootstrap to be performed. If None will use
+            len(bootstrap_seeds) instead. If bootstrap_seeds is given
+            seeds those seeds will be used for the generation
+            otherwise seeds are generated randomly.
+        bootstrap_seeds : Union[list[int], None]
+            The list of seeds used for bootstrapping random states.
+            If None will generate n_bootstraps randomly, in the presence
+            of both allways use bootstrap_seeds.
         dp_target_epsilon: float
             The target epsilon for (epsilon, delta)-differential
             private guarantee. Defaults to None.
@@ -189,7 +215,11 @@ class FedECA(Experiment, BaseSurvivalEstimator):
         self.damping_factor_nr = damping_factor_nr
         self.l2_coeff_nr = l2_coeff_nr
         self.propensity_strategy = propensity_strategy
-        self.robust = robust
+        self.variance_method = variance_method
+        self.robust = variance_method == "robust"
+        self.is_bootstrap = variance_method == "bootstrap"
+        self.n_bootstrap = n_bootstrap
+        self.bootstrap_seeds = bootstrap_seeds
         self.dp_target_delta = dp_target_delta
         self.dp_target_epsilon = dp_target_epsilon
         self.dp_max_grad_norm = dp_max_grad_norm
@@ -268,8 +298,26 @@ class FedECA(Experiment, BaseSurvivalEstimator):
         self.webdisco_strategy = WebDisco(
             algo=self.webdisco_algo, standardize_data=self.standardize_data
         )
+        strategies_to_run = [self.propensity_model_strategy, self.webdisco_strategy]
 
-        kwargs["strategies"] = [self.propensity_model_strategy, self.webdisco_strategy]
+        if self.variance_method == "bootstrap":
+            # We only bootstrap the first strategy because
+            # for the glue to work for the second one we need to
+            # do it later and there is no 3rd one with bootstrap
+            strategies_to_run = [
+                make_bootstrap_strategy(
+                    strategies_to_run[0],
+                    n_bootstrap=self.n_bootstrap,
+                    bootstrap_seeds=self.bootstrap_seeds,
+                )[0]
+            ] + strategies_to_run[1:]
+            # We need to prepare the metrics for the bootstrap
+            self.metrics_dicts_list = [
+                {k: make_bootstrap_metric_function(v) for k, v in metric_dict.items()}
+                for metric_dict in self.metrics_dicts_list
+            ]
+
+        kwargs["strategies"] = strategies_to_run
         if self.robust:
             # We prepare robust estimation
             class MockAlgo:
@@ -451,7 +499,9 @@ class FedECA(Experiment, BaseSurvivalEstimator):
         split_method: Union[Callable, None] = None,
         split_method_kwargs: Union[Callable, None] = None,
         data_path: Union[str, None] = None,
-        robust: Union[bool, None] = None,
+        variance_method: Union[str, None] = None,
+        n_bootstrap: Union[int, None] = None,
+        bootstrap_seeds: Union[list[int], None] = None,
         dp_target_epsilon: Union[float, None] = None,
         dp_target_delta: Union[float, None] = None,
         dp_max_grad_norm: Union[float, None] = None,
@@ -483,11 +533,27 @@ class FedECA(Experiment, BaseSurvivalEstimator):
             Argument of the function used to split data, by default None
         data_path : Union[str, None]
             Where to store the data on disk when backend is not remote.
-        robust: Union[None, bool], optional
-            Whether or not to use robust estimator of variance as in [1] and
-            lifelines.
-            Defauts to False.
+        variance_method : `{"naive", "robust", "bootstrap"}`
+            Method for estimating the variance, and therefore the p-value of the
+            estimated treatment effect.
+            * "naive": Inverse of the Fisher information.
+            * "robust": The robust sandwich estimator [1] computed in FL thanks
+                to FedECA. Useful when samples are reweighted.
+            * "bootstrap": Bootstrap the given data by sampling each patient
+              with replacement, each time estimate the treatment effect, then
+              use all repeated estimations to compute the variance. The implementation
+              is efficient in substra and shouldn't induce too much overhead.
+            Defauts to naïve.
             [1] David A Binder. Fitting cox’s proportional hazards models from survey data. Biometrika, 79(1):139–147, 1992.  # noqa: E501
+        n_bootstraps : Union[int, None]
+            Number of bootstrap to be performed. If None will use
+            len(bootstrap_seeds) instead. If bootstrap_seeds is given
+            seeds those seeds will be used for the generation
+            otherwise seeds are generated randomly.
+        bootstrap_seeds : Union[list[int], None]
+            The list of seeds used for bootstrapping random states.
+            If None will generate n_bootstraps randomly, in the presence
+            of both allways use bootstrap_seeds.
         dp_target_epsilon: float
             The target epsilon for (epsilon, delta)-differential
             private guarantee. Defaults to None.
@@ -586,32 +652,67 @@ class FedECA(Experiment, BaseSurvivalEstimator):
             self.strategies[0] = self.propensity_model_strategy
             self.strategies[1] = self.webdisco_strategy
 
-        if robust is not None and robust != self.robust:
-            self.robust = robust
+        if variance_method is not None:
+            robust = variance_method == "robust"
+            is_bootstrap = variance_method == "bootstrap"
+            if robust != self.robust:
+                self.robust = robust
+            if is_bootstrap != self.is_bootstrap:
+                self.is_bootstrap = is_bootstrap
+            if self.robust:
+                assert self.is_bootstrap is False, "You can't use robust and bootstrap"
 
-        if self.robust:
+                class MockAlgo:
+                    def __init__(self):
+                        self.strategies = ["Robust Cox Variance"]
 
-            class MockAlgo:
-                def __init__(self):
-                    self.strategies = ["Robust Cox Variance"]
-
-            mock_algo = MockAlgo()
-            self.strategies.append(
-                RobustCoxVariance(
-                    algo=mock_algo,
+                mock_algo = MockAlgo()
+                self.strategies.append(
+                    RobustCoxVariance(
+                        algo=mock_algo,
+                    )
                 )
-            )
-            # We put WebDisco in "robust" mode in the sense that we ask it
-            # to store all needed quantities for robust variance estimation
-            self.strategies[1].algo._robust = True  # not sufficient for serialization
-            # possible only because we added robust as a kwargs
-            self.strategies[1].algo.kwargs.update({"robust": True})
-            # We need those two lines for the zip to consider all 3
-            # strategies
-            self.metrics_dicts_list.append({})
-            self.num_rounds_list.append(sys.maxsize)
-        else:
-            self.strategies = self.strategies[:2]
+                # We put WebDisco in "robust" mode in the sense that we ask it
+                # to store all needed quantities for robust variance estimation
+                self.strategies[
+                    1
+                ].algo._robust = True  # not sufficient for serialization
+                # possible only because we added robust as a kwargs
+                self.strategies[1].algo.kwargs.update({"robust": True})
+                # We need those two lines for the zip to consider all 3
+                # strategies
+                self.metrics_dicts_list.append({})
+                self.num_rounds_list.append(sys.maxsize)
+            else:
+                self.strategies = self.strategies[:2]
+                if variance_method == "bootstrap":
+                    is_btst_strategy = [
+                        hasattr(strat, "individual_strategies")
+                        for strat in self.strategies
+                    ]
+                    if any(is_btst_strategy) and not all(is_btst_strategy):
+                        assert (
+                            "One of the strategy is a bootstrap strategy the"
+                            "other is a regular strategy this should not happen"
+                        )
+                    if not any(is_btst_strategy):
+                        # We only bootstrap the first strategy because
+                        # for the glue to work for the second one we need to
+                        # do it later and there is no 3rd one with bootstrap
+                        self.strategies = [
+                            make_bootstrap_strategy(
+                                self.strategies[0],
+                                n_bootstrap=n_bootstrap,
+                                bootstrap_seeds=bootstrap_seeds,
+                            )[0]
+                        ] + self.strategies[1:]
+                        self.metrics_dicts_list = [
+                            {
+                                k: make_bootstrap_metric_function(v)
+                                for k, v in metric_dict.items()
+                            }
+                            for metric_dict in self.metrics_dicts_list
+                        ]
 
         self.run(targets=targets)
         self.propensity_scores_, self.weights_ = self.compute_propensity_scores(data)
@@ -653,17 +754,29 @@ class FedECA(Experiment, BaseSurvivalEstimator):
                 compute_plan_key=self.compute_plan_keys[0].key,
                 round_idx=None,
             )
-
-            self.propensity_model = algo.model
         else:
-            # The algos are stored in the nodes
-            self.propensity_model = self.train_data_nodes[0].algo.model
-        # TODO check with webdisco as well
-        # Do not touch the two lines below this is dark dark magic
-        self.strategies[1].algo._propensity_model = self.propensity_model
-        self.strategies[1].algo.kwargs.update(
-            {"propensity_model": self.propensity_model}
-        )
+            algo = self.train_data_nodes[0].algo
+
+        if self.variance_method != "bootstrap":
+            self.propensity_model = algo.model
+            # We give the trained model to WebDisco
+            self.strategies[1].algo._propensity_model = self.propensity_model
+            self.strategies[1].algo.kwargs.update(
+                {"propensity_model": self.propensity_model}
+            )
+        else:
+            self.propensity_models = [algo.model for algo in algo.individual_algos]
+            # We give the trained modelS to WebDisco
+            # Now we can create the bootstrap strategy as we have all the
+            # propensity models
+            self.strategies[1] = make_bootstrap_strategy(
+                self.strategies[1],
+                bootstrap_seeds=self.bootstrap_seeds,
+                bootstrap_specific_kwargs=[
+                    {"propensity_model": model} for model in self.propensity_models
+                ],
+            )[0]
+
         # We need to save intermediate outputs now
         for t in self.train_data_nodes:
             t.keep_intermediate_states = True
@@ -692,8 +805,8 @@ class FedECA(Experiment, BaseSurvivalEstimator):
         self.get_final_cox_model()
         logger.info("Computing summary...")
         self.compute_summary()
-        logger.info("Final partial log-likelihood:")
-        logger.info(self.ll)
+        logger.info("Final partial log-likelihood.s:")
+        logger.info(self.lls)
         logger.info(self.results_)
 
     def get_final_cox_model(self):
@@ -705,10 +818,10 @@ class FedECA(Experiment, BaseSurvivalEstimator):
             cp = self.compute_plan_keys[1]
 
         (
-            self.hessian,
-            self.ll,
-            self.final_params,
-            self.computed_stds,
+            self.hessians,
+            self.lls,
+            self.final_params_list,
+            self.computed_stds_list,
             self.global_robust_statistics,
         ) = get_final_cox_model_function(
             self.ds_client,
@@ -720,6 +833,7 @@ class FedECA(Experiment, BaseSurvivalEstimator):
             simu_mode=self.simu_mode,
             robust=self.robust,
         )
+        self.final_params_array = np.array(self.final_params_list)
 
     def compute_propensity_scores(self, data: pd.DataFrame):
         """Compute propensity scores and corresponding weights."""
@@ -743,55 +857,70 @@ class FedECA(Experiment, BaseSurvivalEstimator):
         alpha: float, (default=0.05)
             Confidence level for computing CIs
         """
-        self.variance_matrix = -inv(self.hessian) / np.outer(
-            self.computed_stds, self.computed_stds
-        )
-        if self.robust:
-            assert self.global_robust_statistics
-            beta = self.final_params
-            variance_matrix = self.variance_matrix
-            global_robust_statistics = self.global_robust_statistics
-            propensity_model = self.propensity_model
-            duration_col = self.duration_col
-            event_col = self.event_col
-            treated_col = self.treated_col
+        if not (self.is_bootstrap):
+            self.variance_matrix = -inv(self.hessians[0]) / np.outer(
+                self.computed_stds_list[0], self.computed_stds_list[0]
+            )
+            if self.robust:
+                assert self.global_robust_statistics
+                beta = self.final_params_list[0]
+                variance_matrix = self.variance_matrix
+                global_robust_statistics = self.global_robust_statistics
+                propensity_model = self.propensity_model
+                duration_col = self.duration_col
+                event_col = self.event_col
+                treated_col = self.treated_col
 
-            # no self attributes in this class !!!!!!
-            class MyRobustCoxVarianceAlgo(RobustCoxVarianceAlgo):
-                def __init__(self, **kwargs):
-                    super().__init__(
-                        beta=beta,
-                        variance_matrix=variance_matrix,
-                        global_robust_statistics=global_robust_statistics,
-                        propensity_model=propensity_model,
-                        duration_col=duration_col,
-                        event_col=event_col,
-                        treated_col=treated_col,
+                # no self attributes in this class !!!!!!
+                class MyRobustCoxVarianceAlgo(RobustCoxVarianceAlgo):
+                    def __init__(self, **kwargs):
+                        super().__init__(
+                            beta=beta,
+                            variance_matrix=variance_matrix,
+                            global_robust_statistics=global_robust_statistics,
+                            propensity_model=propensity_model,
+                            duration_col=duration_col,
+                            event_col=event_col,
+                            treated_col=treated_col,
+                        )
+
+                my_robust_cox_algo = MyRobustCoxVarianceAlgo()
+                # Now we need to make sure strategy has the right algo
+                self.strategies[2].algo = my_robust_cox_algo
+                super().run(1)
+
+                if not self.simu_mode:
+                    self.check_cp_status(idx=2)
+                    self.variance_matrix = get_outmodel_function(
+                        "Aggregating Qk into Q",
+                        self.ds_client,
+                        compute_plan_key=self.compute_plan_keys[2].key,
+                        idx_task=0,
                     )
 
-            my_robust_cox_algo = MyRobustCoxVarianceAlgo()
-            # Now we need to make sure strategy has the right algo
-            self.strategies[2].algo = my_robust_cox_algo
-            super().run(1)
+                else:
+                    # Awful but hard to hack better
+                    self.variance_matrix = sum(
+                        [
+                            e.algo._client_statistics["Qk"]
+                            for e in self.compute_plan_keys[2]
+                        ]
+                    )
 
-            if not self.simu_mode:
-                self.check_cp_status(idx=2)
-                self.variance_matrix = get_outmodel_function(
-                    "Aggregating Qk into Q",
-                    self.ds_client,
-                    compute_plan_key=self.compute_plan_keys[2].key,
-                    idx_task=0,
-                )
+        else:
+            # We directly estimate the variance matrix in the bootstrap case
+            self.variance_matrix = np.cov(
+                self.final_params_array, rowvar=False
+            ).reshape(
+                (self.final_params_array.shape[1], self.final_params_array.shape[1])
+            )
 
-            else:
-                # Awful but hard to hack better
-                self.variance_matrix = sum(
-                    [e.algo._client_statistics["Qk"] for e in self.compute_plan_keys[2]]
-                )
+        # The final params vector is either the params wo bootstrap or the mean
 
         summary = compute_summary_function(
-            self.final_params, self.variance_matrix, alpha
+            np.mean(self.final_params_array, axis=0), self.variance_matrix, alpha
         )
+
         summary["exp(coef)"] = np.exp(summary["coef"])
         summary["exp(coef) lower 95%"] = np.exp(summary["coef lower 95%"])
         summary["exp(coef) upper 95%"] = np.exp(summary["coef upper 95%"])

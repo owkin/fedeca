@@ -6,6 +6,8 @@ import re
 import tempfile
 import types
 import zipfile
+from collections.abc import Callable
+from functools import partial
 from pathlib import Path
 from typing import Union
 
@@ -16,19 +18,23 @@ from substrafl.algorithms.pytorch.torch_base_algo import TorchAlgo
 from substrafl.remote import remote, remote_data
 from substrafl.strategies.strategy import Strategy
 
+from fedeca.utils.survival_utils import BootstrapMixin
+
 
 def make_bootstrap_strategy(
     strategy: Strategy,
-    n_bootstraps: Union[int, None] = None,
+    n_bootstrap: Union[int, None] = None,
     bootstrap_seeds: Union[list[int], None] = None,
+    bootstrap_function: Union[Callable, None] = None,
+    bootstrap_specific_kwargs: Union[None, list[dict]] = None,
 ):
     """Bootstrap a substrafl strategy wo impacting the number of compute tasks.
 
     In order to reduce the bottleneck of substra when bootstraping a strategy
     we need to go over the strategy compute plan and modifies each local atomic
-    task to execute n_bootstraps times on bootstraped data. Each modified task
+    task to execute n_bootstrap times on bootstraped data. Each modified task
     returns a list of n_bootstraps original outputs obtained on each bootstrap.
-    Each aggregation task is then modified to aggregate the n_bootstraps outputs
+    Each aggregation task is then modified to aggregate the n_bootstrap outputs
     independently.
     This code heavily uses some code patterns invented by Arthur Pignet.
 
@@ -36,15 +42,25 @@ def make_bootstrap_strategy(
     ----------
     strategy : Strategy
         The strategy to bootstrap.
-    n_bootstraps : Union[int, None]
+    n_bootstrap : Union[int, None]
         Number of bootstrap to be performed. If None will use
         len(bootstrap_seeds) instead. If bootstrap_seeds is given
         seeds those seeds will be used for the generation
         otherwise seeds are generated randomly.
     bootstrap_seeds : Union[list[int], None]
         The list of seeds used for bootstrapping random states.
-        If None will generate n_bootstraps randomly, in the presence
+        If None will generate n_bootstrap randomly, in the presence
         of both allways use bootstrap_seeds.
+    bootstrap_function : Union[Callable, None]
+        A function with signature f(data, seed) that returns a bootstrapped
+        version of the data.
+        If None, use the BootstrapMixin function.
+        Note that this can be used to provide splits/cross-validation capabilities
+        as well where seed would be the fold number in a flattened list of folds.
+    bootstrap_specific_kwargs: Union[None, list[dict]]
+        A list of dictionaries containing the kwargs to be passed to the algos
+        if they are different for each bootstrap. It is useful to chain bootstrapped
+        compute plans for instance.
 
     Returns
     -------
@@ -129,18 +145,18 @@ def make_bootstrap_strategy(
     # strategy and algo.
     # first let's seed the bootstrappping
     if bootstrap_seeds is None:
-        bootstrap_seeds_list = np.random.randint(0, 2**32, n_bootstraps)
+        bootstrap_seeds_list = np.random.randint(0, 2**32, n_bootstrap)
     else:
-        if n_bootstraps is not None:
+        if n_bootstrap is not None:
             assert (
-                len(bootstrap_seeds) == n_bootstraps
-            ), "bootstrap_seeds must have the same length as n_bootstraps"
+                len(bootstrap_seeds) == n_bootstrap
+            ), "bootstrap_seeds must have the same length as n_bootstrap"
         bootstrap_seeds_list = bootstrap_seeds
 
     # Below is where the magic happens.
     # As a reminder we are trying to hook all caught methods above to make them
-    # execute n_bootstraps times on bootstrapped data and then aggregate the
-    # n_bootstraps results independently.
+    # execute n_bootstrap times on bootstrapped data and then aggregate the
+    # n_bootstrap results independently.
     # There are two major difficulties here: first of all we have to tie new
     # methods to the proper object which is the new bootstrapped strategy and
     # algo. To deal with this first issue, we will use the versatility of
@@ -153,20 +169,36 @@ def make_bootstrap_strategy(
 
     # We have to overwrite the original methods at the class level
     class BtstAlgo(strategy.algo.__class__):
-        def __init__(self, *args, **kwargs):
-
+        def __init__(self, *args, bootstrap_specific_kwargs=None, **kwargs):
             super().__init__(*args, **kwargs)
+            if bootstrap_specific_kwargs is not None:
+                assert len(bootstrap_seeds_list) == len(bootstrap_specific_kwargs), (
+                    "bootstrap_specific_kwargs must have the same length as"
+                    "bootstrap_seeds_list"
+                )
+                self.bootstrap_specific_kwargs = bootstrap_specific_kwargs
+                self.kwargs.update(
+                    {"bootstrap_specific_kwargs": bootstrap_specific_kwargs}
+                )
+            else:
+                self.bootstrap_specific_kwargs = None
+
             self.seeds = bootstrap_seeds_list
             self.individual_algos = []
-            for _ in self.seeds:
+            for idx in range(len(self.seeds)):
+                current_kwargs = copy.deepcopy(strategy.algo.kwargs)
+                if self.bootstrap_specific_kwargs is not None:
+                    current_kwargs.update(**self.bootstrap_specific_kwargs[idx])
                 self.individual_algos.append(
-                    copy.deepcopy(strategy.algo.__class__(**strategy.algo.kwargs))
+                    copy.deepcopy(strategy.algo.__class__(**current_kwargs))
                 )
             # Now we have to overwrite the original methods
             # to be calling their local version on each individual algo
             for local_name in local_functions_names["algo"]:
                 f = types.MethodType(
-                    _bootstrap_local_function(local_name),
+                    _bootstrap_local_function(
+                        local_name, bootstrap_function=bootstrap_function
+                    ),
                     self,
                 )
                 setattr(self, local_name, f)
@@ -246,7 +278,10 @@ def make_bootstrap_strategy(
 
             return predictions
 
-    btst_algo = BtstAlgo(**strategy.algo.kwargs)
+    btst_kwargs = copy.deepcopy(strategy.algo.kwargs)
+    if bootstrap_specific_kwargs is not None:
+        btst_kwargs.update({"bootstrap_specific_kwargs": bootstrap_specific_kwargs})
+    btst_algo = BtstAlgo(**btst_kwargs)
 
     class BtstStrategy(strategy.__class__):
         def __init__(self, **kwargs):
@@ -258,7 +293,11 @@ def make_bootstrap_strategy(
                 self.individual_strategies.append(copy.deepcopy(strategy))
             for local_name in local_functions_names["strategy"]:
                 f = types.MethodType(
-                    _bootstrap_local_function(local_name, task_type="strategy"),
+                    _bootstrap_local_function(
+                        local_name,
+                        task_type="strategy",
+                        bootstrap_function=bootstrap_function,
+                    ),
                     self,
                 )
                 setattr(self, local_name, f)
@@ -274,7 +313,11 @@ def make_bootstrap_strategy(
     return BtstStrategy(algo=btst_algo, **strategy_kwargs_wo_algo), bootstrap_seeds_list
 
 
-def _bootstrap_local_function(local_name, task_type: str = "algo"):
+def _bootstrap_local_function(
+    local_name: str,
+    task_type: str = "algo",
+    bootstrap_function: Union[None, Callable] = None,
+):
     """Bootstrap the local functiion given.
 
     Create a new function that bootstrap the given local function given as parameter.
@@ -288,9 +331,16 @@ def _bootstrap_local_function(local_name, task_type: str = "algo"):
     task_type : str
         The type of task to be bootstrapped, either 'algo' or 'strategy'.
 
+    bootstrap_function : Union[None, Callable]
+        A function with signature f(data, seed) that returns a bootstrapped
+        version of the data.
+        If None, use the BootstrapMixin function.
+        Note that this can be used to provide splits/cross-validation capabilities
+        as well where seed would be the fold number in a flattened list of folds.
+
     Returns
     -------
-    function
+    Callable
         The @remote_data function, that has been renamed,
         and will be used as method.
     """
@@ -300,6 +350,10 @@ def _bootstrap_local_function(local_name, task_type: str = "algo"):
     individual_task_type = (
         "individual_algos" if task_type == "algo" else "individual_strategies"
     )
+    if bootstrap_function is None:
+        # TODO make it cleaner by making bootstrap_sample a function in utils and
+        # not a method of BootstrapMixin
+        bootstrap_function = partial(BootstrapMixin.bootstrap_sample, self=None)
 
     def local_computation(self, datasamples, shared_state=None) -> list:
         """Execute all the parallel local computations of merged strategies.
@@ -327,10 +381,7 @@ def _bootstrap_local_function(local_name, task_type: str = "algo"):
         results = []
 
         for idx, seed in enumerate(self.seeds):
-            rng = np.random.default_rng(seed)
-            bootstrapped_data = datasamples.sample(
-                datasamples.shape[0], replace=True, random_state=rng
-            )
+            bootstrapped_data = bootstrap_function(data=datasamples, seed=seed)
             if shared_state is None:
                 res = getattr(getattr(self, individual_task_type)[idx], local_name)(
                     datasamples=bootstrapped_data, _skip=True
@@ -367,7 +418,7 @@ def _aggregate_all_bootstraps(aggregation_function_name, task_type: str = "algo"
 
     Returns
     -------
-    function
+    Callable
         The @remote function, that has been renamed,
         and will be used as method.
     """
@@ -537,7 +588,7 @@ if __name__ == "__main__":
 
     strategy = FedAvg(algo=TorchLogReg())
 
-    btst_strategy, _ = make_bootstrap_strategy(strategy, n_bootstraps=10)
+    btst_strategy, _ = make_bootstrap_strategy(strategy, n_bootstrap=10)
 
     clients, train_data_nodes, test_data_nodes, _, _ = split_dataframe_across_clients(
         df,

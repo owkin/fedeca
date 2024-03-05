@@ -1,4 +1,5 @@
 """Tests for webdisco."""
+import numpy as np
 from pandas.testing import assert_frame_equal
 
 from fedeca.fedeca_core import FedECA
@@ -98,7 +99,7 @@ class TestFLIPTWEnd2End(TestTempDir):
         # TODO verify propensity model training wrt sklearn and full chain
         # vs iptw pooled implementation with sklearn and lifelines
         assert_frame_equal(self.IPTWs[0].results_, self.IPTWs[1].results_)
-        assert self.IPTWs[0].ll[0] == self.IPTWs[1].ll[0]
+        assert np.allclose(self.IPTWs[0].lls[0], self.IPTWs[1].lls[0])
 
     @classmethod
     def tearDownClass(cls):

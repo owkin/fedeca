@@ -520,10 +520,10 @@ class TestWebDisco(TestTempDir):
         """Test descent."""
         # We measure the accuracy of the final fit
         (
-            self.hessian,
-            self.ll,
-            self.final_params,
-            self.computed_stds,
+            self.hessians,
+            self.lls,
+            self.final_params_list,
+            self.computed_stds_list,
             _,
         ) = get_final_cox_model_function(
             self.ds_client,
@@ -536,7 +536,7 @@ class TestWebDisco(TestTempDir):
         m = copy.deepcopy(self.model)
         # We unnormalize the weights as self.X is normalized
         m.fc1.weight.data = torch.from_numpy(
-            self.final_params * self.computed_stds.to_numpy()
+            self.final_params_list[0] * self.computed_stds_list[0].to_numpy()
         )
         m.eval()
         with torch.no_grad():
@@ -559,16 +559,16 @@ class TestWebDisco(TestTempDir):
         # if we could afford to change cls.NUM_ROUNDS to say 60 isntead of 8
         # we could get rid of the if
         if np.allclose(self.penalizer, 0.0):
-            assert np.allclose(self.cphf.params_, self.final_params, atol=1e-4)
+            assert np.allclose(self.cphf.params_, self.final_params_list[0], atol=1e-4)
 
     @pytest.mark.slow
     def test_standard_deviations(self):
         """Test standard deviations."""
         (
-            self.hessian,
-            self.ll,
-            self.final_params,
-            self.computed_stds,
+            self.hessians,
+            self.lls,
+            self.final_params_list,
+            self.computed_stds_list,
             _,
         ) = get_final_cox_model_function(
             self.ds_client,
@@ -578,18 +578,18 @@ class TestWebDisco(TestTempDir):
             self._duration_col,
             self._event_col,
         )
-        self.scaled_variance_matrix = -inv(self.hessian) / np.outer(
-            self.computed_stds, self.computed_stds
+        self.scaled_variance_matrix = -inv(self.hessians[0]) / np.outer(
+            self.computed_stds_list[0], self.computed_stds_list[0]
         )
         summary = compute_summary_function(
-            self.final_params, self.scaled_variance_matrix, self.cphf.alpha
+            self.final_params_list[0], self.scaled_variance_matrix, self.cphf.alpha
         )
         ground_truth_df = self.cphf.summary
         ground_truth_df = ground_truth_df[summary.columns]
         # In case index are not matching
         summary.index = ground_truth_df.index
         gt_ll = self.cphf.log_likelihood_
-        assert np.allclose(self.ll.item(), gt_ll)
+        assert np.allclose(self.lls[0].item(), gt_ll)
         pd.testing.assert_frame_equal(
             summary, ground_truth_df, check_names=False, atol=1e-03
         )

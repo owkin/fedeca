@@ -18,7 +18,7 @@ from substrafl.model_loading import download_algo_state
 from substrafl.nodes import AggregationNode
 from substrafl.strategies import FedAvg, NewtonRaphson
 
-from fedeca import LogisticRegressionTorch
+from fedeca import FedECA, LogisticRegressionTorch
 from fedeca.algorithms import TorchWebDiscoAlgo
 from fedeca.strategies import make_bootstrap_strategy  # make_bootstrap_metric_function
 from fedeca.strategies import WebDisco
@@ -333,3 +333,107 @@ def test_bootstrapping(strategy_params: dict, num_rounds: int):
                 assert False
     # Clean up
     shutil.rmtree("./data")
+
+
+def test_bootstrapping_end2end():
+    """Tests of data generation with constant cate."""
+    # Let's generate 1000 data samples with 10 covariates
+    data = CoxData(seed=42, n_samples=1000, ndim=50, overlap=10.0, propensity="linear")
+    original_df = data.generate_dataframe()
+
+    # We remove the true propensity score
+    original_df = original_df.drop(columns=["propensity_scores"], axis=1)
+
+    bootstrap_seeds_list = [42, 43, 44, 44]
+
+    # inefficient bootstrap
+    splits = {}
+    btst_results = []
+
+    for idx, seed in enumerate(bootstrap_seeds_list):
+        # We need to mimic the bootstrap sampling of the data which is per-client
+        clients_indices_list = uniform_split(original_df, N_CLIENTS)
+        dfs = [original_df.iloc[clients_indices_list[i]] for i in range(N_CLIENTS)]
+        # Rng needs to be defined within the loop so that it's not updated by the
+        # sampling
+        dfs = [
+            df.sample(
+                df.shape[0], replace=True, random_state=np.random.default_rng(seed)
+            )
+            for df in dfs
+        ]
+
+        size_dfs = [len(df.index) for df in dfs]
+        bootstrapped_df = pd.concat(dfs, ignore_index=True).reset_index(drop=True)
+
+        def trivial_split(df, n_clients):
+            start = 0
+            end = 0
+            clients_indices_list = []
+            for i in range(n_clients):
+                end += size_dfs[i]
+                clients_indices_list.append(range(start, end))
+                start = end
+            return clients_indices_list
+
+        clients, train_data_nodes, _, current_dfs, _ = split_dataframe_across_clients(
+            bootstrapped_df,
+            n_clients=N_CLIENTS,
+            split_method=trivial_split,
+            split_method_kwargs=None,
+            data_path="./data",
+            backend_type="subprocess",
+        )
+        splits[seed] = current_dfs
+
+        first_key = list(clients.keys())[0]
+        xp_dir = str(Path.cwd() / "tmp" / "experiment_summaries")
+        os.makedirs(xp_dir, exist_ok=True)
+        fed_iptw = FedECA(
+            ndim=50,
+            ds_client=clients[first_key],
+            train_data_nodes=train_data_nodes,
+            treated_col="treatment",
+            duration_col="time",
+            event_col="event",
+            variance_method="naive",
+            num_rounds_list=[2, 3],
+        )
+        print(f"Bootstrap {idx}")
+        fed_iptw.run()
+        btst_results.append(fed_iptw.results_)
+        # Clean up
+        shutil.rmtree("./data")
+
+    # Variance estimation of beta through inefficient bootstrap
+    beta_inefficient = pd.concat(
+        [btst_res["coef"] for btst_res in btst_results], axis=0
+    )
+
+    # efficient bootstrap
+    clients, train_data_nodes, _, _, _ = split_dataframe_across_clients(
+        original_df,
+        n_clients=N_CLIENTS,
+        split_method="uniform",
+        split_method_kwargs=None,
+        data_path="./data",
+        backend_type="subprocess",
+    )
+
+    first_key = list(clients.keys())[0]
+    fed_iptw = FedECA(
+        ndim=50,
+        ds_client=clients[first_key],
+        train_data_nodes=train_data_nodes,
+        treated_col="treatment",
+        duration_col="time",
+        event_col="event",
+        variance_method="bootstrap",
+        bootstrap_seeds=bootstrap_seeds_list,
+        num_rounds_list=[2, 3],
+    )
+    print("Efficient bootstrap")
+    fed_iptw.run()
+    beta_efficient = fed_iptw.final_params_array
+
+    assert np.allclose(beta_inefficient.to_numpy(), beta_efficient.flatten())
