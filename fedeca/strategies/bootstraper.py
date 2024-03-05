@@ -26,6 +26,7 @@ def make_bootstrap_strategy(
     n_bootstrap: Union[int, None] = None,
     bootstrap_seeds: Union[list[int], None] = None,
     bootstrap_function: Union[Callable, None] = None,
+    bootstrap_specific_kwargs: Union[None, list[dict]] = None,
 ):
     """Bootstrap a substrafl strategy wo impacting the number of compute tasks.
 
@@ -56,6 +57,10 @@ def make_bootstrap_strategy(
         If None, use the BootstrapMixin function.
         Note that this can be used to provide splits/cross-validation capabilities
         as well where seed would be the fold number in a flattened list of folds.
+    bootstrap_specific_kwargs: Union[None, list[dict]]
+        A list of dictionaries containing the kwargs to be passed to the algos
+        if they are different for each bootstrap. It is useful to chain bootstrapped
+        compute plans for instance.
 
     Returns
     -------
@@ -173,8 +178,10 @@ def make_bootstrap_strategy(
                 )
                 self.bootstrap_specific_kwargs = bootstrap_specific_kwargs
                 self.kwargs.update(
-                    "bootstrap_specific_kwargs", bootstrap_specific_kwargs
+                    {"bootstrap_specific_kwargs": bootstrap_specific_kwargs}
                 )
+            else:
+                self.bootstrap_specific_kwargs = None
 
             self.seeds = bootstrap_seeds_list
             self.individual_algos = []
@@ -271,7 +278,10 @@ def make_bootstrap_strategy(
 
             return predictions
 
-    btst_algo = BtstAlgo(**strategy.algo.kwargs)
+    btst_kwargs = copy.deepcopy(strategy.algo.kwargs)
+    if bootstrap_specific_kwargs is not None:
+        btst_kwargs.update({"bootstrap_specific_kwargs": bootstrap_specific_kwargs})
+    btst_algo = BtstAlgo(**btst_kwargs)
 
     class BtstStrategy(strategy.__class__):
         def __init__(self, **kwargs):

@@ -755,18 +755,15 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
             {"propensity_model": self.propensity_model}
         )
         if self.variance_method == "bootstrap":
-            # Since kwargs are updated it will work but everyone will have the first
-            # propensity model : (, we will need to fix it
+            # Now we can create the bootstrap strategy as we have all the
+            # propensity models
             self.strategies[1] = make_bootstrap_strategy(
                 self.strategies[1],
-                n_bootstrap=self.n_bootstrap,
                 bootstrap_seeds=self.bootstrap_seeds,
+                bootstrap_specific_kwargs=[
+                    {"propensity_model": model} for model in self.propensity_models
+                ],
             )
-            # we fix it by passing the right model to the kwargs of each strategy
-            [
-                algo.kwargs.update({"propensity_model": self.propensity_models[idx]})
-                for idx, algo in enumerate(self.strategies[1].algo.individual_algos)
-            ]
 
         # We need to save intermediate outputs now
         for t in self.train_data_nodes:
