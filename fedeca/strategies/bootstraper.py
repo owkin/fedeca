@@ -111,7 +111,7 @@ def make_bootstrap_strategy(
         if not (
             ("shared_states" in method_args_dict)
             or ("shared_state" in method_args_dict)
-        ) or (method_name in ["save_local_state", "load_local_state"]):
+        ) or (method_name in ["save_local_state", "load_local_state", "evaluate"]):
             continue
         if not hasattr(getattr(obj, method_name), "__wrapped__"):
             continue
@@ -479,7 +479,7 @@ def _aggregate_all_bootstraps(aggregation_function_name, task_type: str = "algo"
 
 
 def make_bootstrap_metric_function(metric_functions: dict) -> dict:
-    """Averages metric on each bootstrapped versions of the models.
+    """Take the metric_functions dict, and bootstrap each metric.
 
     Parameters
     ----------
@@ -488,14 +488,27 @@ def make_bootstrap_metric_function(metric_functions: dict) -> dict:
     """
     btsp_metric_functions = {}
     for metric_name in metric_functions:
-        btsp_metric_functions["bootstrap-" + metric_name] = get_bootstraped_metric(
-            metric_functions[metric_name]
-        )
+        btsp_metric_functions[
+            "bootstrap-" + metric_name
+        ] = lambda data_from_opener, predictions: np.array(
+            [
+                metric_functions[metric_name](data_from_opener, individual_pred)
+                for individual_pred in predictions
+            ]
+        ).mean()
 
     return btsp_metric_functions
 
 
 def get_bootstraped_metric(function):
+    """Averages metric on each bootstrapped versions of the models.
+
+    Parameters
+    ----------
+    function : Callable
+        The metric function to hook.
+    """
+
     def bootstraped_metric(data_from_opener, predictions):
         results = []
         for individual_pred in predictions:

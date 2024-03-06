@@ -663,8 +663,7 @@ class WebDisco(Strategy):
         train_data_nodes: List[TrainDataNode],
         round_idx: int,
     ):
-        """Evaluate function for test_data_nodes on which the model have been trained
-        on.
+        """Evaluate model on the given test_data_nodes.
 
         Parameters
         ----------

@@ -54,7 +54,7 @@ class Experiment:
         fedeca_path: Union[str, None] = None,
         algo_dependencies: Union[list, None] = None,
     ):
-        """Initialize an experiment.
+        """Initialize Experiment class.
 
         Parameters
         ----------
@@ -82,7 +82,6 @@ class Experiment:
         algo_dependencies : list, optional
             List of algorithm dependencies, by default [].
         """
-
         assert len(num_rounds_list) == len(strategies)
         self.strategies = strategies
         self.num_rounds_list = num_rounds_list
