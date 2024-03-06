@@ -78,7 +78,7 @@ class TestFedECAEnd2End(TestTempDir):
         cls.fed_iptw_results = cls.fed_iptw.results_
 
     @pytest.mark.slow
-    def test_standard_deviations(self):
+    def test_matching(self):
         """Test equality of end results.
 
         We allow ourselves rtol=1e-2 as in the paper.
