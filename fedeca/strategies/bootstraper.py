@@ -300,9 +300,17 @@ def make_bootstrap_strategy(
                 )
                 setattr(self, agg_name, f)
 
+    metric_bootstrap = make_bootstrap_metric_function(strategy.metric_functions)
+
     strategy_kwargs_wo_algo = copy.deepcopy(strategy.kwargs)
     strategy_kwargs_wo_algo.pop("algo")
-    return BtstStrategy(algo=btst_algo, **strategy_kwargs_wo_algo), bootstrap_seeds_list
+    strategy_kwargs_wo_algo.pop("metric_functions")
+    return (
+        BtstStrategy(
+            algo=btst_algo, metric_functions=metric_bootstrap, **strategy_kwargs_wo_algo
+        ),
+        bootstrap_seeds_list,
+    )
 
 
 def _bootstrap_local_function(
@@ -470,23 +478,25 @@ def _aggregate_all_bootstraps(aggregation_function_name, task_type: str = "algo"
     return remote(aggregation)
 
 
-def make_bootstrap_metric_function(metric_function):
+def make_bootstrap_metric_function(metric_functions: dict) -> dict:
     """Averages metric on each bootstrapped versions of the models.
 
     Parameters
     ----------
-    metric_function : list
-        The metric function to hook.
+    metric_functions : dict
+        The metric functions to hook.
     """
+    btsp_metric_functions = {}
+    for metric_name in metric_functions:
+        bstp_metric_func = lambda data_from_opener, predictions: np.array(
+            [
+                metric_functions[metric_name](data_from_opener, y_pred)
+                for y_pred in predictions
+            ]
+        ).mean()
+        btsp_metric_functions["bstp_" + metric_name] = bstp_metric_func
 
-    def bootstraped_metric(data_from_opener, predictions):
-        list_of_metrics = []
-        y_preds = predictions
-        for y_pred in y_preds:
-            list_of_metrics.append(metric_function(data_from_opener, y_pred))
-        return np.array(list_of_metrics).mean()
-
-    return bootstraped_metric
+    return btsp_metric_functions
 
 
 if __name__ == "__main__":
@@ -541,7 +551,6 @@ if __name__ == "__main__":
         return_torch_tensors=True,
     )
     accuracy = make_accuracy_function("treatment")
-    accuracy_btst = make_bootstrap_metric_function(accuracy)
 
     class TorchLogReg(TorchFedAvgAlgo):
         """Spawns FedAvg algo with logreg model with uniform weights."""
@@ -569,7 +578,7 @@ if __name__ == "__main__":
     #         )
 
     strategy = FedAvg(
-        algo=TorchLogReg(), metric_functions={accuracy_btst.__name__: accuracy_btst}
+        algo=TorchLogReg(), metric_functions={accuracy.__name__: accuracy}
     )
 
     btst_strategy, _ = make_bootstrap_strategy(strategy, n_bootstrap=10)

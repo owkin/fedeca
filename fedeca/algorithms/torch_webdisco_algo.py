@@ -187,10 +187,8 @@ class TorchWebDiscoAlgo(TorchAlgo):
         WebDiscoSharedState
             _description_
         """
-        breakpoint()
         if not hasattr(self, "server_state"):
             self.server_state = {}
-        breakpoint()
         # We either already have global_statistics in the self or we don't
         if shared_state is None:
             # This is part of the stateless server

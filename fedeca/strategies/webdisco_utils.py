@@ -69,7 +69,19 @@ def get_final_cox_model_function(
             )
             algo = _load_from_files(input_folder=temp_dir)
     else:
-        algo = compute_plan_key.intermediate_states[actual_round]
+        # Filter on client name
+        intersec_cliend_id = [
+            w == client.organization_info().organization_id
+            for w in compute_plan_key[1].worker
+        ]
+        # Filter on round idx
+        intersec_round = [r == actual_round for r in compute_plan_key[1].round_idx]
+        # Match both
+        state_idx = np.where(
+            [r and w for r, w in zip(intersec_round, intersec_cliend_id)]
+        )[0][0]
+
+        algo = compute_plan_key[1].state[state_idx].algo
 
     if hasattr(algo, "individual_algos"):
         num_seeds = len(algo.individual_algos)
@@ -122,6 +134,7 @@ def get_final_cox_model_function(
             state_idx = np.where(
                 [r and w for r, w in zip(intersec_round, intersec_cliend_id)]
             )[0][0]
+            algo = compute_plan_key[1].state[state_idx].algo
 
         convergence_of_algos = test_convergence(algo)
 
@@ -263,14 +276,13 @@ def get_last_algo_from_round_count(num_rounds, standardize_data=True, simu_mode=
     """
     # One count for each aggregation starting at 1 (init round): +1 for
     # standardization +1 for global_survival_statistics
-    if not simu_mode:
-        actual_number_of_rounds = 2 * (num_rounds + 1) + 2
+    actual_number_of_rounds = 2 * (num_rounds + 1) + 2
     # Minus 1 stems from the fact that simu mode is peculiar
     # and that we start adding to it only in the build_compute_plan
     # aka 1 before
 
-    if simu_mode:
-        actual_number_of_rounds = (num_rounds + 1) + 2
+    # if simu_mode:
+    #     actual_number_of_rounds = (num_rounds + 1) + 2
     if not standardize_data:
         actual_number_of_rounds -= 1
     return actual_number_of_rounds
