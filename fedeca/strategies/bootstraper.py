@@ -488,15 +488,20 @@ def make_bootstrap_metric_function(metric_functions: dict) -> dict:
     """
     btsp_metric_functions = {}
     for metric_name in metric_functions:
-        bstp_metric_func = lambda data_from_opener, predictions: np.array(
-            [
-                metric_functions[metric_name](data_from_opener, y_pred)
-                for y_pred in predictions
-            ]
-        ).mean()
-        btsp_metric_functions["bstp_" + metric_name] = bstp_metric_func
+        btsp_metric_functions["bootstrap-" + metric_name] = get_bootstraped_metric(
+            metric_functions[metric_name]
+        )
 
     return btsp_metric_functions
+
+
+def get_bootstraped_metric(function):
+    def bootstraped_metric(data_from_opener, predictions):
+        return np.array(
+            [function(data_from_opener, y_pred) for y_pred in predictions]
+        ).mean()
+
+    return bootstraped_metric
 
 
 if __name__ == "__main__":
