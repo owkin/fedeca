@@ -145,12 +145,19 @@ def make_bootstrap_strategy(
     # strategy and algo.
     # first let's seed the bootstrappping
     if bootstrap_seeds is None:
-        bootstrap_seeds_list = np.random.randint(0, 2**32, n_bootstrap)
+        assert (
+            n_bootstrap is not None
+        ), "n_bootstrap must be given in the absence of seeds"
+        bootstrap_seeds_list = np.random.randint(0, 2**32, n_bootstrap).tolist()
     else:
         if n_bootstrap is not None:
-            assert (
-                len(bootstrap_seeds) == n_bootstrap
-            ), "bootstrap_seeds must have the same length as n_bootstrap"
+            if len(bootstrap_seeds) != n_bootstrap:
+                print(
+                    "Careful len(bootstrap_seeds) and n_bootstrap are different"
+                    "therefore bootstrap seeds will take precedence and n_bootstrap "
+                    "will be ignored."
+                )
+
         bootstrap_seeds_list = bootstrap_seeds
 
     # Below is where the magic happens.

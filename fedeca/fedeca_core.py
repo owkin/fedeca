@@ -70,7 +70,7 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
         dtype: float = "float64",
         propensity_strategy="iptw",
         variance_method: str = "naïve",
-        n_bootstrap: Union[int, None] = None,
+        n_bootstrap: Union[int, None] = 200,
         bootstrap_seeds: Union[list[int], None] = None,
         dp_target_epsilon: Union[float, None] = None,
         dp_target_delta: Union[float, None] = None,
@@ -142,14 +142,14 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
               is efficient in substra and shouldn't induce too much overhead.
             Defauts to naïve.
             [1] David A Binder. Fitting cox’s proportional hazards models from survey data. Biometrika, 79(1):139–147, 1992.  # noqa: E501
-        n_bootstraps : Union[int, None]
+        n_bootstrap : Union[int, None]
             Number of bootstrap to be performed. If None will use
             len(bootstrap_seeds) instead. If bootstrap_seeds is given
             seeds those seeds will be used for the generation
             otherwise seeds are generated randomly.
         bootstrap_seeds : Union[list[int], None]
             The list of seeds used for bootstrapping random states.
-            If None will generate n_bootstraps randomly, in the presence
+            If None will generate n_bootstrap randomly, in the presence
             of both allways use bootstrap_seeds.
         dp_target_epsilon: float
             The target epsilon for (epsilon, delta)-differential
@@ -699,11 +699,15 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
                         # We only bootstrap the first strategy because
                         # for the glue to work for the second one we need to
                         # do it later and there is no 3rd one with bootstrap
+                        if n_bootstrap is not None:
+                            self.n_bootstrap = n_bootstrap
+                        if bootstrap_seeds is not None:
+                            self.bootstrap_seeds = bootstrap_seeds
                         self.strategies = [
                             make_bootstrap_strategy(
                                 self.strategies[0],
-                                n_bootstrap=n_bootstrap,
-                                bootstrap_seeds=bootstrap_seeds,
+                                n_bootstrap=self.n_bootstrap,
+                                bootstrap_seeds=self.bootstrap_seeds,
                             )[0]
                         ] + self.strategies[1:]
                         self.metrics_dicts_list = [

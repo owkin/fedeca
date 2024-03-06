@@ -35,7 +35,7 @@ fit_fedeca:
   split_method_kwargs: {"treatment_info": "treatment_allocation"}
   data_path: "fl_data_overlap"
   backend_type: "simu"
-  robust: True
+  variance_method: "robust"
 
 models_common:
   treated_col: "treatment_allocation"

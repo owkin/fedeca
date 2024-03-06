@@ -20,7 +20,7 @@ class TestFedECAEnd2End(TestTempDir):
         ndim=100,
         nsamples=500,
         seed=43,
-        robust=False,
+        variance_method="naive",
     ):
         """Set up the test class for experiment comparison.
 
@@ -32,14 +32,16 @@ class TestFedECAEnd2End(TestTempDir):
             The number of samles in total.
         seed : int
             The seed to use for the data generation process.
-        robust : bool
-            Whether to use robust variance estimation or not.
+        variance_method : str
+            The variance method to use for the IPTW.
         """
         super().setUpClass()
-        cls.seed = seed
+
+        cls.n_clients = n_clients
         cls.nsamples = nsamples
+        cls.seed = seed
+        cls.variance_method = variance_method
         cls.ndim = ndim
-        cls.robust = robust
         data = CoxData(seed=cls.seed, n_samples=cls.nsamples, ndim=cls.ndim)
         df = data.generate_dataframe()
         cls.df = df.drop(columns=["propensity_scores"], axis=1)
@@ -51,7 +53,7 @@ class TestFedECAEnd2End(TestTempDir):
             treated_col=cls._treated_col,
             event_col=cls._event_col,
             duration_col=cls._duration_col,
-            cox_fit_kwargs={"robust": cls.robust},
+            variance_method=cls.variance_method,
         )
         cls.pooled_iptw.fit(cls.df)
         cls.pooled_iptw_results = cls.pooled_iptw.results_
@@ -66,17 +68,17 @@ class TestFedECAEnd2End(TestTempDir):
         cls.fed_iptw.fit(
             data=cls.df,
             targets=None,
-            n_clients=n_clients,
+            n_clients=cls.n_clients,
             split_method="split_control_over_centers",
             split_method_kwargs={"treatment_info": cls._treated_col},
             backend_type="subprocess",
-            variance_method="robust" if cls.robust else "naive",
+            variance_method=cls.variance_method,
             data_path=cls.test_dir,
         )
         cls.fed_iptw_results = cls.fed_iptw.results_
 
     @pytest.mark.slow
-    def test_standard_deviations(self):
+    def test_matching(self):
         """Test equality of end results.
 
         We allow ourselves rtol=1e-2 as in the paper.
@@ -94,4 +96,14 @@ class TestRobustFedECAEnd2End(TestFedECAEnd2End):
     @classmethod
     def setUpClass(cls):
         """Use parent class setup with robust=True."""
-        super().setUpClass(robust=True)
+        super().setUpClass(variance_method="robust")
+
+
+# TODO make this test pass and reactivate it
+# class TestBtstFedECAEnd2End(TestFedECAEnd2End):
+#     """BtstIPTW tests class."""
+
+#     @classmethod
+#     def setUpClass(cls):
+#         """Use parent class setup with robust=True."""
+#         super().setUpClass(variance_method="bootstrap")

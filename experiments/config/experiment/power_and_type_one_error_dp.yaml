@@ -27,12 +27,12 @@ models:
     ndim: ${data.ndim}
     num_rounds_list: [10, 10]
     fedeca_path: "/home/owkin/fedeca/"
-    robust: True
+    variance_method: "robust"
   FedECA_naive:
     ndim: ${data.ndim}
     num_rounds_list: [10, 10]
     fedeca_path: "/home/owkin/fedeca/"
-    robust: False
+    variance_method: "naive"
 
 # config fit FedECA
 fit_fedeca:
