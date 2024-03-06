@@ -29,7 +29,7 @@ models:
 # config fit FedECA
 fit_fedeca:
   n_clients: 3
-  robust: True
+  variance_method: "robust"
   split_method: "split_control_over_centers"
   split_method_kwargs: {"treatment_info": "treatment_allocation"}
   data_path: "/home/owkin/real-world/"

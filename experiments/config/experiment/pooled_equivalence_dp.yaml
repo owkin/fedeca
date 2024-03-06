@@ -36,7 +36,7 @@ fit_fedeca:
   dp_propensity_model_training_params: {"batch_size": 100, "num_updates": 100}
   dp_propensity_model_optimizer_kwargs: {"lr": 1e-2}
   backend_type: "simu"
-  robust: True
+  variance_method: "robust"
 
 models_common:
   treated_col: "treatment_allocation"

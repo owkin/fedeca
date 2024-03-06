@@ -31,7 +31,7 @@ fit_fedeca:
   split_method: "split_control_over_centers"
   split_method_kwargs: {"treatment_info": "treatment_allocation"}
   data_path: "/home/owkin/federated-eca-code/experiments/simulated_cox/iptw_experiment/"
-  robust: True
+  variance_method: "robust"
   backend_type: "simu"
 
 models_common:

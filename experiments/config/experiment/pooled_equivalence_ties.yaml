@@ -32,7 +32,7 @@ fit_fedeca:
   split_method: "split_control_over_centers"
   split_method_kwargs: {"treatment_info": "treatment_allocation"}
   backend_type: "simu"
-  robust: True
+  variance_method: "robust"
 
 models_common:
   treated_col: "treatment_allocation"
