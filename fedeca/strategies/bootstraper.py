@@ -116,8 +116,6 @@ def make_bootstrap_strategy(
         if not hasattr(getattr(obj, method_name), "__wrapped__"):
             continue
 
-        # f(shared_state, data_samples) looks like a local computation !
-
         if ("shared_state" in method_args_dict) and (
             "data_from_opener" in method_args_dict
         ):
@@ -130,13 +128,12 @@ def make_bootstrap_strategy(
             ), "This method's signature is not valid"
             aggregations_names[key].append(method_name)
         else:
-            if method_name not in ("save_local_state", "load_local_state"):
-                raise ValueError(
-                    "Method {} has a shared_state.s argument but isn't \
-                    respecting conventions".format(
-                        method_name
-                    )
+            raise ValueError(
+                "Method {} has a shared_state.s argument but isn't \
+                respecting conventions".format(
+                    method_name
                 )
+            )
 
     # Now we have the list of local computations and aggregations names for both
     # strategy and algo.
@@ -489,7 +486,7 @@ def make_bootstrap_metric_function(metric_functions: dict) -> dict:
     btsp_metric_functions = {}
     for metric_name in metric_functions:
         btsp_metric_functions[
-            "bootstrap-" + metric_name
+            "bootstrapped-" + metric_name
         ] = lambda data_from_opener, predictions: np.array(
             [
                 metric_functions[metric_name](data_from_opener, individual_pred)
@@ -498,24 +495,6 @@ def make_bootstrap_metric_function(metric_functions: dict) -> dict:
         ).mean()
 
     return btsp_metric_functions
-
-
-def get_bootstraped_metric(function):
-    """Averages metric on each bootstrapped versions of the models.
-
-    Parameters
-    ----------
-    function : Callable
-        The metric function to hook.
-    """
-
-    def bootstraped_metric(data_from_opener, predictions):
-        results = []
-        for individual_pred in predictions:
-            results.append(function(data_from_opener, individual_pred))
-        return np.array(results).mean()
-
-    return bootstraped_metric
 
 
 if __name__ == "__main__":

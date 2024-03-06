@@ -34,7 +34,10 @@ from fedeca.utils import (
     make_substrafl_torch_dataset_class,
 )
 from fedeca.utils.data_utils import split_dataframe_across_clients
-from fedeca.utils.substrafl_utils import get_outmodel_function
+from fedeca.utils.substrafl_utils import (
+    get_outmodel_function,
+    get_simu_state_from_round,
+)
 from fedeca.utils.survival_utils import (
     BaseSurvivalEstimator,
     BootstrapMixin,
@@ -742,7 +745,14 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
                 round_idx=None,
             )
         else:
-            algo = self.compute_plan_keys[0][1].state[-1].algo
+            # compute_plan_keys[0] is a tuple with
+            # (scores, train_states, aggregate_states) in it
+            train_state = get_simu_state_from_round(
+                simu_memory=self.compute_plan_keys[0][1],
+                client_id=self.ds_client.organization_info().organization_id,
+                round_idx=None,  # Retrieve last round
+            )
+            algo = train_state.algo
 
         if self.variance_method != "bootstrap":
             self.propensity_model = algo.model
@@ -887,6 +897,8 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
 
                 else:
                     # Awful but hard to hack better
+                    # compute_plan_keys[2] is a tuple with
+                    # (scores, train_states, aggregate_states) in it
                     self.variance_matrix = sum(
                         [
                             e.algo._client_statistics["Qk"]

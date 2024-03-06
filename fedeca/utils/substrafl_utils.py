@@ -5,9 +5,10 @@ import pickle
 import tempfile
 from collections.abc import Callable
 from pathlib import Path
-from typing import Union
+from typing import Optional, Union
 
 import lifelines
+import numpy as np
 import pandas as pd
 import torch
 from sklearn.metrics import accuracy_score
@@ -15,7 +16,7 @@ from substrafl.dependency import Dependency
 from substrafl.evaluation_strategy import EvaluationStrategy
 from substrafl.experiment import execute_experiment, simulate_experiment
 from substrafl.nodes import AggregationNode, TestDataNode, TrainDataNode
-from substrafl.nodes.schemas import OutputIdentifiers
+from substrafl.nodes.schemas import OutputIdentifiers, SimuStatesMemory
 
 from fedeca.utils.data_utils import split_dataframe_across_clients
 
@@ -286,10 +287,11 @@ class Experiment:
                 xp_output = execute_experiment(**current_kwargs)
             else:
                 xp_output = simulate_experiment(**current_kwargs)
-                scores, intermediate_state_train, intermediate_state_agg = xp_output
+                # Tuple exported for pedagogical purposes
+                scores, train_states, agg_states = xp_output
 
                 # TODO Check that it is well formatted it's probably not
-                self.performances_strategies.append(pd.DataFrame(xp_output[0]))
+                self.performances_strategies.append(pd.DataFrame(scores))
 
             self.compute_plan_keys.append(xp_output)
 
@@ -444,6 +446,38 @@ class SubstraflTorchDataset(torch.utils.data.Dataset):
     def __len__(self):
         """Get length."""
         return len(self.data.index)
+
+
+def get_simu_state_from_round(
+    simu_memory: SimuStatesMemory, client_id, round_idx: Optional[int] = None
+):
+    """Get the simulation state from a specific round and client.
+
+    Parameters
+    ----------
+    simu_memory : SimuStatesMemory
+        Simulation memory.
+    client_id : str
+        Client ID.
+    round_idx : Optional[int], optional
+        Round index, by default None.
+    """
+    # Filter on client name
+    intersec_cliend_id = [w == client_id for w in simu_memory.worker]
+    # Filter on round idx
+    if round_idx is not None:
+        intersec_round = [r == round_idx for r in simu_memory.round_idx]
+    else:
+        # If no round_idx given, we filter on the highest one to retrieve the last algo
+        last_round = max(simu_memory.round_idx)
+        intersec_round = [r == last_round for r in simu_memory.round_idx]
+
+    # Match both. We know that there will be only one match, so we take indice 0
+    # in the np.where array
+    state_idx = np.where([r and w for r, w in zip(intersec_round, intersec_cliend_id)])[
+        0
+    ][0]
+    return simu_memory.state[state_idx]
 
 
 def make_substrafl_torch_dataset_class(
