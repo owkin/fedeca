@@ -497,9 +497,10 @@ def make_bootstrap_metric_function(metric_functions: dict) -> dict:
 
 def get_bootstraped_metric(function):
     def bootstraped_metric(data_from_opener, predictions):
-        return np.array(
-            [function(data_from_opener, y_pred) for y_pred in predictions]
-        ).mean()
+        results = []
+        for individual_pred in predictions:
+            results.append(function(data_from_opener, individual_pred))
+        return np.array(results).mean()
 
     return bootstraped_metric
 
