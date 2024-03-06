@@ -466,6 +466,11 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
             logreg_model = self.logreg_model
             logreg_dataset_class = self.logreg_dataset_class
             seed = self.seed
+            if self.variance_method == "bootstrap":
+                # Bootstrap makes hessian ill-conditioned we have to regularize
+                # a bit therefore we implement "doigt-mouillé" min regularization
+                # to avoid ill-conditioning wo changing the hessian too much
+                self.l2_coeff_nr = max(self.l2_coeff_nr, 1e-10)
             l2_coeff_nr = self.l2_coeff_nr
 
             class NRAlgo(TorchNewtonRaphsonAlgo):
@@ -480,10 +485,16 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
                     )
 
             self.nr_algo = NRAlgo()
+
             self.nr_strategy = NewtonRaphson(
                 damping_factor=self.damping_factor_nr, algo=self.nr_algo
             )
             self.propensity_model_strategy = self.nr_strategy
+
+        # Allow for actual modifications of strategies if it is called afterwards
+        if hasattr(self, "strategies"):
+            self.strategies[0] = self.propensity_model_strategy
+            self.strategies[1] = self.webdisco_strategy
 
     def reset_experiment(self):
         """Remove the propensity model just in case."""
@@ -648,17 +659,20 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
         if dp_params_given:
             # We need to reset the training mode more deeply
             self.set_propensity_model_strategy()
-            # Allow for robust=True
-            self.strategies[0] = self.propensity_model_strategy
-            self.strategies[1] = self.webdisco_strategy
 
         if variance_method is not None:
+            if variance_method != self.variance_method:
+                self.variance_method = variance_method
             robust = variance_method == "robust"
             is_bootstrap = variance_method == "bootstrap"
             if robust != self.robust:
                 self.robust = robust
             if is_bootstrap != self.is_bootstrap:
+                # We need to reset the propensity model to have non zero
+                # regularization
+                self.set_propensity_model_strategy()
                 self.is_bootstrap = is_bootstrap
+
             if self.robust:
                 assert self.is_bootstrap is False, "You can't use robust and bootstrap"
 
