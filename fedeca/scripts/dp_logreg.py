@@ -7,12 +7,16 @@ import pandas as pd
 import torch
 import torch.nn as nn
 from sklearn.metrics import accuracy_score
-from substrafl.algorithms.pytorch import TorchNewtonRaphsonAlgo
 from substrafl.model_loading import download_algo_state
 from substrafl.strategies import FedAvg, NewtonRaphson
 from torch.optim import SGD
 
 from fedeca.algorithms.torch_dp_fed_avg_algo import TorchDPFedAvgAlgo
+
+# TODO replace by substrafl import when it's merged
+from fedeca.algorithms.torch_newton_raphson_symmetrised import (
+    TorchSNewtonRaphsonAlgo as TorchNewtonRaphsonAlgo,
+)
 from fedeca.fedeca_core import LogisticRegressionTorch
 from fedeca.utils import (
     Experiment,

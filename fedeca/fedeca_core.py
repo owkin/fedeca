@@ -11,7 +11,6 @@ import pandas as pd
 import torch
 from scipy.linalg import inv
 from substra.sdk.models import ComputePlanStatus
-from substrafl.algorithms.pytorch import TorchNewtonRaphsonAlgo
 from substrafl.model_loading import download_algo_state
 from substrafl.nodes import AggregationNode, TrainDataNode
 from substrafl.strategies import FedAvg, NewtonRaphson
@@ -20,6 +19,11 @@ from torch.optim import SGD, Optimizer
 
 from fedeca.algorithms import TorchWebDiscoAlgo
 from fedeca.algorithms.torch_dp_fed_avg_algo import TorchDPFedAvgAlgo
+
+# TODO replace by substrafl import when it's merged
+from fedeca.algorithms.torch_newton_raphson_symmetrised import (
+    TorchSNewtonRaphsonAlgo as TorchNewtonRaphsonAlgo,
+)
 from fedeca.analytics import RobustCoxVariance, RobustCoxVarianceAlgo
 from fedeca.strategies import WebDisco
 from fedeca.strategies.bootstraper import make_bootstrap_strategy
@@ -61,7 +65,7 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
         ps_col="propensity_scores",
         num_rounds_list: list[int] = [10, 10],
         damping_factor_nr: float = 0.8,
-        l2_coeff_nr: float = 0.0,
+        l2_coeff_nr: float = 1e-6,
         standardize_data: bool = True,
         penalizer: float = 0.0,
         l1_ratio: float = 1.0,
@@ -113,7 +117,7 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
         damping_factor_nr : float, optional
             Damping factor for natural gradient regularization, by default 0.8.
         l2_coeff_nr : float, optional
-            L2 regularization coefficient for natural gradient, by default 0.0.
+            L2 regularization coefficient for natural gradient, by default 1e-6.
         standardize_data : bool, optional
             Whether to standardize data before training, by default True.
         penalizer : float, optional
@@ -457,11 +461,6 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
             logreg_model = self.logreg_model
             logreg_dataset_class = self.logreg_dataset_class
             seed = self.seed
-            if self.variance_method == "bootstrap":
-                # Bootstrap makes hessian ill-conditioned we have to regularize
-                # a bit therefore we implement "doigt-mouillé" min regularization
-                # to avoid ill-conditioning wo changing the hessian too much
-                self.l2_coeff_nr = max(self.l2_coeff_nr, 1e-10)
             l2_coeff_nr = self.l2_coeff_nr
 
             class NRAlgo(TorchNewtonRaphsonAlgo):
@@ -777,11 +776,12 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
             )
         else:
             self.propensity_models = [algo.model for algo in algo.individual_algos]
-            # We give the trained modelS to WebDisco
+            # We give the trained models to WebDisco
             # Now we can create the bootstrap strategy as we have all the
             # propensity models
             self.strategies[1] = make_bootstrap_strategy(
                 self.strategies[1],
+                n_bootstrap=self.n_bootstrap,
                 bootstrap_seeds=self.bootstrap_seeds,
                 bootstrap_specific_kwargs=[
                     {"propensity_model": model} for model in self.propensity_models
@@ -851,7 +851,13 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
         X = data.drop([self.duration_col, self.event_col, self.treated_col], axis=1)
         Xprop = torch.from_numpy(np.array(X)).type(self.torch_dtype)
         with torch.no_grad():
-            propensity_scores = self.propensity_model(Xprop)
+            if hasattr(self, "propensity_model"):
+                propensity_scores = self.propensity_model(Xprop)
+            else:
+                propensity_scores = self.propensity_models[0](Xprop)
+                for model in self.propensity_models[1:]:
+                    model.eval()
+                    propensity_scores += model(Xprop)
 
         propensity_scores = propensity_scores.detach().numpy().flatten()
         weights = data[self.treated_col] * 1.0 / propensity_scores + (
