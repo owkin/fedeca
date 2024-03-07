@@ -19,16 +19,18 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ windows-latest ]
+        os: [ windows-2019 ]
         python: [ "3.9" ]
     steps:
       # Checkout not in working dir to ensure the imported module is the installed one
       - uses: actions/checkout@v3
         with:
           path: anywhere
-      - uses: actions/setup-python@v4
+      - name: Install miniconda
+        uses: conda-incubator/setup-miniconda@v3
         with:
           python-version: ${{ matrix.python }}
+          activate-environment: fedeca
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -36,6 +38,7 @@ jobs:
       - name: Test import successful
         run: |
           python -c "import fedeca"
+          pip list
   run_tests:
     runs-on: ${{ matrix.os }}
     strategy:
