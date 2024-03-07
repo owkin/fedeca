@@ -106,11 +106,12 @@ if __name__ == "__main__":
                 )
 
         nr_algo = NRAlgo()
-        nr_strategy = NewtonRaphson(damping_factor=0.8, algo=nr_algo)
+        nr_strategy = NewtonRaphson(
+            damping_factor=0.8, algo=nr_algo, metric_functions=accuracy_metrics_dict
+        )
         regular_xp = Experiment(
             strategies=[nr_strategy],
             num_rounds_list=[10],
-            metrics_dicts_list=[accuracy_metrics_dict],
         )
 
         regular_xp.fit(df, nb_clients=3, backend_type=BACKEND_TYPE)
@@ -172,11 +173,12 @@ if __name__ == "__main__":
                     )
 
             dp_algo = DPLogRegAlgo()
-            dp_fedavg_strategy = FedAvg(algo=dp_algo)
+            dp_fedavg_strategy = FedAvg(
+                algo=dp_algo, metric_functions=accuracy_metrics_dict
+            )
             dp_xp = Experiment(
                 strategies=[dp_fedavg_strategy],
                 num_rounds_list=[NUM_ROUNDS],
-                metrics_dicts_list=[accuracy_metrics_dict],
             )
             dp_xp.fit(df, nb_clients=3, backend_type=BACKEND_TYPE)
             if dp_xp.ds_client.is_simu:

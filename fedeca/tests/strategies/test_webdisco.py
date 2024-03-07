@@ -297,14 +297,17 @@ class TestWebDisco(TestTempDir):
                     store_hessian=True,
                 )
 
-        cls.strategy = WebDisco(algo=MyAlgo(), standardize_data=cls.standardize_data)
         cls.cindex = make_c_index_function(cls._duration_col, cls._event_col)
+        cls.strategy = WebDisco(
+            algo=MyAlgo(),
+            standardize_data=cls.standardize_data,
+            metric_functions={"C-index": cls.cindex},
+        )
         cls.webdisco_experiment = Experiment(
             ds_client=cls.clients[list(cls.clients.keys())[0]],
             strategies=[cls.strategy],
             train_data_nodes=cls.train_data_nodes,
             num_rounds_list=[cls.NUM_ROUNDS],
-            metrics_dicts_list=[{"C-index": cls.cindex}],
             experiment_folder=cls.test_dir,
         )
         if cls.run:

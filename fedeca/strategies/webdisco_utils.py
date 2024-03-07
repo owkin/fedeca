@@ -10,7 +10,10 @@ from substra import Client
 from substrafl.algorithms import Algo
 from substrafl.model_loading import _load_from_files
 
-from fedeca.utils.substrafl_utils import download_train_task_models_by_round
+from fedeca.utils.substrafl_utils import (
+    download_train_task_models_by_round,
+    get_simu_state_from_round,
+)
 
 
 def get_final_cox_model_function(
@@ -69,7 +72,14 @@ def get_final_cox_model_function(
             )
             algo = _load_from_files(input_folder=temp_dir)
     else:
-        algo = compute_plan_key.intermediate_states[actual_round]
+        # compute_plan_key is a tuple with (scores, train_states, aggregate_states)
+        train_state = get_simu_state_from_round(
+            simu_memory=compute_plan_key[1],
+            client_id=client.organization_info().organization_id,
+            round_idx=actual_round,
+        )
+
+        algo = train_state.algo
 
     if hasattr(algo, "individual_algos"):
         num_seeds = len(algo.individual_algos)
@@ -111,7 +121,14 @@ def get_final_cox_model_function(
                 )
                 algo = _load_from_files(input_folder=temp_dir)
         else:
-            algo = compute_plan_key.intermediate_states[actual_round]
+            # compute_plan_key is a tuple with (scores, train_states, aggregate_states)
+            train_state = get_simu_state_from_round(
+                simu_memory=compute_plan_key[1],
+                client_id=client.organization_info().organization_id,
+                round_idx=actual_round,
+            )
+
+            algo = train_state.algo
 
         convergence_of_algos = test_convergence(algo)
 
@@ -253,14 +270,8 @@ def get_last_algo_from_round_count(num_rounds, standardize_data=True, simu_mode=
     """
     # One count for each aggregation starting at 1 (init round): +1 for
     # standardization +1 for global_survival_statistics
-    if not simu_mode:
-        actual_number_of_rounds = 2 * (num_rounds + 1) + 2
-    # Minus 1 stems from the fact that simu mode is peculiar
-    # and that we start adding to it only in the build_compute_plan
-    # aka 1 before
+    actual_number_of_rounds = 2 * (num_rounds + 1) + 2
 
-    if simu_mode:
-        actual_number_of_rounds = (num_rounds + 1) + 2
     if not standardize_data:
         actual_number_of_rounds -= 1
     return actual_number_of_rounds

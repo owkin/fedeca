@@ -262,8 +262,7 @@ def split_dataframe_across_clients(
         test_data_node = TestDataNode(
             organization_id=org_id,
             data_manager_key=dataset_keys[org_id],
-            test_data_sample_keys=[datasample_keys[org_id]],
-            metric_functions=[],
+            data_sample_keys=[datasample_keys[org_id]],
         )
 
         test_data_nodes.append(test_data_node)

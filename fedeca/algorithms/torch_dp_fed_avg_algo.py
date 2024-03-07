@@ -1,6 +1,7 @@
 """Differentially private algorithm to be used with FedAvg strategy."""
 import logging
 import random
+from pathlib import Path
 from typing import Any, Optional
 
 import numpy as np
@@ -215,7 +216,7 @@ class TorchDPFedAvgAlgo(TorchFedAvgAlgo):
     @remote_data
     def train(
         self,
-        datasamples: Any,
+        data_from_opener: Any,
         shared_state: Optional[FedAvgAveragedState] = None,
     ) -> FedAvgSharedState:
         """Train method of the DP federated averaging strategy.
@@ -225,7 +226,7 @@ class TorchDPFedAvgAlgo(TorchFedAvgAlgo):
 
         Parameters
         ----------
-        datasamples : typing.Any
+        data_from_opener : typing.Any
             Input data returned by the ``get_data`` method from the opener.
         shared_state : FedAvgAveragedState, Optional
             Dictionary containing torch parameters that will be set to the model.
@@ -240,7 +241,7 @@ class TorchDPFedAvgAlgo(TorchFedAvgAlgo):
         # because it assumes the existence of the NpIndexGenerator
 
         # Create torch dataset
-        train_dataset = self._dataset(datasamples, is_inference=False)
+        train_dataset = self._dataset(data_from_opener, is_inference=False)
 
         if shared_state is not None:
             # The shared states is the average of the model parameter updates
@@ -292,8 +293,6 @@ class TorchDPFedAvgAlgo(TorchFedAvgAlgo):
     def _local_predict(
         self,
         predict_dataset: torch.utils.data.Dataset,
-        predictions_path,
-        return_predictions=False,
     ):
         """Predict.
 
@@ -332,10 +331,8 @@ class TorchDPFedAvgAlgo(TorchFedAvgAlgo):
                 predictions.append(self._model(x))
         predictions = torch.cat(predictions, 0)
         predictions = predictions.cpu().detach()
-        if return_predictions:
-            return predictions
-        else:
-            self._save_predictions(predictions, predictions_path)
+
+        return predictions
 
     def _get_state_to_save(self) -> dict:
         """Get all attibutes to save and pass on to next state.
@@ -372,22 +369,27 @@ class TorchDPFedAvgAlgo(TorchFedAvgAlgo):
 
         return checkpoint
 
-    def _update_from_checkpoint(self, checkpoint: dict) -> None:
+    def _update_from_checkpoint(self, path: Path) -> dict:
         """Set self attributes using saved values.
 
         Parameters
         ----------
-        checkpoint : dict
-            Checkpoint to load.
+        path : Path
+            Path towards the checkpoint to use.
 
         Returns
         -------
         dict
             The emptied checkpoint.
         """
-        # One cannot simply call checkpoint = super()._update_from_checkpoint(chkpt)
+        # One cannot simply call checkpoint = super()._update_from_checkpoint(path)
         # because we have to change the model class if it should be changed
         # (and optimizer) aka if we find a specific key in the checkpoint
+
+        assert (
+            path.is_file()
+        ), f'Cannot load the model - does not exist {list(path.parent.glob("*"))}'
+        checkpoint = torch.load(path, map_location=self._device)
 
         # For some reason substrafl save and load client before calling train
         if "privacy_accountant_state_dict" in checkpoint:
@@ -449,4 +451,4 @@ class TorchDPFedAvgAlgo(TorchFedAvgAlgo):
         for attr in attr_names:
             setattr(self, attr, checkpoint.pop(attr))
 
-        return
+        return checkpoint

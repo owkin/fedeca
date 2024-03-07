@@ -1,8 +1,8 @@
 """Implement webdisco algorithm with Torch."""
 import copy
-import os
 from copy import deepcopy
 from math import sqrt
+from pathlib import Path
 from typing import Any, List, Optional
 
 # hello
@@ -168,7 +168,7 @@ class TorchWebDiscoAlgo(TorchAlgo):
     @remote_data
     def compute_local_phi_stats(
         self,
-        datasamples: Any,
+        data_from_opener: Any,
         # Set shared_state to None per default for clarity reason as
         # the decorator will do it if the arg shared_state is not passed.
         shared_state: Optional[WebDiscoAveragedStates] = None,
@@ -177,7 +177,7 @@ class TorchWebDiscoAlgo(TorchAlgo):
 
         Parameters
         ----------
-        datasamples : Any
+        data_from_opener : Any
             _description_
         shared_state : Optional[WebDiscoAveragedStates], optional
             _description_. Defaults to None.
@@ -205,7 +205,9 @@ class TorchWebDiscoAlgo(TorchAlgo):
             self.server_state["global_survival_statistics"] = global_survival_statistics
             moments = shared_state["moments"]
 
-        X, y, weights = self.compute_X_y_and_propensity_weights(datasamples, moments)
+        X, y, weights = self.compute_X_y_and_propensity_weights(
+            data_from_opener, moments
+        )
 
         distinct_event_times = global_survival_statistics["distinct_event_times"]
 
@@ -246,7 +248,7 @@ class TorchWebDiscoAlgo(TorchAlgo):
         }
 
     @remote_data
-    def local_uncentered_moments(self, datasamples, shared_state=None):
+    def local_uncentered_moments(self, data_from_opener, shared_state=None):
         """Compute the local uncentered moments.
 
         This method is transformed by the decorator to meet Substra API,
@@ -254,7 +256,7 @@ class TorchWebDiscoAlgo(TorchAlgo):
 
         Parameters
         ----------
-        datasamples : pd.DataFrame
+        data_from_opener : pd.DataFrame
             Dataframe returned by the opener.
         shared_state : None, optional
             Given by the aggregation node, here nothing, by default None.
@@ -266,17 +268,20 @@ class TorchWebDiscoAlgo(TorchAlgo):
         """
         del shared_state  # unused
         # We do not have to do the mean on the target columns
-        datasamples = datasamples.drop(columns=self._target_cols)
+        data_from_opener = data_from_opener.drop(columns=self._target_cols)
         if self._propensity_model is not None and self._propensity_strategy == "iptw":
-            datasamples = datasamples.loc[:, [self._treated_col]]
+            data_from_opener = data_from_opener.loc[:, [self._treated_col]]
         results = {
-            f"moment{k}": compute_uncentered_moment(datasamples, k) for k in range(1, 3)
+            f"moment{k}": compute_uncentered_moment(data_from_opener, k)
+            for k in range(1, 3)
         }
-        results["n_samples"] = datasamples.select_dtypes(include=np.number).count()
+        results["n_samples"] = data_from_opener.select_dtypes(include=np.number).count()
         return results
 
     @remote_data
-    def _compute_local_constant_survival_statistics(self, datasamples, shared_state):
+    def _compute_local_constant_survival_statistics(
+        self, data_from_opener, shared_state
+    ):
         """Computes local statistics and Dt for all ts in the distinct event times.
         Those statistics are useful for to compute the global statistics that will be
         used throughout training. The definition of :math:`\\mathcal{D}_t` (Dt)
@@ -313,7 +318,7 @@ class TorchWebDiscoAlgo(TorchAlgo):
             - "total_number_samples": total number of samples
         """
         X, y, weights = self.compute_X_y_and_propensity_weights(
-            datasamples, shared_state
+            data_from_opener, shared_state
         )
         distinct_event_times = np.unique(y[y > 0]).tolist()
 
@@ -339,7 +344,7 @@ class TorchWebDiscoAlgo(TorchAlgo):
     @remote_data
     def train(
         self,
-        datasamples: Any,
+        data_from_opener: Any,
         # Set shared_state to None per default for clarity reason as
         # the decorator will do it if the arg shared_state is not passed.
         shared_state: Optional[WebDiscoAveragedStates] = None,
@@ -348,7 +353,7 @@ class TorchWebDiscoAlgo(TorchAlgo):
 
         Parameters
         ----------
-        datasamples : Any
+        data_from_opener : Any
             _description_
         shared_state  : Optional[WebDiscoAveragedStates], optional
             description_. Defaults to None.
@@ -477,18 +482,14 @@ class TorchWebDiscoAlgo(TorchAlgo):
             self.server_state["global_robust_statistics"][
                 "distinct_event_times"
             ] = self.server_state["global_survival_statistics"]["distinct_event_times"]
-
         return self.compute_local_phi_stats(
-            datasamples=datasamples, shared_state=None, _skip=True
+            data_from_opener=data_from_opener, shared_state=None, _skip=True
         )
 
-    @remote_data
     def predict(
         self,
-        datasamples: Any,
+        data_from_opener: Any,
         shared_state: Any = None,
-        predictions_path: os.PathLike = None,
-        return_predictions: bool = False,
     ) -> Any:
         """Predict function.
 
@@ -499,27 +500,21 @@ class TorchWebDiscoAlgo(TorchAlgo):
 
         Parameters
         ----------
-        datasamples : typing.Any
+        data_from_opener : typing.Any
             Input data
         shared_state : typing.Any
             Latest train task shared state (output of the train method)
-        predictions_path : os.PathLike
-            Destination file to save predictions
-        return_predictions: bool
-            Whether or not to make the method return predictions. Useful only
-            with simu mode.
         """
-        X, _, _ = self.compute_X_y_and_propensity_weights(datasamples, shared_state)
+        X, _, _ = self.compute_X_y_and_propensity_weights(
+            data_from_opener, shared_state
+        )
 
         X = torch.from_numpy(X)
 
         self._model.eval()
 
         predictions = self._model(X).cpu().detach().numpy()
-        if return_predictions:
-            return predictions
-        else:
-            self._save_predictions(predictions, predictions_path)
+        return predictions
 
     def _get_state_to_save(self) -> dict:
         """Create the algo checkpoint: a dictionary saved with ``torch.save``.
@@ -546,7 +541,7 @@ class TorchWebDiscoAlgo(TorchAlgo):
         checkpoint.update({"global_moments": self.global_moments})
         return checkpoint
 
-    def _update_from_checkpoint(self, checkpoint: dict) -> None:
+    def _update_from_checkpoint(self, path: Path) -> dict:
         """Load the local state from the checkpoint.
 
         Parameters
@@ -554,10 +549,10 @@ class TorchWebDiscoAlgo(TorchAlgo):
         checkpoint : dict
             The checkpoint to load.
         """
-        super()._update_from_checkpoint(checkpoint=checkpoint)
+        checkpoint = super()._update_from_checkpoint(path=path)
         self.server_state = checkpoint.pop("server_state")
         self.global_moments = checkpoint.pop("global_moments")
-        return
+        return checkpoint
 
     def summary(self):
         """Summary of the class to be exposed in the experiment summary file.
@@ -570,7 +565,7 @@ class TorchWebDiscoAlgo(TorchAlgo):
         summary = super().summary()
         return summary
 
-    def build_X_y(self, datasamples, shared_state={}):
+    def build_X_y(self, data_from_opener, shared_state={}):
         """Build appropriate X and y times from output of opener.
 
         This function 1. uses the event column to inject the censorship
@@ -585,7 +580,7 @@ class TorchWebDiscoAlgo(TorchAlgo):
 
         Parameters
         ----------
-        datasamples : pd.DataFrame
+        data_from_opener : pd.DataFrame
             The output of the opener
         shared_state : dict, optional
             Outmodel containing global means and stds.
@@ -598,17 +593,20 @@ class TorchWebDiscoAlgo(TorchAlgo):
             propensity model input
         """
         # We need y to be in the format (2*event-1)*duration
-        datasamples["time_multiplier"] = [
-            2.0 * e - 1.0 for e in datasamples[self._event_col].tolist()
+        data_from_opener["time_multiplier"] = [
+            2.0 * e - 1.0 for e in data_from_opener[self._event_col].tolist()
         ]
         # No funny business irrespective of the convention used
-        y = np.abs(datasamples[self._duration_col]) * datasamples["time_multiplier"]
+        y = (
+            np.abs(data_from_opener[self._duration_col])
+            * data_from_opener["time_multiplier"]
+        )
         y = y.to_numpy().astype("float64")
-        datasamples = datasamples.drop(columns=["time_multiplier"])
+        data_from_opener = data_from_opener.drop(columns=["time_multiplier"])
 
         # We drop the targets from X
         columns_to_drop = self._target_cols
-        X = datasamples.drop(columns=columns_to_drop)
+        X = data_from_opener.drop(columns=columns_to_drop)
         if self._propensity_model is not None and self._propensity_strategy == "iptw":
             X = X.loc[:, [self._treated_col]]
 
@@ -645,7 +643,7 @@ class TorchWebDiscoAlgo(TorchAlgo):
         # treated column
         if self._propensity_model is not None:
             # We do not normalize the data for the propensity model !!!
-            Xprop = datasamples.drop(columns=columns_to_drop + [self._treated_col])
+            Xprop = data_from_opener.drop(columns=columns_to_drop + [self._treated_col])
             Xprop = Xprop.to_numpy().astype("float64")
         else:
             Xprop = None
@@ -653,7 +651,7 @@ class TorchWebDiscoAlgo(TorchAlgo):
         # If WebDisco is used without propensity treated column does not exist
         if self._treated_col is not None:
             treated = (
-                datasamples[self._treated_col]
+                data_from_opener[self._treated_col]
                 .to_numpy()
                 .astype("float64")
                 .reshape((-1, 1))
@@ -663,7 +661,7 @@ class TorchWebDiscoAlgo(TorchAlgo):
 
         return (X, y, treated, Xprop)
 
-    def compute_X_y_and_propensity_weights(self, datasamples, shared_state):
+    def compute_X_y_and_propensity_weights(self, data_from_opener, shared_state):
         """Build appropriate X, y and weights from raw output of opener.
 
         Uses the helper function build_X_y and the propensity model to build the
@@ -671,7 +669,7 @@ class TorchWebDiscoAlgo(TorchAlgo):
 
         Parameters
         ----------
-        datasamples : pd.DataFrame
+        data_from_opener : pd.DataFrame
             Raw output from opener
         shared_state : dict, optional
             Outmodel containing global means and stds, by default {}
@@ -681,7 +679,7 @@ class TorchWebDiscoAlgo(TorchAlgo):
         tuple
             _description_
         """
-        X, y, treated, Xprop = self.build_X_y(datasamples, shared_state)
+        X, y, treated, Xprop = self.build_X_y(data_from_opener, shared_state)
         if self._propensity_model is not None:
             assert (
                 treated is not None

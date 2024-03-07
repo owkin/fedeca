@@ -20,8 +20,7 @@ from substrafl.strategies import FedAvg, NewtonRaphson
 
 from fedeca import FedECA, LogisticRegressionTorch
 from fedeca.algorithms import TorchWebDiscoAlgo
-from fedeca.strategies import make_bootstrap_strategy  # make_bootstrap_metric_function
-from fedeca.strategies import WebDisco
+from fedeca.strategies import WebDisco, make_bootstrap_strategy
 from fedeca.utils import make_accuracy_function, make_substrafl_torch_dataset_class
 from fedeca.utils.data_utils import split_dataframe_across_clients, uniform_split
 from fedeca.utils.survival_utils import CoxData, CoxPHModelTorch
@@ -144,6 +143,7 @@ list_strategy_params = [
             "strategy_class": WebDisco,
             "strategy_kwargs": {
                 "algo": WDAlgo(propensity_model=logreg_model, robust=True),
+                "metric_functions": {"accuracy": accuracy},
                 "standardize_data": True,
             },
         },
