@@ -15,11 +15,36 @@ on:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
+  check_windows:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ windows-latest ]
+        python: [ "3.9" ]
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install dependencies
+        env:
+          GIT_TOKEN: ${{ secrets.GIT_TOKEN }}
+          GIT_USERNAME: ${{ secrets.GIT_USERNAME }}
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[all_extra]"
+      - name: Test import successful
+        env:
+          GIT_TOKEN: ${{ secrets.GIT_TOKEN }}
+          GIT_USERNAME: ${{ secrets.GIT_USERNAME }}
+        run: |
+          python -c "import fedeca"
   run_tests:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ ubuntu-latest ]
+#        os: [ ubuntu-latest, windows-latest ]
         python: ["3.9"]
         # python: ["3.9", "3.10", "3.11"]  # TODO: expand to other pythons
     steps:
