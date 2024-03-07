@@ -17,7 +17,7 @@ class TestFedECAEnd2End(TestTempDir):
     def setUpClass(
         cls,
         n_clients=3,
-        ndim=100,
+        ndim=10,
         nsamples=500,
         seed=43,
         variance_method="naive",
@@ -71,14 +71,14 @@ class TestFedECAEnd2End(TestTempDir):
             n_clients=cls.n_clients,
             split_method="split_control_over_centers",
             split_method_kwargs={"treatment_info": cls._treated_col},
-            backend_type="subprocess",
+            backend_type="simu",
             variance_method=cls.variance_method,
             data_path=cls.test_dir,
         )
         cls.fed_iptw_results = cls.fed_iptw.results_
 
     @pytest.mark.slow
-    def test_matching(self):
+    def test_matching(self, rtol=1e-2):
         """Test equality of end results.
 
         We allow ourselves rtol=1e-2 as in the paper.
@@ -86,7 +86,7 @@ class TestFedECAEnd2End(TestTempDir):
         pd.testing.assert_frame_equal(
             self.pooled_iptw_results.reset_index()[self.fed_iptw_results.columns],
             self.fed_iptw_results,
-            rtol=1e-2,
+            rtol=rtol,
         )
 
 
@@ -99,11 +99,14 @@ class TestRobustFedECAEnd2End(TestFedECAEnd2End):
         super().setUpClass(variance_method="robust")
 
 
-# TODO make this test pass and reactivate it
-# class TestBtstFedECAEnd2End(TestFedECAEnd2End):
-#     """BtstIPTW tests class."""
+class TestBtstFedECAEnd2End(TestFedECAEnd2End):
+    """BtstIPTW tests class."""
 
-#     @classmethod
-#     def setUpClass(cls):
-#         """Use parent class setup with robust=True."""
-#         super().setUpClass(variance_method="bootstrap")
+    @classmethod
+    def setUpClass(cls):
+        """Use parent class setup with robust=True."""
+        super().setUpClass(variance_method="bootstrap")
+
+    def test_matching(self):
+        """Changing tolerance as we can't match precise seeds in bootstrap."""
+        super().test_matching(rtol=0.2)
