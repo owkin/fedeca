@@ -53,7 +53,7 @@ class TestFedECAEnd2End(TestTempDir):
         cls.variance_method = variance_method
         cls.ndim = ndim
         cls.bootstrap_seeds = bootstrap_seeds
-        cls.n_bootstrap = len(bootstrap_seeds)
+        cls.n_bootstrap = len(bootstrap_seeds) if bootstrap_seeds is not None else None
         data = CoxData(seed=cls.seed, n_samples=cls.nsamples, ndim=cls.ndim)
         df = data.generate_dataframe()
         cls.df = df.drop(columns=["propensity_scores"], axis=1)
