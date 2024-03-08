@@ -968,7 +968,7 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
             )
 
         # The final params vector is the params wo bootstrap
-        if self.final_params_array.ndim == 2 and self.final_params_array.shape[0] > 1:
+        if self.final_params_array.ndim == 2:
             final_params = self.final_params_array[0]
         else:
             final_params = self.final_params_array
