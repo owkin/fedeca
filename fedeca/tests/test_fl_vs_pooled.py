@@ -1,10 +1,14 @@
 """Tests for Robust IPTW."""
+import copy
+
+import numpy as np
 import pandas as pd
 import pytest
 
 from fedeca.competitors import PooledIPTW
 from fedeca.fedeca_core import FedECA
 from fedeca.tests.common import TestTempDir
+from fedeca.utils.data_utils import split_control_over_centers
 from fedeca.utils.survival_utils import CoxData
 
 
@@ -19,8 +23,10 @@ class TestFedECAEnd2End(TestTempDir):
         n_clients=3,
         ndim=10,
         nsamples=500,
-        seed=43,
+        seed=42,
         variance_method="naive",
+        bootstrap_seeds=None,
+        bootstrap_function=None,
     ):
         """Set up the test class for experiment comparison.
 
@@ -34,6 +40,10 @@ class TestFedECAEnd2End(TestTempDir):
             The seed to use for the data generation process.
         variance_method : str
             The variance method to use for the IPTW.
+        bootstrap_seeds : list[Seeds]
+            The seeds to use for the bootstrap variance method.
+        bootstrap_function: Union[Callable, None]
+            The bootstrap function to use to mimic the global sampling.
         """
         super().setUpClass()
 
@@ -42,6 +52,7 @@ class TestFedECAEnd2End(TestTempDir):
         cls.seed = seed
         cls.variance_method = variance_method
         cls.ndim = ndim
+        cls.bootstrap_seeds = bootstrap_seeds
         data = CoxData(seed=cls.seed, n_samples=cls.nsamples, ndim=cls.ndim)
         df = data.generate_dataframe()
         cls.df = df.drop(columns=["propensity_scores"], axis=1)
@@ -54,6 +65,7 @@ class TestFedECAEnd2End(TestTempDir):
             event_col=cls._event_col,
             duration_col=cls._duration_col,
             variance_method=cls.variance_method,
+            seed=cls.seed,
         )
         cls.pooled_iptw.fit(cls.df)
         cls.pooled_iptw_results = cls.pooled_iptw.results_
@@ -65,6 +77,21 @@ class TestFedECAEnd2End(TestTempDir):
             event_col=cls._event_col,
             num_rounds_list=[20, 20],
         )
+
+        if variance_method == "bootstrap":
+            # We need for the client to know who they are so that we can finely
+            # control the per-client sampling
+            clients_indices = split_control_over_centers(
+                cls.df,
+                n_clients=cls.n_clients,
+                treatment_info=cls._treated_col,
+                seed=42,
+            )
+            cls.df["client"] = -1
+            for idx, client_indices in enumerate(clients_indices):
+                cls.df["client"].iloc[client_indices] = f"client_{idx}"
+            cls.df["original_clients_indices"] = np.arange(cls.df.shape[0])
+
         cls.fed_iptw.fit(
             data=cls.df,
             targets=None,
@@ -74,6 +101,8 @@ class TestFedECAEnd2End(TestTempDir):
             backend_type="simu",
             variance_method=cls.variance_method,
             data_path=cls.test_dir,
+            bootstrap_seeds=cls.bootstrap_seeds,
+            bootstrap_function=bootstrap_function,
         )
         cls.fed_iptw_results = cls.fed_iptw.results_
 
@@ -99,14 +128,84 @@ class TestRobustFedECAEnd2End(TestFedECAEnd2End):
         super().setUpClass(variance_method="robust")
 
 
+# TODO re-enable when we can match each seed perfectly
 class TestBtstFedECAEnd2End(TestFedECAEnd2End):
     """BtstIPTW tests class."""
 
     @classmethod
-    def setUpClass(cls):
+    def setUpClass(cls, seed=42):
         """Use parent class setup with robust=True."""
-        super().setUpClass(variance_method="bootstrap")
+        bootstrap_seeds = []
+        # First one called in init of the class of PooledIPTW
+        cls.seed = np.random.default_rng(seed)
+        # Second one called when calling bootstrap_std
+        cls.seed = np.random.default_rng(cls.seed)
+        data = CoxData(seed=42, n_samples=500, ndim=10)
+        df = data.generate_dataframe()
+        df = df.drop(columns=["propensity_scores"], axis=1)
+
+        # Tracing random state AND indices
+        clients_indices = split_control_over_centers(
+            df, n_clients=3, treatment_info="treatment", seed=42
+        )
+        bootstrap_seeds = []
+        clients_btst_samples = []
+        for _ in range(200):
+            rng = np.random.default_rng(cls.seed)
+            rng_copy = copy.deepcopy(rng)
+            bootstrap_seeds.append(rng_copy)
+            new_df = df.sample(df.shape[0], replace=True, random_state=rng)
+            current_sampled_points = {}
+            for idx, client_indices in enumerate(clients_indices):
+                current_sampled_points[f"client_{idx}"] = list(
+                    set(new_df.index).intersection(client_indices)
+                )
+            clients_btst_samples.append(current_sampled_points)
+
+        def bootstrap_function(data, seed):
+            if not isinstance(seed, int):
+                rng = copy.deepcopy(seed)
+            else:
+                rng = seed
+            bootstrap_id = [b.__getstate__() for b in bootstrap_seeds].index(
+                rng.__getstate__()
+            )
+
+            assert data["client"].nunique() == 1
+            client_id = data["client"].iloc[0]
+            data = data.drop(columns=["client"])
+            sampled_rows = clients_btst_samples[bootstrap_id][client_id]
+            # We assert this is indeed a sampling of rows of this client
+            assert all(
+                [
+                    s_row in data["original_clients_indices"].tolist()
+                    for s_row in sampled_rows
+                ]
+            )
+            data = (
+                data.set_index("original_clients_indices")
+                .loc[sampled_rows]
+                .reset_index()
+            )
+            assert all(
+                [
+                    a == b
+                    for a, b in zip(
+                        data["original_clients_indices"].tolist(), sampled_rows
+                    )
+                ]
+            )
+            data = data.drop(columns={"original_clients_indices"})
+            return data
+
+        super().setUpClass(
+            variance_method="bootstrap",
+            bootstrap_seeds=bootstrap_seeds,
+            seed=seed,
+            bootstrap_function=bootstrap_function,
+        )
 
     def test_matching(self):
         """Changing tolerance as we can't match precise seeds in bootstrap."""
+        breakpoint()
         super().test_matching(rtol=0.2)

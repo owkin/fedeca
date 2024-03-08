@@ -76,6 +76,7 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
         variance_method: str = "naïve",
         n_bootstrap: Union[int, None] = 200,
         bootstrap_seeds: Union[list[int], None] = None,
+        bootstrap_function: Union[Callable, None] = None,
         dp_target_epsilon: Union[float, None] = None,
         dp_target_delta: Union[float, None] = None,
         dp_max_grad_norm: Union[float, None] = None,
@@ -155,6 +156,9 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
             The list of seeds used for bootstrapping random states.
             If None will generate n_bootstrap randomly, in the presence
             of both allways use bootstrap_seeds.
+        bootstrap_function: Union[Callable, None]
+            The bootstrap function to use for instance if it is necessary to
+            mimic perfectly a global sampling.
         dp_target_epsilon: float
             The target epsilon for (epsilon, delta)-differential
             private guarantee. Defaults to None.
@@ -224,6 +228,7 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
         self.is_bootstrap = variance_method == "bootstrap"
         self.n_bootstrap = n_bootstrap
         self.bootstrap_seeds = bootstrap_seeds
+        self.bootstrap_function = bootstrap_function
         self.dp_target_delta = dp_target_delta
         self.dp_target_epsilon = dp_target_epsilon
         self.dp_max_grad_norm = dp_max_grad_norm
@@ -311,6 +316,7 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
                     strategies_to_run[0],
                     n_bootstrap=self.n_bootstrap,
                     bootstrap_seeds=self.bootstrap_seeds,
+                    bootstrap_function=self.bootstrap_function,
                 )[0]
             ] + strategies_to_run[1:]
 
@@ -505,6 +511,7 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
         variance_method: Union[str, None] = None,
         n_bootstrap: Union[int, None] = None,
         bootstrap_seeds: Union[list[int], None] = None,
+        bootstrap_function: Union[Callable, None] = None,
         dp_target_epsilon: Union[float, None] = None,
         dp_target_delta: Union[float, None] = None,
         dp_max_grad_norm: Union[float, None] = None,
@@ -557,6 +564,9 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
             The list of seeds used for bootstrapping random states.
             If None will generate n_bootstraps randomly, in the presence
             of both allways use bootstrap_seeds.
+        bootstrap_function: Union[Callable, None]
+            The bootstrap function to use for instance if it is necessary to mimic
+            a global sampling.
         dp_target_epsilon: float
             The target epsilon for (epsilon, delta)-differential
             private guarantee. Defaults to None.
@@ -663,7 +673,19 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
                 # We need to reset the propensity model to have non zero
                 # regularization
                 self.set_propensity_model_strategy()
-                self.is_bootstrap = is_bootstrap
+
+            if (
+                is_bootstrap
+                and is_bootstrap == self.is_bootstrap
+                and any(
+                    [
+                        e is not None
+                        for e in [n_bootstrap, bootstrap_seeds, bootstrap_function]
+                    ]
+                )
+            ):
+                raise ValueError("Not supported need refactor of fit/__init__")
+            self.is_bootstrap = is_bootstrap
 
             if self.robust:
                 assert self.is_bootstrap is False, "You can't use robust and bootstrap"
@@ -709,11 +731,15 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
                             self.n_bootstrap = n_bootstrap
                         if bootstrap_seeds is not None:
                             self.bootstrap_seeds = bootstrap_seeds
+                        if bootstrap_function is not None:
+                            self.bootstrap_function = bootstrap_function
+
                         self.strategies = [
                             make_bootstrap_strategy(
                                 self.strategies[0],
                                 n_bootstrap=self.n_bootstrap,
                                 bootstrap_seeds=self.bootstrap_seeds,
+                                bootstrap_function=self.bootstrap_function,
                             )[0]
                         ] + self.strategies[1:]
 
@@ -783,6 +809,7 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
                 self.strategies[1],
                 n_bootstrap=self.n_bootstrap,
                 bootstrap_seeds=self.bootstrap_seeds,
+                bootstrap_function=self.bootstrap_function,
                 bootstrap_specific_kwargs=[
                     {"propensity_model": model} for model in self.propensity_models
                 ],
