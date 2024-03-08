@@ -177,7 +177,7 @@ def make_bootstrap_strategy(
                     "client_specific_kwargs must have the same length as"
                     "bootstrap_seeds_list + 1"
                 )
-                self.bootstrap_specific_kwargs = client_specific_kwargs
+                self.client_specific_kwargs = client_specific_kwargs
                 self.kwargs.update({"client_specific_kwargs": client_specific_kwargs})
             else:
                 self.client_specific_kwargs = None
@@ -187,7 +187,7 @@ def make_bootstrap_strategy(
             # We add the first run wo bootstrapping
             for idx in range(len(self.seeds) + 1):
                 current_kwargs = copy.deepcopy(strategy.algo.kwargs)
-                if self.bootstrap_specific_kwargs is not None:
+                if self.client_specific_kwargs is not None:
                     current_kwargs.update(**self.client_specific_kwargs[idx])
                 self.individual_algos.append(
                     copy.deepcopy(strategy.algo.__class__(**current_kwargs))

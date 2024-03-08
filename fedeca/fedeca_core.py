@@ -811,7 +811,7 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
                 n_bootstrap=self.n_bootstrap,
                 bootstrap_seeds=self.bootstrap_seeds,
                 bootstrap_function=self.bootstrap_function,
-                bootstrap_specific_kwargs=[
+                client_specific_kwargs=[
                     {"propensity_model": model} for model in self.propensity_models
                 ],
             )[0]
