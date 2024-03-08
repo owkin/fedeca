@@ -329,8 +329,8 @@ def test_bootstrapping(strategy_params: dict, num_rounds: int):
         compute_plan_key=compute_plan.key,
         round_idx=strategy_params["get_true_nb_rounds"](num_rounds),
     )
-
-    bootstrapped_models_efficient = [alg._model for alg in algo.individual_algos]
+    # We don't care about the first model which is not bootstrapped
+    bootstrapped_models_efficient = [alg._model for alg in algo.individual_algos][1:]
 
     for model1, model2 in zip(bootstrapped_models_gt, bootstrapped_models_efficient):
         for p1, p2 in zip(model1.parameters(), model2.parameters()):
@@ -439,6 +439,7 @@ def test_bootstrapping_end2end():
     )
     print("Efficient bootstrap")
     fed_iptw.run()
-    beta_efficient = fed_iptw.final_params_array
+    # We don't care about the first run which is not bootstrapped
+    beta_efficient = fed_iptw.final_params_array.flatten()[1:]
 
     assert np.allclose(beta_inefficient.to_numpy(), beta_efficient.flatten())

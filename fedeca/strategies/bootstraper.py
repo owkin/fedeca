@@ -173,9 +173,9 @@ def make_bootstrap_strategy(
         def __init__(self, *args, client_specific_kwargs=None, **kwargs):
             super().__init__(*args, **kwargs)
             if client_specific_kwargs is not None:
-                assert len(bootstrap_seeds_list) == len(client_specific_kwargs), (
+                assert (len(bootstrap_seeds_list) + 1) == len(client_specific_kwargs), (
                     "client_specific_kwargs must have the same length as"
-                    "bootstrap_seeds_list + 1"
+                    " bootstrap_seeds_list + 1"
                 )
                 self.client_specific_kwargs = client_specific_kwargs
                 self.kwargs.update({"client_specific_kwargs": client_specific_kwargs})

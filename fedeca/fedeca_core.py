@@ -959,17 +959,21 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
 
         else:
             # We directly estimate the variance matrix in the bootstrap case
+            # we drop the first run which is not bootstrapped
+            # bias=True to match the pooled implementation
             self.variance_matrix = np.cov(
-                self.final_params_array, rowvar=False
+                self.final_params_array[1:], rowvar=False, bias=True
             ).reshape(
                 (self.final_params_array.shape[1], self.final_params_array.shape[1])
             )
 
         # The final params vector is the params wo bootstrap
+        if self.final_params_array.ndim == 2 and self.final_params_array.shape[0] > 1:
+            final_params = self.final_params_array[0]
+        else:
+            final_params = self.final_params_array
 
-        summary = compute_summary_function(
-            np.mean(self.final_params_array, axis=0), self.variance_matrix, alpha
-        )
+        summary = compute_summary_function(final_params, self.variance_matrix, alpha)
 
         summary["exp(coef)"] = np.exp(summary["coef"])
         summary["exp(coef) lower 95%"] = np.exp(summary["coef lower 95%"])
