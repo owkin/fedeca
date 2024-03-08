@@ -222,7 +222,3 @@ class TestBtstFedECAEnd2End(TestFedECAEnd2End):
             seed=42,
             bootstrap_function=bootstrap_function,
         )
-
-    def test_matching(self):
-        """Changing tolerance as we can't match precise seeds in bootstrap."""
-        super().test_matching(rtol=0.1)
