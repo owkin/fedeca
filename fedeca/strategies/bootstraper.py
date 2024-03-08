@@ -26,7 +26,7 @@ def make_bootstrap_strategy(
     n_bootstrap: Union[int, None] = None,
     bootstrap_seeds: Union[list[int], None] = None,
     bootstrap_function: Union[Callable, None] = None,
-    bootstrap_specific_kwargs: Union[None, list[dict]] = None,
+    client_specific_kwargs: Union[None, list[dict]] = None,
 ):
     """Bootstrap a substrafl strategy wo impacting the number of compute tasks.
 
@@ -57,7 +57,7 @@ def make_bootstrap_strategy(
         If None, use the BootstrapMixin function.
         Note that this can be used to provide splits/cross-validation capabilities
         as well where seed would be the fold number in a flattened list of folds.
-    bootstrap_specific_kwargs: Union[None, list[dict]]
+    client_specific_kwargs: Union[None, list[dict]]
         A list of dictionaries containing the kwargs to be passed to the algos
         if they are different for each bootstrap. It is useful to chain bootstrapped
         compute plans for instance.
@@ -170,26 +170,25 @@ def make_bootstrap_strategy(
 
     # We have to overwrite the original methods at the class level
     class BtstAlgo(strategy.algo.__class__):
-        def __init__(self, *args, bootstrap_specific_kwargs=None, **kwargs):
+        def __init__(self, *args, client_specific_kwargs=None, **kwargs):
             super().__init__(*args, **kwargs)
-            if bootstrap_specific_kwargs is not None:
-                assert len(bootstrap_seeds_list) == len(bootstrap_specific_kwargs), (
-                    "bootstrap_specific_kwargs must have the same length as"
-                    "bootstrap_seeds_list"
+            if client_specific_kwargs is not None:
+                assert (len(bootstrap_seeds_list) + 1) == len(client_specific_kwargs), (
+                    "client_specific_kwargs must have the same length as"
+                    " bootstrap_seeds_list + 1"
                 )
-                self.bootstrap_specific_kwargs = bootstrap_specific_kwargs
-                self.kwargs.update(
-                    {"bootstrap_specific_kwargs": bootstrap_specific_kwargs}
-                )
+                self.client_specific_kwargs = client_specific_kwargs
+                self.kwargs.update({"client_specific_kwargs": client_specific_kwargs})
             else:
-                self.bootstrap_specific_kwargs = None
+                self.client_specific_kwargs = None
 
             self.seeds = bootstrap_seeds_list
             self.individual_algos = []
-            for idx in range(len(self.seeds)):
+            # We add the first run wo bootstrapping
+            for idx in range(len(self.seeds) + 1):
                 current_kwargs = copy.deepcopy(strategy.algo.kwargs)
-                if self.bootstrap_specific_kwargs is not None:
-                    current_kwargs.update(**self.bootstrap_specific_kwargs[idx])
+                if self.client_specific_kwargs is not None:
+                    current_kwargs.update(**self.client_specific_kwargs[idx])
                 self.individual_algos.append(
                     copy.deepcopy(strategy.algo.__class__(**current_kwargs))
                 )
@@ -218,7 +217,10 @@ def make_bootstrap_strategy(
             with tempfile.TemporaryDirectory() as tmpdirname:
                 paths_to_checkpoints = []
                 for idx, algo in enumerate(self.individual_algos):
-                    path_to_checkpoint = Path(tmpdirname) / f"bootstrap_{idx}"
+                    if idx == 0:
+                        path_to_checkpoint = Path(tmpdirname) / "full_data"
+                    else:
+                        path_to_checkpoint = Path(tmpdirname) / f"bootstrap_{idx}"
                     algo.save_local_state(path_to_checkpoint)
                     paths_to_checkpoints.append(path_to_checkpoint)
 
@@ -248,9 +250,16 @@ def make_bootstrap_strategy(
             archive = zipfile.ZipFile(path, "r")
             with tempfile.TemporaryDirectory() as tmpdirname:
                 archive.extractall(tmpdirname)
+                full_data_checkpoints = [
+                    p for p in Path(tmpdirname).glob("**/full_data")
+                ]
+                assert len(full_data_checkpoints) == 1
+                full_data_checkpoint = full_data_checkpoints[0]
+
                 checkpoints_found = sorted(
                     [p for p in Path(tmpdirname).glob("**/bootstrap_*")]
                 )
+                checkpoints_found = [full_data_checkpoint] + checkpoints_found
                 self.checkpoints_list = [None] * len(checkpoints_found)
                 for idx, file in enumerate(checkpoints_found):
                     self.individual_algos[idx].load_local_state(file)
@@ -268,8 +277,8 @@ def make_bootstrap_strategy(
             return predictions
 
     btst_kwargs = copy.deepcopy(strategy.algo.kwargs)
-    if bootstrap_specific_kwargs is not None:
-        btst_kwargs.update({"bootstrap_specific_kwargs": bootstrap_specific_kwargs})
+    if client_specific_kwargs is not None:
+        btst_kwargs.update({"client_specific_kwargs": client_specific_kwargs})
     btst_algo = BtstAlgo(**btst_kwargs)
 
     class BtstStrategy(strategy.__class__):
@@ -277,7 +286,7 @@ def make_bootstrap_strategy(
             super().__init__(**kwargs)
             self.seeds = bootstrap_seeds_list
             self.individual_strategies = []
-            for _ in self.seeds:
+            for _ in [None] + self.seeds:
                 # We have to make sure they are independent and new
                 self.individual_strategies.append(copy.deepcopy(strategy))
             for local_name in local_functions_names["strategy"]:
@@ -377,15 +386,19 @@ def _bootstrap_local_function(
         """
         results = []
 
-        for idx, seed in enumerate(self.seeds):
-            bootstrapped_data = bootstrap_function(data=data_from_opener, seed=seed)
+        for idx, seed in enumerate([None] + self.seeds):
+            # On first run we don't bootstrap
+            if idx == 0:
+                data = data_from_opener
+            else:
+                data = bootstrap_function(data=data_from_opener, seed=seed)
             if shared_state is None:
                 res = getattr(getattr(self, individual_task_type)[idx], local_name)(
-                    data_from_opener=bootstrapped_data, _skip=True
+                    data_from_opener=data, _skip=True
                 )
             else:
                 res = getattr(getattr(self, individual_task_type)[idx], local_name)(
-                    data_from_opener=bootstrapped_data,
+                    data_from_opener=data,
                     shared_state=shared_state[idx],
                     _skip=True,
                 )

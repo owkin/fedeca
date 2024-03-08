@@ -198,6 +198,7 @@ def split_dataframe_across_clients(
             df_path.unlink()
         cdf.to_csv(df_path, index=False)
         dfs.append(cdf)
+
     assets_directory = Path(fedeca.__file__).parent / "scripts" / "substra_assets"
 
     # Sample registration: will fill two dicts with relevant handles to retrieve

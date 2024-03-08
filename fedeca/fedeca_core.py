@@ -9,6 +9,7 @@ from typing import Optional, Union
 import numpy as np
 import pandas as pd
 import torch
+from pandas.api.types import is_numeric_dtype
 from scipy.linalg import inv
 from substra.sdk.models import ComputePlanStatus
 from substrafl.model_loading import download_algo_state
@@ -65,7 +66,7 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
         ps_col="propensity_scores",
         num_rounds_list: list[int] = [10, 10],
         damping_factor_nr: float = 0.8,
-        l2_coeff_nr: float = 1e-6,
+        l2_coeff_nr: float = 0.0,
         standardize_data: bool = True,
         penalizer: float = 0.0,
         l1_ratio: float = 1.0,
@@ -76,6 +77,7 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
         variance_method: str = "naïve",
         n_bootstrap: Union[int, None] = 200,
         bootstrap_seeds: Union[list[int], None] = None,
+        bootstrap_function: Union[Callable, None] = None,
         dp_target_epsilon: Union[float, None] = None,
         dp_target_delta: Union[float, None] = None,
         dp_max_grad_norm: Union[float, None] = None,
@@ -117,7 +119,7 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
         damping_factor_nr : float, optional
             Damping factor for natural gradient regularization, by default 0.8.
         l2_coeff_nr : float, optional
-            L2 regularization coefficient for natural gradient, by default 1e-6.
+            L2 regularization coefficient for natural gradient, by default 0.0.
         standardize_data : bool, optional
             Whether to standardize data before training, by default True.
         penalizer : float, optional
@@ -155,6 +157,9 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
             The list of seeds used for bootstrapping random states.
             If None will generate n_bootstrap randomly, in the presence
             of both allways use bootstrap_seeds.
+        bootstrap_function: Union[Callable, None]
+            The bootstrap function to use for instance if it is necessary to
+            mimic perfectly a global sampling.
         dp_target_epsilon: float
             The target epsilon for (epsilon, delta)-differential
             private guarantee. Defaults to None.
@@ -224,6 +229,7 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
         self.is_bootstrap = variance_method == "bootstrap"
         self.n_bootstrap = n_bootstrap
         self.bootstrap_seeds = bootstrap_seeds
+        self.bootstrap_function = bootstrap_function
         self.dp_target_delta = dp_target_delta
         self.dp_target_epsilon = dp_target_epsilon
         self.dp_max_grad_norm = dp_max_grad_norm
@@ -311,6 +317,7 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
                     strategies_to_run[0],
                     n_bootstrap=self.n_bootstrap,
                     bootstrap_seeds=self.bootstrap_seeds,
+                    bootstrap_function=self.bootstrap_function,
                 )[0]
             ] + strategies_to_run[1:]
 
@@ -505,6 +512,7 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
         variance_method: Union[str, None] = None,
         n_bootstrap: Union[int, None] = None,
         bootstrap_seeds: Union[list[int], None] = None,
+        bootstrap_function: Union[Callable, None] = None,
         dp_target_epsilon: Union[float, None] = None,
         dp_target_delta: Union[float, None] = None,
         dp_max_grad_norm: Union[float, None] = None,
@@ -557,6 +565,9 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
             The list of seeds used for bootstrapping random states.
             If None will generate n_bootstraps randomly, in the presence
             of both allways use bootstrap_seeds.
+        bootstrap_function: Union[Callable, None]
+            The bootstrap function to use for instance if it is necessary to mimic
+            a global sampling.
         dp_target_epsilon: float
             The target epsilon for (epsilon, delta)-differential
             private guarantee. Defaults to None.
@@ -663,7 +674,19 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
                 # We need to reset the propensity model to have non zero
                 # regularization
                 self.set_propensity_model_strategy()
-                self.is_bootstrap = is_bootstrap
+
+            if (
+                is_bootstrap
+                and is_bootstrap == self.is_bootstrap
+                and any(
+                    [
+                        e is not None
+                        for e in [n_bootstrap, bootstrap_seeds, bootstrap_function]
+                    ]
+                )
+            ):
+                raise ValueError("Not supported need refactor of fit/__init__")
+            self.is_bootstrap = is_bootstrap
 
             if self.robust:
                 assert self.is_bootstrap is False, "You can't use robust and bootstrap"
@@ -709,11 +732,15 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
                             self.n_bootstrap = n_bootstrap
                         if bootstrap_seeds is not None:
                             self.bootstrap_seeds = bootstrap_seeds
+                        if bootstrap_function is not None:
+                            self.bootstrap_function = bootstrap_function
+
                         self.strategies = [
                             make_bootstrap_strategy(
                                 self.strategies[0],
                                 n_bootstrap=self.n_bootstrap,
                                 bootstrap_seeds=self.bootstrap_seeds,
+                                bootstrap_function=self.bootstrap_function,
                             )[0]
                         ] + self.strategies[1:]
 
@@ -783,7 +810,8 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
                 self.strategies[1],
                 n_bootstrap=self.n_bootstrap,
                 bootstrap_seeds=self.bootstrap_seeds,
-                bootstrap_specific_kwargs=[
+                bootstrap_function=self.bootstrap_function,
+                client_specific_kwargs=[
                     {"propensity_model": model} for model in self.propensity_models
                 ],
             )[0]
@@ -849,6 +877,9 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
     def compute_propensity_scores(self, data: pd.DataFrame):
         """Compute propensity scores and corresponding weights."""
         X = data.drop([self.duration_col, self.event_col, self.treated_col], axis=1)
+        # dangerous but we need to do it
+        string_columns = [col for col in X.columns if not (is_numeric_dtype(X[col]))]
+        X = X.drop(columns=string_columns)
         Xprop = torch.from_numpy(np.array(X)).type(self.torch_dtype)
         with torch.no_grad():
             if hasattr(self, "propensity_model"):
@@ -928,17 +959,21 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
 
         else:
             # We directly estimate the variance matrix in the bootstrap case
+            # we drop the first run which is not bootstrapped
+            # bias=True to match the pooled implementation
             self.variance_matrix = np.cov(
-                self.final_params_array, rowvar=False
+                self.final_params_array[1:], rowvar=False, bias=True
             ).reshape(
                 (self.final_params_array.shape[1], self.final_params_array.shape[1])
             )
 
-        # The final params vector is either the params wo bootstrap or the mean
+        # The final params vector is the params wo bootstrap
+        if self.final_params_array.ndim == 2:
+            final_params = self.final_params_array[0]
+        else:
+            final_params = self.final_params_array
 
-        summary = compute_summary_function(
-            np.mean(self.final_params_array, axis=0), self.variance_matrix, alpha
-        )
+        summary = compute_summary_function(final_params, self.variance_matrix, alpha)
 
         summary["exp(coef)"] = np.exp(summary["coef"])
         summary["exp(coef) lower 95%"] = np.exp(summary["coef lower 95%"])
