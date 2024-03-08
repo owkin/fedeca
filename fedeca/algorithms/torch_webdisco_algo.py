@@ -11,6 +11,7 @@ import torch
 from autograd import elementwise_grad
 from autograd import numpy as anp
 from lifelines.utils import StepSizer
+from pandas.api.types import is_numeric_dtype
 from scipy.linalg import norm
 from scipy.linalg import solve as spsolve
 from substrafl.algorithms.pytorch import weight_manager
@@ -603,6 +604,13 @@ class TorchWebDiscoAlgo(TorchAlgo):
         )
         y = y.to_numpy().astype("float64")
         data_from_opener = data_from_opener.drop(columns=["time_multiplier"])
+        # dangerous but we need to do it
+        string_columns = [
+            col
+            for col in data_from_opener.columns
+            if not (is_numeric_dtype(data_from_opener[col]))
+        ]
+        data_from_opener = data_from_opener.drop(columns=string_columns)
 
         # We drop the targets from X
         columns_to_drop = self._target_cols

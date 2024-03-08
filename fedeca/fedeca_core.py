@@ -9,6 +9,7 @@ from typing import Optional, Union
 import numpy as np
 import pandas as pd
 import torch
+from pandas.api.types import is_numeric_dtype
 from scipy.linalg import inv
 from substra.sdk.models import ComputePlanStatus
 from substrafl.model_loading import download_algo_state
@@ -876,6 +877,9 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
     def compute_propensity_scores(self, data: pd.DataFrame):
         """Compute propensity scores and corresponding weights."""
         X = data.drop([self.duration_col, self.event_col, self.treated_col], axis=1)
+        # dangerous but we need to do it
+        string_columns = [col for col in X.columns if not (is_numeric_dtype(X[col]))]
+        X = X.drop(columns=string_columns)
         Xprop = torch.from_numpy(np.array(X)).type(self.torch_dtype)
         with torch.no_grad():
             if hasattr(self, "propensity_model"):

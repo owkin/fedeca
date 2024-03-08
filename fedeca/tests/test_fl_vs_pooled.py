@@ -90,7 +90,15 @@ class TestFedECAEnd2End(TestTempDir):
             cls.df["client"] = -1
             for idx, client_indices in enumerate(clients_indices):
                 cls.df["client"].iloc[client_indices] = f"client_{idx}"
-            cls.df["original_clients_indices"] = np.arange(cls.df.shape[0])
+            # the following is neede because 1 we need original indices for
+            # correct broadcasting and 2 we need to drop both client and
+            # original indices at inference time where data si not bootstraped
+            # We cannot just stringify the indices as the dump on disk would make
+            # pandas consider them as integers instead of string that is why we
+            # add the _str suffix
+            cls.df["original_clients_indices"] = pd.Series(
+                [f"{e}_str" for e in range(len(cls.df.index))], dtype="string"
+            )
 
         cls.fed_iptw.fit(
             data=cls.df,
@@ -163,6 +171,7 @@ class TestBtstFedECAEnd2End(TestFedECAEnd2End):
             clients_btst_samples.append(current_sampled_points)
 
         def bootstrap_function(data, seed):
+            data = copy.deepcopy(data)
             if not isinstance(seed, int):
                 rng = copy.deepcopy(seed)
             else:
@@ -175,6 +184,10 @@ class TestBtstFedECAEnd2End(TestFedECAEnd2End):
             client_id = data["client"].iloc[0]
             data = data.drop(columns=["client"])
             sampled_rows = clients_btst_samples[bootstrap_id][client_id]
+            # We convert it back to int
+            data["original_clients_indices"] = [
+                int(e.split("_")[0]) for e in data["original_clients_indices"].tolist()
+            ]
             # We assert this is indeed a sampling of rows of this client
             assert all(
                 [
@@ -207,5 +220,4 @@ class TestBtstFedECAEnd2End(TestFedECAEnd2End):
 
     def test_matching(self):
         """Changing tolerance as we can't match precise seeds in bootstrap."""
-        breakpoint()
         super().test_matching(rtol=0.2)

@@ -11,6 +11,7 @@ import lifelines
 import numpy as np
 import pandas as pd
 import torch
+from pandas.api.types import is_numeric_dtype
 from sklearn.metrics import accuracy_score
 from substrafl.dependency import Dependency
 from substrafl.evaluation_strategy import EvaluationStrategy
@@ -390,7 +391,7 @@ def get_outmodel_function(
 
 
 class SubstraflTorchDataset(torch.utils.data.Dataset):
-    """Substra toch dataset class."""
+    """Substra torch dataset class."""
 
     def __init__(
         self,
@@ -425,7 +426,16 @@ class SubstraflTorchDataset(torch.utils.data.Dataset):
         self.is_inference = is_inference
         self.target_columns = target_columns
         self.columns_to_drop = list(set(columns_to_drop + self.target_columns))
-        self.x = self.data.drop(columns=self.columns_to_drop).to_numpy().astype(dtype)
+
+        string_columns = [
+            col for col in self.data.columns if not (is_numeric_dtype(self.data[col]))
+        ]
+        self.x = (
+            self.data.drop(columns=(self.columns_to_drop + string_columns))
+            .to_numpy()
+            .astype(dtype)
+        )
+
         self.y = self.data[self.target_columns].to_numpy().astype(dtype)
         self.return_torch_tensors = return_torch_tensors
 
