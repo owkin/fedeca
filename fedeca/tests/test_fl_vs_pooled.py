@@ -53,6 +53,7 @@ class TestFedECAEnd2End(TestTempDir):
         cls.variance_method = variance_method
         cls.ndim = ndim
         cls.bootstrap_seeds = bootstrap_seeds
+        cls.n_bootstrap = len(bootstrap_seeds)
         data = CoxData(seed=cls.seed, n_samples=cls.nsamples, ndim=cls.ndim)
         df = data.generate_dataframe()
         cls.df = df.drop(columns=["propensity_scores"], axis=1)
@@ -66,6 +67,7 @@ class TestFedECAEnd2End(TestTempDir):
             duration_col=cls._duration_col,
             variance_method=cls.variance_method,
             seed=cls.seed,
+            n_bootstrap=cls.n_bootstrap,
         )
         cls.pooled_iptw.fit(cls.df)
         cls.pooled_iptw_results = cls.pooled_iptw.results_
@@ -75,7 +77,7 @@ class TestFedECAEnd2End(TestTempDir):
             treated_col=cls._treated_col,
             duration_col=cls._duration_col,
             event_col=cls._event_col,
-            num_rounds_list=[20, 20],
+            num_rounds_list=[50, 50],
         )
 
         if variance_method == "bootstrap":
@@ -136,14 +138,14 @@ class TestRobustFedECAEnd2End(TestFedECAEnd2End):
         super().setUpClass(variance_method="robust")
 
 
-# TODO re-enable when we can match each seed perfectly
 class TestBtstFedECAEnd2End(TestFedECAEnd2End):
     """BtstIPTW tests class."""
 
     @classmethod
-    def setUpClass(cls, seed=42):
+    def setUpClass(cls, seed=42, n_bootstrap=2):
         """Use parent class setup with robust=True."""
         bootstrap_seeds = []
+        cls.n_bootstrap = n_bootstrap
         # First one called in init of the class of PooledIPTW
         cls.seed = np.random.default_rng(seed)
         # Second one called when calling bootstrap_std
@@ -158,27 +160,30 @@ class TestBtstFedECAEnd2End(TestFedECAEnd2End):
         )
         bootstrap_seeds = []
         clients_btst_samples = []
-        for _ in range(200):
+        for _ in range(cls.n_bootstrap):
             rng = np.random.default_rng(cls.seed)
             rng_copy = copy.deepcopy(rng)
             bootstrap_seeds.append(rng_copy)
             new_df = df.sample(df.shape[0], replace=True, random_state=rng)
             current_sampled_points = {}
             for idx, client_indices in enumerate(clients_indices):
-                current_sampled_points[f"client_{idx}"] = list(
-                    set(new_df.index).intersection(client_indices)
-                )
+                # One cannot use sets as there are duplicates in the indices
+                current_sampled_points[f"client_{idx}"] = [
+                    idx for idx in new_df.index if idx in client_indices
+                ]
+
             clients_btst_samples.append(current_sampled_points)
 
         def bootstrap_function(data, seed):
             data = copy.deepcopy(data)
             if not isinstance(seed, int):
                 rng = copy.deepcopy(seed)
+                bootstrap_id = [b.__getstate__() for b in bootstrap_seeds].index(
+                    rng.__getstate__()
+                )
             else:
                 rng = seed
-            bootstrap_id = [b.__getstate__() for b in bootstrap_seeds].index(
-                rng.__getstate__()
-            )
+                bootstrap_id = bootstrap_seeds.index(rng)
 
             assert data["client"].nunique() == 1
             client_id = data["client"].iloc[0]
@@ -214,10 +219,10 @@ class TestBtstFedECAEnd2End(TestFedECAEnd2End):
         super().setUpClass(
             variance_method="bootstrap",
             bootstrap_seeds=bootstrap_seeds,
-            seed=seed,
+            seed=42,
             bootstrap_function=bootstrap_function,
         )
 
     def test_matching(self):
         """Changing tolerance as we can't match precise seeds in bootstrap."""
-        super().test_matching(rtol=0.2)
+        super().test_matching(rtol=0.1)

@@ -66,7 +66,7 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
         ps_col="propensity_scores",
         num_rounds_list: list[int] = [10, 10],
         damping_factor_nr: float = 0.8,
-        l2_coeff_nr: float = 1e-6,
+        l2_coeff_nr: float = 0.0,
         standardize_data: bool = True,
         penalizer: float = 0.0,
         l1_ratio: float = 1.0,
@@ -119,7 +119,7 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
         damping_factor_nr : float, optional
             Damping factor for natural gradient regularization, by default 0.8.
         l2_coeff_nr : float, optional
-            L2 regularization coefficient for natural gradient, by default 1e-6.
+            L2 regularization coefficient for natural gradient, by default 0.0.
         standardize_data : bool, optional
             Whether to standardize data before training, by default True.
         penalizer : float, optional

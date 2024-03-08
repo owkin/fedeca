@@ -122,7 +122,8 @@ class BootstrapMixin(BootstrapMixinProtocol):
             data_resampled = self.bootstrap_sample(data, rng)
             return np.array(self.point_estimate(data_resampled))
 
-        std = np.std([bootstrap_coef() for _ in range(n_bootstrap)], axis=0)
+        final_params_array = [bootstrap_coef() for _ in range(n_bootstrap)]
+        std = np.std(final_params_array, axis=0)
         return std
 
 
