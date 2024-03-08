@@ -965,7 +965,7 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
                 (self.final_params_array.shape[1], self.final_params_array.shape[1])
             )
 
-        # The final params vector is either the params wo bootstrap or the mean
+        # The final params vector is the params wo bootstrap
 
         summary = compute_summary_function(
             np.mean(self.final_params_array, axis=0), self.variance_matrix, alpha
