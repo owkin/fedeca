@@ -77,7 +77,7 @@ class TestFedECAEnd2End(TestTempDir):
             treated_col=cls._treated_col,
             duration_col=cls._duration_col,
             event_col=cls._event_col,
-            num_rounds_list=[50, 50],
+            num_rounds_list=[20, 20],
         )
 
         if variance_method == "bootstrap":
@@ -142,7 +142,7 @@ class TestBtstFedECAEnd2End(TestFedECAEnd2End):
     """BtstIPTW tests class."""
 
     @classmethod
-    def setUpClass(cls, seed=42, n_bootstrap=2):
+    def setUpClass(cls, seed=42, n_bootstrap=200):
         """Use parent class setup with robust=True."""
         bootstrap_seeds = []
         cls.n_bootstrap = n_bootstrap
