@@ -239,12 +239,9 @@ def single_experiment(
                     .transpose()
                     .add_prefix("smd_weighted_")
                 )
-
+            breakpoint()
             # Check special case of FedECA
-            if (
-                log_likelihood := getattr(model, "ll", None)  # noqa: E231, E999, E251
-            ) is None:
-                log_likelihood = model.lls[0]
+            log_likelihood = model.log_likelihood_
 
             if name != "FedECA":
                 backend_type = "N/A"
