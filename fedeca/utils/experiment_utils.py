@@ -190,8 +190,11 @@ def single_experiment(
             if backend_type == "remote":
                 fit_fedeca["urls"] = fit_fedeca["urls"][: fit_fedeca["n_clients"]]
                 fit_fedeca["tokens"] = [
-                    open(f"/home/owkin/tokens/api_key{i + 1}", "r").read()
-                    for i in range(1, fit_fedeca["n_clients"] + 1)
+                    open(
+                        f"/home/owkin/tokens/api_key{i + 1}",
+                        "r",
+                    ).read()
+                    for i in range(0, fit_fedeca["n_clients"])
                 ]
 
             model.fit(data_fedeca, targets, **fit_fedeca)
@@ -241,7 +244,7 @@ def single_experiment(
             if (
                 log_likelihood := getattr(model, "ll", None)  # noqa: E231, E999, E251
             ) is None:
-                log_likelihood = model.log_likelihood_
+                log_likelihood = model.lls[0]
 
             if name != "FedECA":
                 backend_type = "N/A"
