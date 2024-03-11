@@ -239,8 +239,7 @@ def single_experiment(
                     .transpose()
                     .add_prefix("smd_weighted_")
                 )
-            breakpoint()
-            # Check special case of FedECA
+
             log_likelihood = model.log_likelihood_
 
             if name != "FedECA":
