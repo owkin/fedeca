@@ -12,7 +12,8 @@ docs = [
     "sphinx_autodoc_typehints",
     "sphinxcontrib.bibtex",
 ]
-all_extra = deps + tests + docs
+dev = ["flake8", "flake8-docstrings", "pre-commit"]
+all_extra = deps + tests + docs + dev
 
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
