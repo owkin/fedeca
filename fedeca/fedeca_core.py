@@ -844,8 +844,9 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
         self.get_final_cox_model()
         logger.info("Computing summary...")
         self.compute_summary()
-        logger.info("Final partial log-likelihood.s:")
-        logger.info(self.lls)
+        logger.info("Final partial log-likelihood:")
+        self.log_likelihood_ = self.lls[0]
+        logger.info(self.log_likelihood_)
         logger.info(self.results_)
 
     def get_final_cox_model(self):

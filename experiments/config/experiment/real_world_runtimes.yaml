@@ -35,7 +35,7 @@ fit_fedeca:
   data_path: "/home/owkin/real-world/"
   # We start on the second url the first is reserved for the server
   urls: ["https://api.org-2.fedeca-rw.cg.owkin.tech", "https://api.org-3.fedeca-rw.cg.owkin.tech", "https://api.org-4.fedeca-rw.cg.owkin.tech", "https://api.org-5.fedeca-rw.cg.owkin.tech", "https://api.org-6.fedeca-rw.cg.owkin.tech", "https://api.org-7.fedeca-rw.cg.owkin.tech", "https://api.org-8.fedeca-rw.cg.owkin.tech", "https://api.org-9.fedeca-rw.cg.owkin.tech", "https://api.org-10.fedeca-rw.cg.owkin.tech", "https://api.org-11.fedeca-rw.cg.owkin.tech"]
-  server_org_id: 'MyOrg1MSP'
+  server_org_id: 'Org1MSP'
 
 models_common:
   treated_col: "treatment_allocation"

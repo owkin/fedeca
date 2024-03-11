@@ -131,9 +131,8 @@ class Experiment:
             algo_dependencies = []
 
         self.algo_dependencies = Dependency(
-            pypi_dependencies=["numpy==1.23.1", "torch==1.11.0", "lifelines", "pandas"]
-            + algo_dependencies,
-            local_dependencies=[wheel_path],
+            pypi_dependencies=algo_dependencies,
+            local_installable_dependencies=[wheel_path],
         )
 
         self.experiment_path = str(Path(self.experiment_folder))
