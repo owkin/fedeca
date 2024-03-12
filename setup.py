@@ -31,7 +31,7 @@ setup(
     install_requires=[
         # We cannot use the git+https / git+ssh syntax here because of docker
         # build issues related to git not being installed
-        "substrafl @ https://github.com/Substra/substrafl/archive/refs/heads/main.zip",  # noqa: E501
+        "substrafl==0.44.0",
         "argparse",
         "numpy",
         "pandas",
