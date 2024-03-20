@@ -500,6 +500,9 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
         super().reset_experiment()
         if hasattr(self, "propensity_model"):
             self.propensity_model = None
+        if hasattr(self, "propensity_models"):
+            self.propensity_models = None
+        self.logreg_model = LogisticRegressionTorch(self.ndim, self.torch_dtype)
 
     def fit(
         self,
