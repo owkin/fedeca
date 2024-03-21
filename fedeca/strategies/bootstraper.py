@@ -390,8 +390,7 @@ def _bootstrap_local_function(
                 # breakpoint()
                 print(f"Bootstrapping: seed seeds[{idx}]={seed}")
                 data = bootstrap_function(data=data_from_opener, seed=seed)
-                if seed == 48:
-                    breakpoint()
+
             if shared_state is None:
                 res = getattr(getattr(self, individual_task_type)[idx], local_name)(
                     data_from_opener=data, _skip=True
