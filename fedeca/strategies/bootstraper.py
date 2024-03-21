@@ -387,7 +387,7 @@ def _bootstrap_local_function(
             if idx == 0:
                 data = data_from_opener
             else:
-                # breakpoint()
+                # Useful for remote debugging if logs are enabled
                 print(f"Bootstrapping: seed seeds[{idx}]={seed}")
                 data = bootstrap_function(data=data_from_opener, seed=seed)
 
