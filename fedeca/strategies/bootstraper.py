@@ -514,8 +514,7 @@ def make_bootstrap_metric_function(metric_functions: dict) -> dict:
 if __name__ == "__main__":
     from substrafl.algorithms.pytorch import TorchFedAvgAlgo
 
-    # TODO replace by substrafl import when it's merged
-    # from fedeca.algorithms.torch_newton_raphson_symmetrised import TorchSNewtonRaphsonAlgo as TorchNewtonRaphsonAlgo # noqa: E501
+    # from substrafl.algorithms.pytorch import TorchNewtonRaphsonAlgo
     from substrafl.dependency import Dependency
     from substrafl.evaluation_strategy import EvaluationStrategy
     from substrafl.experiment import execute_experiment

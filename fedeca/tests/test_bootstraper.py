@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 import pytest
 import torch
-from substrafl.algorithms.pytorch import TorchFedAvgAlgo
+from substrafl.algorithms.pytorch import TorchFedAvgAlgo, TorchNewtonRaphsonAlgo
 from substrafl.dependency import Dependency
 from substrafl.experiment import execute_experiment
 from substrafl.index_generator import NpIndexGenerator
@@ -20,11 +20,6 @@ from substrafl.strategies import FedAvg, NewtonRaphson
 
 from fedeca import FedECA, LogisticRegressionTorch
 from fedeca.algorithms import TorchWebDiscoAlgo
-
-# TODO replace by substrafl import when it's merged
-from fedeca.algorithms.torch_newton_raphson_symmetrised import (
-    TorchSNewtonRaphsonAlgo as TorchNewtonRaphsonAlgo,
-)
 from fedeca.strategies import WebDisco, make_bootstrap_strategy
 from fedeca.utils import make_accuracy_function, make_substrafl_torch_dataset_class
 from fedeca.utils.data_utils import split_dataframe_across_clients, uniform_split
