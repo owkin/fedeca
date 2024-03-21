@@ -209,11 +209,7 @@ def make_bootstrap_strategy(
 
         def save_local_state(self, path: Path) -> "TorchAlgo":
             # We save all bootstrapped states in different subfolders
-            # It assumes at this point checkpoints_list has been populated
-            # if it exists
 
-            # The reason for the if is because of initialize functions which don't
-            # populate checkpoints_list
             with tempfile.TemporaryDirectory() as tmpdirname:
                 paths_to_checkpoints = []
                 for idx, algo in enumerate(self.individual_algos):
@@ -257,10 +253,10 @@ def make_bootstrap_strategy(
                 full_data_checkpoint = full_data_checkpoints[0]
 
                 checkpoints_found = sorted(
-                    [p for p in Path(tmpdirname).glob("**/bootstrap_*")]
+                    [p for p in Path(tmpdirname).glob("**/bootstrap_*")],
+                    key=lambda x: int(x.stem.split("_")[-1]),
                 )
                 checkpoints_found = [full_data_checkpoint] + checkpoints_found
-                self.checkpoints_list = [None] * len(checkpoints_found)
                 for idx, file in enumerate(checkpoints_found):
                     self.individual_algos[idx].load_local_state(file)
 
@@ -391,7 +387,11 @@ def _bootstrap_local_function(
             if idx == 0:
                 data = data_from_opener
             else:
+                # breakpoint()
+                print(f"Bootstrapping: seed seeds[{idx}]={seed}")
                 data = bootstrap_function(data=data_from_opener, seed=seed)
+                if seed == 48:
+                    breakpoint()
             if shared_state is None:
                 res = getattr(getattr(self, individual_task_type)[idx], local_name)(
                     data_from_opener=data, _skip=True
