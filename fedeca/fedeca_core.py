@@ -12,6 +12,7 @@ import torch
 from pandas.api.types import is_numeric_dtype
 from scipy.linalg import inv
 from substra.sdk.models import ComputePlanStatus
+from substrafl.algorithms.pytorch import TorchNewtonRaphsonAlgo
 from substrafl.model_loading import download_algo_state
 from substrafl.nodes import AggregationNode, TrainDataNode
 from substrafl.strategies import FedAvg, NewtonRaphson
@@ -20,11 +21,6 @@ from torch.optim import SGD, Optimizer
 
 from fedeca.algorithms import TorchWebDiscoAlgo
 from fedeca.algorithms.torch_dp_fed_avg_algo import TorchDPFedAvgAlgo
-
-# TODO replace by substrafl import when it's merged
-from fedeca.algorithms.torch_newton_raphson_symmetrised import (
-    TorchSNewtonRaphsonAlgo as TorchNewtonRaphsonAlgo,
-)
 from fedeca.analytics import RobustCoxVariance, RobustCoxVarianceAlgo
 from fedeca.strategies import WebDisco
 from fedeca.strategies.bootstraper import make_bootstrap_strategy
