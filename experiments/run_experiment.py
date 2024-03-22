@@ -8,7 +8,7 @@ import numpy as np
 from hydra.core.hydra_config import HydraConfig
 from omegaconf import DictConfig, open_dict
 
-from fedeca.utils.experiment_utils import single_experiment
+from experiments.synthetic import single_experiment
 from fedeca.utils.survival_utils import BaseSurvivalEstimator, CoxData
 
 

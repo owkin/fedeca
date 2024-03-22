@@ -6,13 +6,13 @@ import numpy as np
 import pandas as pd
 import yaml
 
+from experiments.synthetic import single_experiment
 from fedeca.competitors import (
     CovariateAdjusted,
     MatchingAjudsted,
     NaiveComparison,
     PooledIPTW,
 )
-from fedeca.utils.experiment_utils import single_experiment
 from fedeca.utils.survival_utils import CoxData
 
 if __name__ == "__main__":
