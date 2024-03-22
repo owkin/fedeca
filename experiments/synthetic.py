@@ -39,8 +39,8 @@ def single_experiment(
         Data generator instance.
     n_samples : int
         Number of samples to generate.
-    models : Mapping[str, BaseSurvivalEstimator]
-        Dictionary of survival models to evaluate.
+    model_configs : Mapping[str, dict | DictConfig]
+        Dictionary of configs used to initialize survival models.
     duration_col : str, optional
         Column name for event duration, by default "time".
     event_col : str, optional
