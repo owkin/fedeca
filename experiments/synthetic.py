@@ -97,7 +97,9 @@ def single_experiment(
     )
     ate_true = data_gen.average_treatment_effect_
     percent_ties = data_gen.percent_ties
-    models_fit_times = {model_name: None for model_name, _ in models.items()}
+    models_fit_times: dict[str, Optional[float]] = {
+        model_name: None for model_name, _ in models.items()
+    }
 
     for name, model in models.items():
         model.treated_col = treated_col
@@ -130,6 +132,9 @@ def single_experiment(
 
             models_fit_times[name] = model.total_fit_time
         else:
+            backend_type = "N/A"
+            dp_target_epsilon = np.nan
+            dp_target_delta = np.nan
             try:
                 t1 = time.time()
                 model.fit(data, targets)
@@ -165,11 +170,6 @@ def single_experiment(
                 )
 
             log_likelihood = model.log_likelihood_
-
-            if name != "FedECA":
-                backend_type = "N/A"
-                dp_target_epsilon = np.nan
-                dp_target_delta = np.nan
 
             df_res_single = model.results_.assign(
                 method=name,
