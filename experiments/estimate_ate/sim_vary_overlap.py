@@ -1,6 +1,7 @@
 """Simulation data for FedECA."""
 import pickle
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -27,34 +28,33 @@ if __name__ == "__main__":
     EVENT = "event"
     TIME = "time"
     PS = "propensity_scores"
-    iptw = PooledIPTW(
-        treated_col=TREATED,
-        event_col=EVENT,
-        duration_col=TIME,
-        effect="ATE",
-    )
-    maic = MatchingAjudsted(
-        treated_col=TREATED,
-        event_col=EVENT,
-        duration_col=TIME,
-    )
-    covadjust = CovariateAdjusted(
-        treated_col=TREATED,
-        event_col=EVENT,
-        duration_col=TIME,
-    )
-    naive = NaiveComparison(
-        treated_col=TREATED,
-        event_col=EVENT,
-        duration_col=TIME,
-    )
-    models = {
+    config_base: dict[str, Any] = {
+        "treated_col": TREATED,
+        "event_col": EVENT,
+        "duration_col": TIME,
+    }
+
+    iptw = config_base.copy()
+    iptw["_target_"] = PooledIPTW
+    iptw["effect"] = "ATE"
+
+    maic = config_base.copy()
+    maic["_target_"] = MatchingAjudsted
+
+    covadjust = config_base.copy()
+    covadjust["_target_"] = CovariateAdjusted
+
+    naive = config_base.copy()
+    naive["_target_"] = NaiveComparison
+
+    model_configs = {
         "IPTW": iptw,
         "MAIC": maic,
         # "CovAdj": covadjust,
         "Naive": naive,
         "OracleIPTW": iptw,
     }
+
     config_experiment = config["parameters"]["experiments"]
     results = []
     list_overlap = config_experiment["overlap"]
@@ -75,7 +75,7 @@ if __name__ == "__main__":
             res_single_exp = single_experiment(
                 coxdata,
                 n_samples=config_experiment["n_samples"],
-                models=models,
+                model_configs=model_configs,
                 treated_col=TREATED,
                 event_col=EVENT,
                 duration_col=TIME,

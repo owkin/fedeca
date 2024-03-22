@@ -6,20 +6,22 @@ import time
 from collections.abc import Mapping
 from typing import Any, Optional
 
+import hydra
 import numpy as np
 import pandas as pd
 from lifelines.exceptions import ConvergenceError
+from omegaconf.dictconfig import DictConfig
 
 from fedeca.fedeca_core import FedECA
 from fedeca.utils.experiment_utils import effective_sample_size, std_mean_differences
-from fedeca.utils.survival_utils import BaseSurvivalEstimator, CoxData
+from fedeca.utils.survival_utils import CoxData
 from fedeca.utils.typing import _SeedType
 
 
 def single_experiment(
     data_gen: CoxData,
     n_samples: int,
-    models: Mapping[str, BaseSurvivalEstimator],
+    model_configs: Mapping[str, dict | DictConfig],
     duration_col: str = "time",
     event_col: str = "event",
     treated_col: str = "treatment",
@@ -67,6 +69,13 @@ def single_experiment(
     if fit_fedeca is None:
         fit_fedeca = {}
     rng = np.random.default_rng(seed)
+
+    models = dict(
+        (name, hydra.utils.instantiate(model)) for name, model in model_configs.items()
+    )
+    for model in models.values():
+        model.set_random_state(rng)
+
     # prepare dataframe
     data = data_gen.generate_dataframe(
         n_samples,

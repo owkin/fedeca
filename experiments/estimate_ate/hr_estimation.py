@@ -2,6 +2,7 @@ import argparse
 import pickle
 import re
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -43,27 +44,28 @@ if __name__ == "__main__":
     TREATED = "treatment"
     EVENT = "event"
     TIME = "time"
-    iptw = PooledIPTW(
-        treated_col=TREATED,
-        event_col=EVENT,
-        duration_col=TIME,
-        effect="ATE",
-    )
-    maic = MatchingAjudsted(
-        treated_col=TREATED,
-        event_col=EVENT,
-        duration_col=TIME,
-    )
-    naive = NaiveComparison(
-        treated_col=TREATED,
-        event_col=EVENT,
-        duration_col=TIME,
-    )
-    models = {
+    config_base: dict[str, Any] = {
+        "treated_col": TREATED,
+        "event_col": EVENT,
+        "duration_col": TIME,
+    }
+
+    iptw = config_base.copy()
+    iptw["_target_"] = PooledIPTW
+    iptw["effect"] = "ATE"
+
+    maic = config_base.copy()
+    maic["_target_"] = MatchingAjudsted
+
+    naive = config_base.copy()
+    naive["_target_"] = NaiveComparison
+
+    model_configs = {
         "IPTW": iptw,
         "MAIC": maic,
         "Naive": naive,
     }
+
     config_experiment = config["parameters"]["experiments"]
     df_params = param_grid_from_dict(config_experiment)
     seeds = np.random.SeedSequence(config["seed"]).generate_state(df_params.shape[0])
@@ -83,7 +85,7 @@ if __name__ == "__main__":
             single_experiment(
                 coxdata,
                 n_samples=getattr(row, "n_samples"),
-                models=models,
+                model_configs=model_configs,
                 treated_col=TREATED,
                 event_col=EVENT,
                 duration_col=TIME,

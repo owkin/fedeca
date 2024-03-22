@@ -1,7 +1,6 @@
 """Main module for running hydra config based experiments."""
 import pickle
 import re
-from collections.abc import Mapping
 
 import hydra
 import numpy as np
@@ -9,7 +8,7 @@ from hydra.core.hydra_config import HydraConfig
 from omegaconf import DictConfig, open_dict
 
 from experiments.synthetic import single_experiment
-from fedeca.utils.survival_utils import BaseSurvivalEstimator, CoxData
+from fedeca.utils.survival_utils import CoxData
 
 
 @hydra.main(version_base=None, config_path="config", config_name="default_config")
@@ -37,11 +36,6 @@ def run_experiment(cfg: DictConfig):
     output = f"{config_hydra.sweep.dir}/results_{output}.pkl"
 
     data_gen: CoxData = hydra.utils.instantiate(cfg.data)
-    models: Mapping[str, BaseSurvivalEstimator] = dict(
-        (name, hydra.utils.instantiate(model)) for name, model in cfg.models.items()
-    )
-    for model in models.values():
-        model.set_random_state(data_gen.rng)
     if "fit_fedeca" in cfg.keys():
         fedeca_config = hydra.utils.instantiate(cfg.fit_fedeca)
     else:
@@ -51,7 +45,7 @@ def run_experiment(cfg: DictConfig):
         single_experiment(
             data_gen,
             n_samples=cfg.parameters.n_samples,
-            models=models,
+            model_configs=cfg.models,
             treated_col=models_common.treated_col,
             event_col=models_common.event_col,
             duration_col=models_common.duration_col,
