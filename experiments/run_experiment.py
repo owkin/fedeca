@@ -1,4 +1,5 @@
 """Main module for running hydra config based experiments."""
+
 import pickle
 import re
 
@@ -36,7 +37,7 @@ def run_experiment(cfg: DictConfig):
     output = f"{config_hydra.sweep.dir}/results_{output}.pkl"
 
     data_gen: CoxData = hydra.utils.instantiate(cfg.data)
-    if "fit_fedeca" in cfg.keys():
+    if "fit_fedeca" in cfg:
         fedeca_config = hydra.utils.instantiate(cfg.fit_fedeca)
     else:
         fedeca_config = None
