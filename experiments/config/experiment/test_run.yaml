@@ -1,0 +1,53 @@
+# @package _global_
+name: "Test run"
+
+# initial_seed is used to generate seed for each run
+initial_seed: 42
+
+data:
+  ndim: 2
+  scale_t: 10.0
+  shape_t: 3.0
+  propensity: "linear"
+  standardize_features: False
+
+defaults:
+  - /model@models.IPTW_robust: pooled_iptw
+  - /model@models.MAIC_robust: matching_adjusted
+  - /model@models.FedECA_robust: fl_iptw
+  - _self_
+
+models:
+  IPTW_robust:
+    variance_method: "robust"
+  MAIC_robust:
+    variance_method: "robust"
+  FedECA_robust:
+    ndim: ${data.ndim}
+    num_rounds_list: [10, 10]
+    variance_method: "robust"
+
+# config fit FedECA
+fit_fedeca:
+  n_clients: 2
+  split_method: "split_control_over_centers"
+  split_method_kwargs: {"treatment_info": "treatment_allocation"}
+  backend_type: "simu"
+
+models_common:
+  treated_col: "treatment_allocation"
+  event_col: "event"
+  duration_col: "time"
+
+parameters:
+  n_samples: 1000
+  n_reps: 2
+  return_propensities: False
+  return_weights: False
+
+hydra:
+  sweep:
+    dir: "test_run"
+  sweeper:
+    params:
+      data.cate: 0.4, 1.0
