@@ -226,7 +226,6 @@ def split_dataframe_across_clients(
             # The real dataset object is created in the add_dataset method.
             dataset = DatasetSpec(
                 name=dataset_name,
-                type="csv",
                 data_opener=assets_directory / "csv_opener.py",
                 description=assets_directory / "description.md",
                 permissions=permissions_dataset,
