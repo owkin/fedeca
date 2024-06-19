@@ -155,7 +155,7 @@ list_strategy_params = [
 @pytest.mark.parametrize(
     "strategy_params, num_rounds", product(list_strategy_params, range(1, 2))
 )
-def test_bootstrapping(strategy_params: dict, num_rounds: int):
+def test_bootstrapping_per_client(strategy_params: dict, num_rounds: int):
     """Tests of data generation with constant cate."""
     # Let's generate 1000 data samples with 10 covariates
     data = CoxData(seed=42, n_samples=1000, ndim=50, overlap=10.0, propensity="linear")
@@ -335,7 +335,7 @@ def test_bootstrapping(strategy_params: dict, num_rounds: int):
     shutil.rmtree("./data")
 
 
-def test_bootstrapping_end2end():
+def test_bootstrapping_per_client_end2end():
     """Tests of data generation with constant cate."""
     # Let's generate 1000 data samples with 10 covariates
     data = CoxData(seed=42, n_samples=1000, ndim=50, overlap=10.0, propensity="linear")
@@ -438,3 +438,83 @@ def test_bootstrapping_end2end():
     beta_efficient = fed_iptw.final_params_array.flatten()[1:]
 
     assert np.allclose(beta_inefficient.to_numpy(), beta_efficient.flatten())
+
+
+def test_global_bootstrapping_indices():
+    """Tests of data generation with constant cate."""
+    # Let's generate 1000 data samples with 10 covariates
+    data = CoxData(seed=42, n_samples=1000, ndim=50, overlap=10.0, propensity="linear")
+    original_df = data.generate_dataframe()
+
+    # We remove the true propensity score
+    original_df = original_df.drop(columns=["propensity_scores"], axis=1)
+    clients_indices_list = uniform_split(original_df, N_CLIENTS)
+    dfs = [original_df.iloc[clients_indices_list[i]] for i in range(N_CLIENTS)]
+    for idx_c, df in enumerate(dfs):
+        df["center"] = "client_" + str(idx_c)
+    # Here we would enter the length of the total dataset
+    TOTAL_LENGTH = len(original_df.index)
+    indices = np.arange(TOTAL_LENGTH)
+    np.random.seed(42)
+    # np.random.shuffle(indices)
+    bootstrap_seeds_list = [42, 43, 44, 44]
+    global_btst_indices = {}
+    per_client_btst_indices = {}
+    for seed in bootstrap_seeds_list:
+        per_client_btst_indices[seed] = {}
+        global_indices_list_per_client = [[] for _ in range(N_CLIENTS)]
+        # Avoid edge cases of bootstrap where some clients might not have any data
+        # or not enough data to compute a variance
+        while not all(
+            [
+                len(global_indices) >= 2
+                for global_indices in global_indices_list_per_client
+            ]
+        ):
+            global_indices_list = np.random.choice(
+                indices, size=TOTAL_LENGTH, replace=True
+            )
+            global_indices_list_per_client = []
+            for client_indices in clients_indices_list:
+                global_indices_list_per_client.append(
+                    [
+                        global_idx
+                        for global_idx in global_indices_list
+                        if global_idx in client_indices
+                    ]
+                )
+        global_btst_indices[seed] = global_indices_list
+
+        # Now we "just" need to translate global_indices in per-client indices
+        for idx_c, client_indices in enumerate(clients_indices_list):
+            per_client_btst_indices[seed]["client_" + str(idx_c)] = [
+                clients_indices_list[idx_c].index(global_idx)
+                for global_idx in global_indices_list_per_client[idx_c]
+            ]
+            assert original_df.iloc[global_indices_list_per_client[idx_c]].equals(
+                dfs[idx_c]
+                .iloc[per_client_btst_indices[seed]["client_" + str(idx_c)]]
+                .drop(columns=["center"])
+            )
+
+    def global_bootstrap(data, seed):
+        assert data["center"].nunique() == 1
+        center = data["center"].unique()[0]
+        data = data.drop(columns=["center"])
+        indices_center = per_client_btst_indices[seed][center]
+        return data.iloc[indices_center]
+
+    for seed in bootstrap_seeds_list:
+        global_indices_list_per_client = []
+        for client_indices in clients_indices_list:
+            global_indices_list_per_client.append(
+                [
+                    global_idx
+                    for global_idx in global_btst_indices[seed]
+                    if global_idx in client_indices
+                ]
+            )
+        for client in range(N_CLIENTS):
+            assert global_bootstrap(dfs[client], seed).equals(
+                original_df.iloc[global_indices_list_per_client[client]]
+            )
