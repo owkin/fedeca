@@ -12,6 +12,7 @@ def make_bootstrap_function(
     n_bootstrap=200,
     bootstrap_seeds: Union[None, list] = None,
     client_identifier: Union[None, str] = None,
+    clients_names: Union[None, list] = None,
 ):
     """Create a function that will return a bootstrap sample for a given seed.
 
@@ -33,8 +34,13 @@ def make_bootstrap_function(
     """
     global_btst_indices = {}
     per_client_btst_indices = {}
-    rng = np.random.default_rng(seed)
     indices = np.arange(sum(clients_sizes))
+    if clients_names is not None:
+        assert len(clients_names) == len(
+            clients_sizes
+        ), "You should give as many clients names as there are clients"
+    else:
+        clients_names = [f"client{i}" for i in range(len(clients_sizes))]
     # A bit silly but we want to follow exactly the BootstrapMixin sampling
     global_df = pd.DataFrame({"indices": indices})
     bootstrap_sample = partial(BootstrapMixin.bootstrap_sample, self=None)
@@ -44,20 +50,22 @@ def make_bootstrap_function(
     start_idx = 0
     for client_size in clients_sizes:
         end_idx = start_idx + client_size
-        clients_indices_list.append(indices[start_idx:end_idx])
+        clients_indices_list.append(indices[start_idx:end_idx].tolist())
         start_idx = end_idx
     if not isinstance(bootstrap_seeds, list):
         # It is either a number or None
         rng = np.random.default_rng(bootstrap_seeds)
-        bootstrap_seeds_list = bootstrap_seeds
-    else:
-        rng = None
-        assert n_bootstrap is not None
         # We need to make sure the seeds are different as we create a dict with
         # keys being the seed but we want to make sure that the seeds are not valid
         # seed as this is not seeded
-        bootstrap_seeds_list = [-seed for seed in np.arrange(n_bootstrap).tolist()]
-    client_identifier = client_identifier if client_identifier is not None else "center"
+        assert n_bootstrap is not None
+        bootstrap_seeds_list = [-seed for seed in np.arange(n_bootstrap).tolist()]
+    else:
+        rng = None
+        assert n_bootstrap is not None
+        bootstrap_seeds_list = bootstrap_seeds
+
+    client_identifier = client_identifier if client_identifier is not None else "client"
     for seed in bootstrap_seeds_list:
         per_client_btst_indices[seed] = {}
         global_indices_list_per_client = [[] for _ in range(len(clients_sizes))]
@@ -75,7 +83,7 @@ def make_bootstrap_function(
             else:
                 temp_rng = rng
             # This changes temp_rng (hence rng) on purpose
-            global_indices_list = bootstrap_sample(global_df, temp_rng)[
+            global_indices_list = bootstrap_sample(data=global_df, seed=temp_rng)[
                 "indices"
             ].tolist()
             global_indices_list_per_client = []
@@ -91,15 +99,15 @@ def make_bootstrap_function(
 
         # Now we "just" need to translate global_indices in per-client indices
         for idx_c, client_indices in enumerate(clients_indices_list):
-            per_client_btst_indices[seed]["client_" + str(idx_c)] = [
+            per_client_btst_indices[seed][clients_names[idx_c]] = [
                 clients_indices_list[idx_c].index(global_idx)
                 for global_idx in global_indices_list_per_client[idx_c]
             ]
 
     def global_bootstrap(data, seed):
         assert (
-            client_identifier in data
-        ), f"Data in each center should have a center identifier {center_identifier}"
+            client_identifier in data.columns
+        ), f"Data in each center should have a center identifier {client_identifier}"
         assert (
             data[client_identifier].nunique() == 1
         ), "Data from one center should come from only one center"
@@ -109,4 +117,4 @@ def make_bootstrap_function(
         indices_center = per_client_btst_indices[seed][center]
         return data.iloc[indices_center]
 
-    return global_bootstrap, bootstrap_seeds_list
+    return global_bootstrap, bootstrap_seeds_list, global_btst_indices

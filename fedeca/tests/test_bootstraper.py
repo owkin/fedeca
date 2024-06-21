@@ -472,7 +472,7 @@ def test_global_bootstrapping_indices():
                     if global_idx in client_indices
                 ]
             )
-        for client in range(len(N_CLIENTS)):
+        for client in range(N_CLIENTS):
             assert global_bootstrap(dfs[client], seed).equals(
                 original_df.iloc[global_indices_list_per_client[client]]
             )
