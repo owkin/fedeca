@@ -34,7 +34,7 @@ from fedeca.utils import (
     make_c_index_function,
     make_substrafl_torch_dataset_class,
 )
-from fedeca.utils.bootstrap_utils import make_bootstrap_function
+from fedeca.utils.bootstrap_utils import make_global_bootstrap_function
 from fedeca.utils.data_utils import split_dataframe_across_clients
 from fedeca.utils.substra_utils import Client
 from fedeca.utils.substrafl_utils import (
