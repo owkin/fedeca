@@ -35,6 +35,7 @@ from fedeca.utils import (
     make_substrafl_torch_dataset_class,
 )
 from fedeca.utils.data_utils import split_dataframe_across_clients
+from fedeca.utils.substra_utils import Client
 from fedeca.utils.substrafl_utils import (
     get_outmodel_function,
     get_simu_state_from_round,
@@ -89,6 +90,7 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
         sleep_time: int = 30,
         fedeca_path: Union[None, str] = None,
         evaluation_frequency=None,
+        partner_client: Union[None, Client] = None,
     ):
         """Initialize the Federated IPTW class.
 
@@ -191,8 +193,8 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
             Path towards the fedeca reository.
         evaluation_frequency:
             Evaluation_frequency.
-        **kwargs
-            Additional keyword arguments.
+        partner_client: Union[None, Client]
+            The client of the partner if we are in remote mode.
         """
         self.standardize_data = standardize_data
         assert dtype in ["float64", "float32", "float16"]
@@ -236,6 +238,7 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
         self.experiment_folder = experiment_folder
         self.fedeca_path = fedeca_path
         self.evaluation_frequency = evaluation_frequency
+        self.partner_client = partner_client
         self.dtype = dtype
 
         kwargs = {}
@@ -341,6 +344,7 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
         kwargs["fedeca_path"] = self.fedeca_path
         kwargs["algo_dependencies"] = self.dependencies
         kwargs["evaluation_frequency"] = self.evaluation_frequency
+        kwargs["partner_client"] = self.partner_client
 
         # TODO: test_data_nodes and evaluation_frequency are not passed
 
@@ -779,7 +783,9 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
         # we run the IPTW Cox
         if not (self.simu_mode):
             algo = download_algo_state(
-                client=self.ds_client,
+                client=self.ds_client
+                if self.partner_client is None
+                else self.partner_client,
                 compute_plan_key=self.compute_plan_keys[0].key,
                 round_idx=None,
             )
@@ -863,7 +869,7 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
             self.computed_stds_list,
             self.global_robust_statistics,
         ) = get_final_cox_model_function(
-            self.ds_client,
+            self.ds_client if self.partner_client is None else self.partner_client,
             cp,
             self.num_rounds_list[1],
             self.standardize_data,
@@ -939,6 +945,7 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
 
                 if not self.simu_mode:
                     self.check_cp_status(idx=2)
+                    # We assume that the builder of tasks is the
                     self.variance_matrix = get_outmodel_function(
                         "Aggregating Qk into Q",
                         self.ds_client,

@@ -21,6 +21,7 @@ from substrafl.nodes.schemas import OutputIdentifiers, SimuStatesMemory
 
 import fedeca
 from fedeca.utils.data_utils import split_dataframe_across_clients
+from fedeca.utils.substra_utils import Client
 
 try:
     import git
@@ -47,7 +48,7 @@ class Experiment:
         self,
         strategies: list,
         num_rounds_list: list[int],
-        ds_client=None,
+        ds_client: Union[Client, None] = None,
         train_data_nodes: Union[list[TrainDataNode], None] = None,
         test_data_nodes: Union[list[TestDataNode], None] = None,
         aggregation_node: Union[AggregationNode, None] = None,
@@ -56,12 +57,13 @@ class Experiment:
         clean_models: bool = False,
         fedeca_path: Union[str, None] = None,
         algo_dependencies: Union[list, None] = None,
+        partner_client: Union[Client, None] = None,
     ):
         """Initialize Experiment class.
 
         Parameters
         ----------
-        ds_client : fl.client.Client
+        ds_client : Client
             Federated Learning client object used to register computations.
         strategies : list
             List of strategies to run.
@@ -84,6 +86,8 @@ class Experiment:
             Path to the FedECA package, by default None.
         algo_dependencies : list, optional
             List of algorithm dependencies, by default [].
+        partner_client : Client, by default None.
+            Partner client used to retrieve models, by default None.
         """
         assert len(num_rounds_list) == len(strategies)
         self.strategies = strategies
@@ -92,6 +96,7 @@ class Experiment:
         self.train_data_nodes = train_data_nodes
         self.test_data_nodes = test_data_nodes
         self.simu_mode = False
+        self.partner_client = partner_client
 
         if self.test_data_nodes is None:
             if self.train_data_nodes is not None:
