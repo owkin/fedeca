@@ -19,6 +19,7 @@ from substrafl.experiment import execute_experiment, simulate_experiment
 from substrafl.nodes import AggregationNode, TestDataNode, TrainDataNode
 from substrafl.nodes.schemas import OutputIdentifiers, SimuStatesMemory
 
+import fedeca
 from fedeca.utils.data_utils import split_dataframe_across_clients
 
 try:
@@ -111,7 +112,7 @@ class Experiment:
 
         # Packaging the right dependencies
         if fedeca_path is None:
-            fedeca_path = os.getcwd()
+            fedeca_path = fedeca.__path__[0]
         repo_folder = Path(
             git.Repo(fedeca_path, search_parent_directories=True).working_dir
         ).resolve()
