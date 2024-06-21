@@ -34,6 +34,7 @@ from fedeca.utils import (
     make_c_index_function,
     make_substrafl_torch_dataset_class,
 )
+from fedeca.utils.bootstrap_utils import make_bootstrap_function
 from fedeca.utils.data_utils import split_dataframe_across_clients
 from fedeca.utils.substra_utils import Client
 from fedeca.utils.substrafl_utils import (
@@ -74,7 +75,10 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
         variance_method: str = "naïve",
         n_bootstrap: Union[int, None] = 200,
         bootstrap_seeds: Union[list[int], None] = None,
-        bootstrap_function: Union[Callable, None] = None,
+        bootstrap_function: Union[Callable, str] = "global",
+        clients_sizes: Union[list, None] = None,
+        client_identifier: str = "client",
+        clients_names: Union[list, None] = None,
         dp_target_epsilon: Union[float, None] = None,
         dp_target_delta: Union[float, None] = None,
         dp_max_grad_norm: Union[float, None] = None,
@@ -155,9 +159,21 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
             The list of seeds used for bootstrapping random states.
             If None will generate n_bootstrap randomly, in the presence
             of both allways use bootstrap_seeds.
-        bootstrap_function: Union[Callable, None]
+        bootstrap_function : Union[Callable, str]
             The bootstrap function to use for instance if it is necessary to
-            mimic perfectly a global sampling.
+            mimic perfectly a global sampling. For now two are implemented by
+            default "global" and "per-client", which samples with replacement
+            from the global data or from the client data respectively using
+            the seeds given in bootstrap_seeds.
+        clients_sizes : Union[list, None]
+            The sizes of the clients to use for the global bootstrap need to be
+            ordered exactly as the train data nodes.
+        client_identifier: str
+            The column name which contains the client identifier for the global
+            bootstrap. By default "client".
+        clients_names: Union[list, None]
+            The different names found in the client_identifier column to categorize
+            each client.
         dp_target_epsilon: float
             The target epsilon for (epsilon, delta)-differential
             private guarantee. Defaults to None.
@@ -227,7 +243,47 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
         self.is_bootstrap = variance_method == "bootstrap"
         self.n_bootstrap = n_bootstrap
         self.bootstrap_seeds = bootstrap_seeds
+        self.clients_sizes = clients_sizes
+        self.client_identifier = client_identifier
+        self.clients_names = clients_names
         self.bootstrap_function = bootstrap_function
+
+        if isinstance(bootstrap_function, str):
+            assert self.bootstrap_function in ["global", "per-client"], "bootstrap"
+            f" {self.bootstrap_function} not implemented. Only 'global' and"
+            " 'per-client' are possible. If you wish to do custom bootstrapping "
+            " use a Callable f(data: pd.DataFrame, seed: int) -> pd.DataFrame."
+            assert (
+                self.clients_sizes is not None
+            ), "You need to provide the size of each client in a list"
+            self.clients_names = (
+                self.clients_names
+                if self.clients_names is not None
+                else [f"client{i}" for i in range(len(self.clients_sizes))]
+            )
+            "of clients for global bootstrap by passing num_clients"
+            if bootstrap_function == "global":
+                assert self.total_size is not None, "You need to provide the total"
+                " size of the dataset for global bootstrap by setting total_size"
+                print(
+                    "WARNING: global bootstrap necessitates that the opener returns"
+                    f" a column {self.client_identifier} with levels={self.clients_names} so that "
+                    "tasks know in which client they occur to select the right global"
+                    "indices (note that you can set the levels of the column by passing clients_names)"
+                )
+                print("Client identifier column is:", self.client_identifier)
+                print("Clients' names found in this column are:", self.clients_names)
+                self.bootstrap_function, self.bootstrap_seeds = make_bootstrap_function(
+                    clients_sizes=self.clients_sizes,
+                    n_bootstrap=self.n_bootstrap,
+                    bootstrap_seeds=self.bootstrap_seeds,
+                    client_identifier=self.client_identifier,
+                )
+            elif bootstrap_function == "per-client":
+                self.bootstrap_function = None
+        else:
+            pass
+
         self.dp_target_delta = dp_target_delta
         self.dp_target_epsilon = dp_target_epsilon
         self.dp_max_grad_norm = dp_max_grad_norm
@@ -308,6 +364,7 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
         strategies_to_run = [self.propensity_model_strategy, self.webdisco_strategy]
 
         if self.variance_method == "bootstrap":
+            # !!!! WARNING !!!!!!
             # We only bootstrap the first strategy because
             # for the glue to work for the second one we need to
             # do it later and there is no 3rd one with bootstrap
