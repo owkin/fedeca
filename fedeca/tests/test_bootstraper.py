@@ -450,8 +450,17 @@ def test_global_bootstrapping_indices():
 
     # We remove the true propensity score
     original_df = original_df.drop(columns=["propensity_scores"], axis=1)
-    clients_indices_list = uniform_split(original_df, N_CLIENTS)
-    dfs = [original_df.iloc[clients_indices_list[i]] for i in range(N_CLIENTS)]
+    # We assume data is laid out in the order of the given centers sizes
+    # but frankly we do not really care
+    clients_sizes = [100, 200, 200, 500]
+    indices = np.arange(sum(clients_sizes))
+    clients_indices_list = []
+    start_idx = 0
+    for client_size in clients_sizes:
+        end_idx = start_idx + client_size
+        clients_indices_list.append(indices[start_idx:end_idx].tolist())
+        start_idx = end_idx
+    dfs = [original_df.iloc[clients_indices_list[i]] for i in range(len(clients_sizes))]
     for idx_c, df in enumerate(dfs):
         df["client"] = "client" + str(idx_c)
     # Here we would enter the length of the total dataset
