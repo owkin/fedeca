@@ -34,7 +34,9 @@ from fedeca.utils import (
     make_c_index_function,
     make_substrafl_torch_dataset_class,
 )
+from fedeca.utils.bootstrap_utils import make_global_bootstrap_function
 from fedeca.utils.data_utils import split_dataframe_across_clients
+from fedeca.utils.substra_utils import Client
 from fedeca.utils.substrafl_utils import (
     get_outmodel_function,
     get_simu_state_from_round,
@@ -73,7 +75,10 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
         variance_method: str = "naïve",
         n_bootstrap: Union[int, None] = 200,
         bootstrap_seeds: Union[list[int], None] = None,
-        bootstrap_function: Union[Callable, None] = None,
+        bootstrap_function: Union[Callable, str] = "global",
+        clients_sizes: Union[list, None] = None,
+        client_identifier: str = "client",
+        clients_names: Union[list, None] = None,
         dp_target_epsilon: Union[float, None] = None,
         dp_target_delta: Union[float, None] = None,
         dp_max_grad_norm: Union[float, None] = None,
@@ -89,6 +94,7 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
         sleep_time: int = 30,
         fedeca_path: Union[None, str] = None,
         evaluation_frequency=None,
+        partner_client: Union[None, Client] = None,
     ):
         """Initialize the Federated IPTW class.
 
@@ -153,9 +159,21 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
             The list of seeds used for bootstrapping random states.
             If None will generate n_bootstrap randomly, in the presence
             of both allways use bootstrap_seeds.
-        bootstrap_function: Union[Callable, None]
+        bootstrap_function : Union[Callable, str]
             The bootstrap function to use for instance if it is necessary to
-            mimic perfectly a global sampling.
+            mimic perfectly a global sampling. For now two are implemented by
+            default "global" and "per-client", which samples with replacement
+            from the global data or from the client data respectively using
+            the seeds given in bootstrap_seeds.
+        clients_sizes : Union[list, None]
+            The sizes of the clients to use for the global bootstrap need to be
+            ordered exactly as the train data nodes.
+        client_identifier: str
+            The column name which contains the client identifier for the global
+            bootstrap. By default "client".
+        clients_names: Union[list, None]
+            The different names found in the client_identifier column to categorize
+            each client.
         dp_target_epsilon: float
             The target epsilon for (epsilon, delta)-differential
             private guarantee. Defaults to None.
@@ -191,8 +209,8 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
             Path towards the fedeca reository.
         evaluation_frequency:
             Evaluation_frequency.
-        **kwargs
-            Additional keyword arguments.
+        partner_client: Union[None, Client]
+            The client of the partner if we are in remote mode.
         """
         self.standardize_data = standardize_data
         assert dtype in ["float64", "float32", "float16"]
@@ -225,7 +243,53 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
         self.is_bootstrap = variance_method == "bootstrap"
         self.n_bootstrap = n_bootstrap
         self.bootstrap_seeds = bootstrap_seeds
+        self.clients_sizes = clients_sizes
+        self.client_identifier = client_identifier
+        self.clients_names = clients_names
         self.bootstrap_function = bootstrap_function
+
+        if isinstance(bootstrap_function, str) and self.variance_method == "bootstrap":
+            assert self.bootstrap_function in ["global", "per-client"], "bootstrap"
+            f" {self.bootstrap_function} not implemented. Only 'global' and"
+            " 'per-client' are possible. If you wish to do custom bootstrapping "
+            " use a Callable f(data: pd.DataFrame, seed: int) -> pd.DataFrame."
+            assert (
+                self.clients_sizes is not None
+            ), "You need to provide the size of each client in a list"
+            self.clients_names = (
+                self.clients_names
+                if self.clients_names is not None
+                else [f"client{i}" for i in range(len(self.clients_sizes))]
+            )
+            "of clients for global bootstrap by passing num_clients"
+            if bootstrap_function == "global":
+                assert self.total_size is not None, "You need to provide the total"
+                " size of the dataset for global bootstrap by setting total_size"
+                print(
+                    "WARNING: global bootstrap necessitates that the opener returns"
+                    f" a column {self.client_identifier} with levels="
+                    f" {self.clients_names} so that tasks know in which client"
+                    " they occur so that they can select the right global"
+                    " indices (note that you can set the levels of the column by"
+                    " passing clients_names)"
+                )
+                print("Client identifier column is:", self.client_identifier)
+                print("Clients' names found in this column are:", self.clients_names)
+                (
+                    self.bootstrap_function,
+                    self.bootstrap_seeds,
+                    _,
+                ) = make_global_bootstrap_function(
+                    clients_sizes=self.clients_sizes,
+                    n_bootstrap=self.n_bootstrap,
+                    bootstrap_seeds=self.bootstrap_seeds,
+                    client_identifier=self.client_identifier,
+                )
+            elif bootstrap_function == "per-client":
+                self.bootstrap_function = None
+        else:
+            pass
+
         self.dp_target_delta = dp_target_delta
         self.dp_target_epsilon = dp_target_epsilon
         self.dp_max_grad_norm = dp_max_grad_norm
@@ -236,6 +300,7 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
         self.experiment_folder = experiment_folder
         self.fedeca_path = fedeca_path
         self.evaluation_frequency = evaluation_frequency
+        self.partner_client = partner_client
         self.dtype = dtype
 
         kwargs = {}
@@ -305,6 +370,7 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
         strategies_to_run = [self.propensity_model_strategy, self.webdisco_strategy]
 
         if self.variance_method == "bootstrap":
+            # !!!! WARNING !!!!!!
             # We only bootstrap the first strategy because
             # for the glue to work for the second one we need to
             # do it later and there is no 3rd one with bootstrap
@@ -341,6 +407,7 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
         kwargs["fedeca_path"] = self.fedeca_path
         kwargs["algo_dependencies"] = self.dependencies
         kwargs["evaluation_frequency"] = self.evaluation_frequency
+        kwargs["partner_client"] = self.partner_client
 
         # TODO: test_data_nodes and evaluation_frequency are not passed
 
@@ -779,7 +846,9 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
         # we run the IPTW Cox
         if not (self.simu_mode):
             algo = download_algo_state(
-                client=self.ds_client,
+                client=self.ds_client
+                if self.partner_client is None
+                else self.partner_client,
                 compute_plan_key=self.compute_plan_keys[0].key,
                 round_idx=None,
             )
@@ -863,7 +932,7 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
             self.computed_stds_list,
             self.global_robust_statistics,
         ) = get_final_cox_model_function(
-            self.ds_client,
+            self.ds_client if self.partner_client is None else self.partner_client,
             cp,
             self.num_rounds_list[1],
             self.standardize_data,
@@ -939,6 +1008,7 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
 
                 if not self.simu_mode:
                     self.check_cp_status(idx=2)
+                    # We assume that the builder of tasks is the
                     self.variance_matrix = get_outmodel_function(
                         "Aggregating Qk into Q",
                         self.ds_client,
