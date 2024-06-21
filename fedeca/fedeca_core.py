@@ -248,7 +248,7 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
         self.clients_names = clients_names
         self.bootstrap_function = bootstrap_function
 
-        if isinstance(bootstrap_function, str):
+        if isinstance(bootstrap_function, str) and self.variance_method == "bootstrap":
             assert self.bootstrap_function in ["global", "per-client"], "bootstrap"
             f" {self.bootstrap_function} not implemented. Only 'global' and"
             " 'per-client' are possible. If you wish to do custom bootstrapping "

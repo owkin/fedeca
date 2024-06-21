@@ -398,7 +398,6 @@ def test_bootstrapping_per_client_end2end():
             duration_col="time",
             event_col="event",
             variance_method="naive",
-            bootstrap_type="per_client",
             num_rounds_list=[2, 3],
         )
         print(f"Bootstrap {idx}")
@@ -413,7 +412,7 @@ def test_bootstrapping_per_client_end2end():
     )
 
     # efficient bootstrap
-    clients, train_data_nodes, _, _, _ = split_dataframe_across_clients(
+    clients, train_data_nodes, _, dfs, _ = split_dataframe_across_clients(
         original_df,
         n_clients=N_CLIENTS,
         split_method="uniform",
@@ -432,6 +431,8 @@ def test_bootstrapping_per_client_end2end():
         event_col="event",
         variance_method="bootstrap",
         bootstrap_seeds=bootstrap_seeds_list,
+        bootstrap_function="per-client",
+        clients_sizes=[len(df) for df in dfs],
         num_rounds_list=[2, 3],
     )
     print("Efficient bootstrap")
