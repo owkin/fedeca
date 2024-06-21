@@ -267,9 +267,11 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
                 " size of the dataset for global bootstrap by setting total_size"
                 print(
                     "WARNING: global bootstrap necessitates that the opener returns"
-                    f" a column {self.client_identifier} with levels={self.clients_names} so that "
-                    "tasks know in which client they occur to select the right global"
-                    "indices (note that you can set the levels of the column by passing clients_names)"
+                    f" a column {self.client_identifier} with levels="
+                    f" {self.clients_names} so that tasks know in which client"
+                    " they occur so that they can select the right global"
+                    " indices (note that you can set the levels of the column by"
+                    " passing clients_names)"
                 )
                 print("Client identifier column is:", self.client_identifier)
                 print("Clients' names found in this column are:", self.clients_names)
@@ -277,7 +279,7 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
                     self.bootstrap_function,
                     self.bootstrap_seeds,
                     _,
-                ) = make_bootstrap_function(
+                ) = make_global_bootstrap_function(
                     clients_sizes=self.clients_sizes,
                     n_bootstrap=self.n_bootstrap,
                     bootstrap_seeds=self.bootstrap_seeds,

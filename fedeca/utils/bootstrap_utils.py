@@ -1,3 +1,4 @@
+"""Bootstrap data globally."""
 from functools import partial
 from typing import Union
 
@@ -7,7 +8,7 @@ import pandas as pd
 from fedeca.utils.survival_utils import BootstrapMixin
 
 
-def make_bootstrap_function(
+def make_global_bootstrap_function(
     clients_sizes: list,
     n_bootstrap=200,
     bootstrap_seeds: Union[None, list] = None,

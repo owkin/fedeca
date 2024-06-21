@@ -22,7 +22,7 @@ from fedeca import FedECA, LogisticRegressionTorch
 from fedeca.algorithms import TorchWebDiscoAlgo
 from fedeca.strategies import WebDisco, make_bootstrap_strategy
 from fedeca.utils import make_accuracy_function, make_substrafl_torch_dataset_class
-from fedeca.utils.bootstrap_utils import make_bootstrap_function
+from fedeca.utils.bootstrap_utils import make_global_bootstrap_function
 from fedeca.utils.data_utils import split_dataframe_across_clients, uniform_split
 from fedeca.utils.survival_utils import CoxData, CoxPHModelTorch
 
@@ -469,7 +469,9 @@ def test_global_bootstrapping_indices():
         global_bootstrap,
         bootstrap_seeds_list,
         global_btst_indices,
-    ) = make_bootstrap_function(clients_sizes=[len(df) for df in dfs], n_bootstrap=5)
+    ) = make_global_bootstrap_function(
+        clients_sizes=[len(df) for df in dfs], n_bootstrap=5
+    )
 
     for seed in bootstrap_seeds_list:
         global_indices_list_per_client = []
