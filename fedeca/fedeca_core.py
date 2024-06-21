@@ -273,7 +273,11 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
                 )
                 print("Client identifier column is:", self.client_identifier)
                 print("Clients' names found in this column are:", self.clients_names)
-                self.bootstrap_function, self.bootstrap_seeds = make_bootstrap_function(
+                (
+                    self.bootstrap_function,
+                    self.bootstrap_seeds,
+                    _,
+                ) = make_bootstrap_function(
                     clients_sizes=self.clients_sizes,
                     n_bootstrap=self.n_bootstrap,
                     bootstrap_seeds=self.bootstrap_seeds,
