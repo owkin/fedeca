@@ -263,8 +263,8 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
             )
             "of clients for global bootstrap by passing num_clients"
             if bootstrap_function == "global":
-                assert self.total_size is not None, "You need to provide the total"
-                " size of the dataset for global bootstrap by setting total_size"
+                assert self.clients_sizes is not None, "You need to provide the total"
+                " size of the dataset for global bootstrap by setting clients_sizes"
                 print(
                     "WARNING: global bootstrap necessitates that the opener returns"
                     f" a column {self.client_identifier} with levels="
