@@ -3,7 +3,7 @@ import copy
 from copy import deepcopy
 from math import sqrt
 from pathlib import Path
-from typing import Any, List, Optional
+from typing import Any, List, Optional, Union
 
 # hello
 import numpy as np
@@ -43,6 +43,7 @@ class TorchWebDiscoAlgo(TorchAlgo):
         l1_ratio: float = 0.0,
         propensity_model: torch.nn.Module = None,
         propensity_strategy: str = "iptw",
+        propensity_fit_cols: Union[None, list] = None,
         store_hessian: bool = False,
         with_batch_norm_parameters: bool = False,
         use_gpu: bool = True,
@@ -78,10 +79,13 @@ class TorchWebDiscoAlgo(TorchAlgo):
         propensity_model : torch.nn.Module, optional
             Propensity model to use. Defaults to None.
         propensity_strategy : str, optional
-            Which covariates to use for the propensity model.
+            Which covariates to use for the Cox model.
             Both give different results because of non-collapsibility:
             https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7986756/
             Defaults to iptw, which will use only the treatment allocation as covariate.
+        propensity_fit_cols : Union[None, list], optional
+            Columns to use for the propensity model's input. Defaults to None
+            which means everything.
         store_hessian : bool, optional
             Whether to store the Hessian. Defaults to False.
         with_batch_norm_parameters : bool, optional
@@ -97,7 +101,7 @@ class TorchWebDiscoAlgo(TorchAlgo):
         assert propensity_strategy in [
             "iptw",
             "aiptw",
-        ], """propensity strategy not
+        ], f"""propensity strategy not {propensity_strategy}
         Implemented"""
 
         super().__init__(
@@ -139,6 +143,8 @@ class TorchWebDiscoAlgo(TorchAlgo):
             self._propensity_model.eval()
         self._propensity_strategy = propensity_strategy
 
+        self._propensity_fit_cols = propensity_fit_cols
+
         self._store_hessian = store_hessian
         self._with_batch_norm_parameters = with_batch_norm_parameters
         self._robust = robust
@@ -151,7 +157,7 @@ class TorchWebDiscoAlgo(TorchAlgo):
         self._n_samples_done = None
 
         # TODO make this as clean as possible but frankly it's hard
-        # you want wargs to be simultaneously emty and not empty
+        # you want wargs to be simultaneously empty and not empty
         for k in ["propensity_model", "robust"]:
             self.kwargs[k] = copy.deepcopy(getattr(self, "_" + k))
 
@@ -652,6 +658,8 @@ class TorchWebDiscoAlgo(TorchAlgo):
         if self._propensity_model is not None:
             # We do not normalize the data for the propensity model !!!
             Xprop = data_from_opener.drop(columns=columns_to_drop + [self._treated_col])
+            if self._propensity_fit_cols is not None:
+                Xprop = Xprop[self._propensity_fit_cols]
             Xprop = Xprop.to_numpy().astype("float64")
         else:
             Xprop = None
