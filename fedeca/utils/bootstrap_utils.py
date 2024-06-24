@@ -113,6 +113,9 @@ def make_global_bootstrap_function(
             data[client_identifier].nunique() == 1
         ), "Data from one center should come from only one center"
         center = data[client_identifier].unique()[0]
+        assert (
+            center in clients_names
+        ), f"{center} is not a valid center name. Those are {clients_names}"
         # we drop the center column so that it doesn't affect FedECA
         data = data.drop(columns=[client_identifier])
         indices_center = per_client_btst_indices[seed][center]

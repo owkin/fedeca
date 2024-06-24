@@ -309,6 +309,7 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
                     n_bootstrap=self.n_bootstrap,
                     bootstrap_seeds=self.bootstrap_seeds,
                     client_identifier=self.client_identifier,
+                    clients_names=self.clients_names,
                 )
             elif bootstrap_function == "per-client":
                 self.bootstrap_function = None

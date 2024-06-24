@@ -443,11 +443,20 @@ class SubstraflTorchDataset(torch.utils.data.Dataset):
         string_columns = [
             col for col in self.data.columns if not (is_numeric_dtype(self.data[col]))
         ]
+
         if fit_cols is not None:
             self.data = self.data[fit_cols]
 
         self.x = (
-            self.data.drop(columns=(self.columns_to_drop + string_columns))
+            self.data.drop(
+                columns=(
+                    [
+                        col
+                        for col in (self.columns_to_drop + string_columns)
+                        if col in self.data
+                    ]
+                )
+            )
             .to_numpy()
             .astype(dtype)
         )
