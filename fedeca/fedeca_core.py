@@ -51,7 +51,7 @@ logger = logging.getLogger(__name__)
 
 
 class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
-    """FedECA class tthat performs Federated IPTW."""
+    """FedECA class that performs Federated IPTW or AIPTW."""
 
     def __init__(
         self,
@@ -98,7 +98,7 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
         evaluation_frequency=None,
         partner_client: Union[None, Client] = None,
     ):
-        """Initialize the Federated IPTW class.
+        """Initialize the Federated (A))IPTW class.
 
         Implements the FedECA algorithm which combines
         an estimation of propensity scores using logistic regression
