@@ -111,7 +111,7 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
         train_data_nodes : list
             List of data nodes participating in the federated training.
         ndim : int
-            Number of dimensions (features) in the dataset.
+            Number of dimensions (features) in the dataset not counting treatment.
         treated_col : str, optional
             Column name indicating treatment status, by default "treated".
         event_col : str, optional
@@ -341,7 +341,12 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
 
         # Note that we don't use self attributes because substrafl classes are messed up
         # and we don't want confusion
-        self.logreg_model = LogisticRegressionTorch(self.ndim, self.torch_dtype)
+        self.logreg_model = LogisticRegressionTorch(
+            self.ndim
+            if self.propensity_fit_cols is None
+            else len(self.propensity_fit_cols),
+            self.torch_dtype,
+        )
         self.logreg_dataset_class = make_substrafl_torch_dataset_class(
             [self.treated_col],
             self.event_col,
@@ -354,8 +359,12 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
         # Set propensity model training to DP or not DP mode
         self.set_propensity_model_strategy()
 
-        # We use only the treatment variable in the model
-        cox_model = CoxPHModelTorch(ndim=1, torch_dtype=self.torch_dtype)
+        # We use only the treatment variable in the model otherwise it's AIPTW
+        # so treatment variable + other columns given in cox_fit_cols
+        cox_model = CoxPHModelTorch(
+            ndim=1 if self.cox_fit_cols is None else len(self.cox_fit_cols) + 1,
+            torch_dtype=self.torch_dtype,
+        )
         survival_dataset_class = make_substrafl_torch_dataset_class(
             [self.duration_col, self.event_col],
             self.event_col,
