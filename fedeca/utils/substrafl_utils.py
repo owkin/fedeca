@@ -445,7 +445,7 @@ class SubstraflTorchDataset(torch.utils.data.Dataset):
         ]
 
         if fit_cols is not None:
-            self.data = self.data[fit_cols]
+            self.data = self.data[fit_cols + self.target_columns]
 
         self.x = (
             self.data.drop(

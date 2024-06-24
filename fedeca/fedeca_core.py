@@ -245,7 +245,7 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
         self.cox_fit_cols = (
             None
             if cox_fit_cols is None
-            else [col for col in self.cox_fit_cols if col != client_identifier]
+            else [col for col in cox_fit_cols if col != client_identifier]
         )
         self.seed = seed
         self.penalizer = penalizer
@@ -396,6 +396,8 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
                     store_hessian=True,
                     propensity_model=propensity_model,
                     propensity_strategy=propensity_strategy,
+                    cox_fit_cols=cox_fit_cols,
+                    propensity_fit_cols=propensity_fit_cols,
                     robust=robust,
                 )
                 self._propensity_model = propensity_model

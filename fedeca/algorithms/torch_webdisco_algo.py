@@ -43,6 +43,7 @@ class TorchWebDiscoAlgo(TorchAlgo):
         l1_ratio: float = 0.0,
         propensity_model: torch.nn.Module = None,
         propensity_strategy: str = "iptw",
+        cox_fit_cols: Union[None, list] = None,
         propensity_fit_cols: Union[None, list] = None,
         store_hessian: bool = False,
         with_batch_norm_parameters: bool = False,
@@ -83,6 +84,9 @@ class TorchWebDiscoAlgo(TorchAlgo):
             Both give different results because of non-collapsibility:
             https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7986756/
             Defaults to iptw, which will use only the treatment allocation as covariate.
+        cox_fit_cols : Union[None, list], optional
+            Columns to use for the Cox model's covariates. Defaults to None for
+            IPTW analysis hence using only the treatment column.
         propensity_fit_cols : Union[None, list], optional
             Columns to use for the propensity model's input. Defaults to None
             which means everything.
@@ -144,6 +148,7 @@ class TorchWebDiscoAlgo(TorchAlgo):
         self._propensity_strategy = propensity_strategy
 
         self._propensity_fit_cols = propensity_fit_cols
+        self._cox_fit_cols = cox_fit_cols
 
         self._store_hessian = store_hessian
         self._with_batch_norm_parameters = with_batch_norm_parameters
@@ -623,6 +628,8 @@ class TorchWebDiscoAlgo(TorchAlgo):
         X = data_from_opener.drop(columns=columns_to_drop)
         if self._propensity_model is not None and self._propensity_strategy == "iptw":
             X = X.loc[:, [self._treated_col]]
+        elif self._propensity_strategy == "aiptw":
+            X = X.loc[:, [self._treated_col] + self._cox_fit_cols]
 
         # If X is to be standardized we do it
         if self._standardize_data:
