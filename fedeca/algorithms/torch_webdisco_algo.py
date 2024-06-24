@@ -283,6 +283,10 @@ class TorchWebDiscoAlgo(TorchAlgo):
         data_from_opener = data_from_opener.drop(columns=self._target_cols)
         if self._propensity_model is not None and self._propensity_strategy == "iptw":
             data_from_opener = data_from_opener.loc[:, [self._treated_col]]
+        elif self._propensity_strategy == "aiptw":
+            data_from_opener = data_from_opener.loc[
+                :, [self._treated_col] + self._cox_fit_cols
+            ]
         results = {
             f"moment{k}": compute_uncentered_moment(data_from_opener, k)
             for k in range(1, 3)
