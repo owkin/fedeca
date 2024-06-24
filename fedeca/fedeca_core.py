@@ -62,6 +62,8 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
         event_col: str = "E",
         duration_col: str = "T",
         ps_col="propensity_scores",
+        propensity_fit_cols: Union[None, list] = None,
+        cox_fit_cols: Union[None, list] = None,
         num_rounds_list: list[int] = [10, 10],
         damping_factor_nr: float = 0.8,
         l2_coeff_nr: float = 0.0,
@@ -116,6 +118,15 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
             Column name indicating event occurrence, by default "E".
         duration_col : str, optional
             Column name indicating time to event or censoring, by default "T".
+        ps_col : str, optional
+            Column name indicating propensity scores, by default "propensity_scores".
+        propensity_fit_cols : list, optional
+            Columns to use for fitting the propensity model, by default None
+            will use all columns minus the client identifier column.
+        cox_fit_cols : list, optional
+            Columns to use for fitting the Cox model, by default None uses only
+            the propensity score (IPTW). If provided can do AIPTW using additional
+            columns.
         num_rounds_list : list, optional
             List of number of rounds for each stage, by default [10, 10].
         damping_factor_nr : float, optional
@@ -168,9 +179,9 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
         clients_sizes : Union[list, None]
             The sizes of the clients to use for the global bootstrap need to be
             ordered exactly as the train data nodes.
-        client_identifier: str
-            The column name which contains the client identifier for the global
-            bootstrap. By default "client".
+        client_identifier: Union[str, None]
+            The column name which contains the client identifier used for the global
+            bootstrap. By default None assumes there is no client identifier.
         clients_names: Union[list, None]
             The different names found in the client_identifier column to categorize
             each client.
@@ -226,6 +237,16 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
         self.event_col = event_col
         self.duration_col = duration_col
         self.ps_col = ps_col
+        self.propensity_fit_cols = (
+            None
+            if propensity_fit_cols is None
+            else [col for col in propensity_fit_cols if col != client_identifier]
+        )
+        self.cox_fit_cols = (
+            None
+            if cox_fit_cols is None
+            else [col for col in self.cox_fit_cols if col != client_identifier]
+        )
         self.seed = seed
         self.penalizer = penalizer
         self.l1_ratio = l1_ratio
@@ -263,18 +284,22 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
             )
             "of clients for global bootstrap by passing num_clients"
             if bootstrap_function == "global":
+                assert self.client_identifier is not None, "You need to provide the"
+                " name of the client identifier column by passing client_identifier"
                 assert self.clients_sizes is not None, "You need to provide the total"
                 " size of the dataset for global bootstrap by setting clients_sizes"
                 print(
-                    "WARNING: global bootstrap necessitates that the opener returns"
+                    "WARNING: global bootstrap will now assume the opener returns"
                     f" a column {self.client_identifier} with levels="
-                    f" {self.clients_names} so that tasks know in which client"
-                    " they occur so that they can select the right global"
-                    " indices (note that you can set the levels of the column by"
-                    " passing clients_names)"
+                    f"{self.clients_names} which will be used so that tasks know"
+                    " in which client they occur so that they can select the"
+                    " right global indices (note that you can set the levels of"
+                    " the column by passing clients_names)"
                 )
                 print("Client identifier column is:", self.client_identifier)
-                print("Clients' names found in this column are:", self.clients_names)
+                print(
+                    "Clients' names to be found in this column are:", self.clients_names
+                )
                 (
                     self.bootstrap_function,
                     self.bootstrap_seeds,
@@ -321,8 +346,10 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
             [self.treated_col],
             self.event_col,
             self.duration_col,
+            fit_cols=self.propensity_fit_cols,
             dtype=dtype,
             return_torch_tensors=True,
+            client_identifier=self.client_identifier,
         )
         # Set propensity model training to DP or not DP mode
         self.set_propensity_model_strategy()
@@ -333,7 +360,9 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
             [self.duration_col, self.event_col],
             self.event_col,
             self.duration_col,
+            fit_cols=self.cox_fit_cols,
             dtype=dtype,
+            client_identifier=self.client_identifier,
         )
 
         # no self attributes in this class !!!!!!

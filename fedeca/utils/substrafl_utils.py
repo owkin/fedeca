@@ -402,8 +402,9 @@ class SubstraflTorchDataset(torch.utils.data.Dataset):
         self,
         data_from_opener,
         is_inference: bool,
-        target_columns=["T", "E"],
-        columns_to_drop=[],
+        target_columns: Union[list, None] = None,
+        columns_to_drop: Union[list, None] = None,
+        fit_cols: Union[list, None] = None,
         dtype="float64",
         return_torch_tensors=False,
     ):
@@ -416,9 +417,13 @@ class SubstraflTorchDataset(torch.utils.data.Dataset):
         is_inference : bool
             Flag indicating if the dataset is for inference.
         target_columns : list, optional
-            List of target columns, by default ["T", "E"].
+            List of target columns, by default None => ["T", "E"].
         columns_to_drop : list, optional
-            List of columns to drop, by default [].
+            List of columns to drop, by default None => [].
+        fit_cols : list, optional
+            List of columns to fit on, by default None will use all
+            columns that can be cast to numeric except target_columns
+            and columns_to_drop.
         dtype : str, optional
             Data type, by default "float64".
         return_torch_tensors: bool, optional
@@ -429,12 +434,18 @@ class SubstraflTorchDataset(torch.utils.data.Dataset):
         """
         self.data = data_from_opener
         self.is_inference = is_inference
-        self.target_columns = target_columns
+        self.target_columns = (
+            target_columns if target_columns is not None else ["T", "E"]
+        )
+        columns_to_drop = columns_to_drop if columns_to_drop is not None else []
         self.columns_to_drop = list(set(columns_to_drop + self.target_columns))
 
         string_columns = [
             col for col in self.data.columns if not (is_numeric_dtype(self.data[col]))
         ]
+        if fit_cols is not None:
+            self.data = self.data[fit_cols]
+
         self.x = (
             self.data.drop(columns=(self.columns_to_drop + string_columns))
             .to_numpy()
@@ -496,11 +507,13 @@ def get_simu_state_from_round(
 
 
 def make_substrafl_torch_dataset_class(
-    target_cols,
-    event_col,
-    duration_col,
-    dtype="float64",
-    return_torch_tensors=False,
+    target_cols: list,
+    event_col: str,
+    duration_col: str,
+    fit_cols: Union[list, None] = None,
+    dtype: str = "float64",
+    return_torch_tensors: bool = False,
+    client_identifier: Union[str, None] = None,
 ):
     """Create a custom SubstraflTorchDataset class for survival analysis.
 
@@ -512,10 +525,16 @@ def make_substrafl_torch_dataset_class(
         Name of the event column.
     duration_col : str
         Name of the duration column.
+    fit_cols : Union[list, None], optional
+        List of columns to fit on, by default None will use all
+        columns that can be cast to numeric except target_columns.
     dtype : str, optional
         Data type, by default "float64".
     return_torch_tensors : bool, optional
         Returns torch.Tensor. Defaults to False.
+    client_identifier : Union[None, str], optional
+        Name of the column that identifies the client and that is to be dropped.
+        By default assumes there is no client identifier.
 
     Returns
     -------
@@ -538,6 +557,9 @@ def make_substrafl_torch_dataset_class(
         target_cols = [duration_col, event_col]
         columns_to_drop = []
 
+    if client_identifier is not None:
+        columns_to_drop.append(client_identifier)
+
     class MySubstraflTorchDataset(SubstraflTorchDataset):
         def __init__(self, data_from_opener, is_inference):
             super().__init__(
@@ -545,6 +567,7 @@ def make_substrafl_torch_dataset_class(
                 is_inference=is_inference,
                 target_columns=target_cols,
                 columns_to_drop=columns_to_drop,
+                fit_cols=fit_cols,
                 dtype=dtype,
                 return_torch_tensors=return_torch_tensors,
             )
