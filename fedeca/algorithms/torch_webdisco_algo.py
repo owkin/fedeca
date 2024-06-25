@@ -128,7 +128,7 @@ class TorchWebDiscoAlgo(TorchAlgo):
         self._duration_col = duration_col
         self._event_col = event_col
         self._target_cols = [self._duration_col, self._event_col]
-        self._treated_col = treated_col
+        self._treated_col = treated_col if treated_col is not None else []
         self._standardize_data = standardize_data
         self._tol = tol
         self._initial_step_size = initial_step_size
@@ -281,8 +281,10 @@ class TorchWebDiscoAlgo(TorchAlgo):
         del shared_state  # unused
         # We do not have to do the mean on the target columns
         data_from_opener = data_from_opener.drop(columns=self._target_cols)
+
         if self._propensity_model is not None and self._propensity_strategy == "iptw":
             data_from_opener = data_from_opener.loc[:, [self._treated_col]]
+
         elif self._propensity_strategy == "aiptw":
             data_from_opener = data_from_opener.loc[
                 :, [self._treated_col] + self._cox_fit_cols
