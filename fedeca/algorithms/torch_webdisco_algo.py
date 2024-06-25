@@ -148,7 +148,7 @@ class TorchWebDiscoAlgo(TorchAlgo):
         self._propensity_strategy = propensity_strategy
 
         self._propensity_fit_cols = propensity_fit_cols
-        self._cox_fit_cols = cox_fit_cols
+        self._cox_fit_cols = cox_fit_cols if cox_fit_cols is not None else []
 
         self._store_hessian = store_hessian
         self._with_batch_norm_parameters = with_batch_norm_parameters
