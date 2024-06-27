@@ -118,7 +118,7 @@ class WDAlgo(TorchWebDiscoAlgo):
             learning_rate_strategy="lifelines",
             store_hessian=True,
             propensity_model=propensity_model,
-            propensity_strategy="iptw",
+            training_strategy="iptw",
             robust=robust,
         )
         self._propensity_model = propensity_model

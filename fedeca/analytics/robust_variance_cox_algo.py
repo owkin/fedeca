@@ -27,7 +27,7 @@ class RobustCoxVarianceAlgo(TorchWebDiscoAlgo):
         event_col: str,
         treated_col: str,
         standardize_data: bool = True,
-        propensity_strategy: str = "iptw",
+        training_strategy: str = "iptw",
         dtype: float = "float64",
         tol: float = 1e-16,
     ):
@@ -53,7 +53,7 @@ class RobustCoxVarianceAlgo(TorchWebDiscoAlgo):
             Column for the treatment.
         standardize_data : bool, optional
             Whether to standardize data. Defaults to True.
-        propensity_strategy : str, optional
+        training_strategy : str, optional
             Which covariates to use for the propensity model.
             Both give different results because of non-collapsibility:
             https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7986756/
@@ -141,7 +141,7 @@ class RobustCoxVarianceAlgo(TorchWebDiscoAlgo):
             event_col=event_col,
             treated_col=treated_col,
             standardize_data=standardize_data,
-            propensity_strategy=propensity_strategy,
+            training_strategy=training_strategy,
             tol=tol,
         )
         # Now AND ONLY NOW we give it the global mean and weights computed by WebDisco
