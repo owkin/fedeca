@@ -290,9 +290,12 @@ class TorchWebDiscoAlgo(TorchAlgo):
             if self._training_strategy == "iptw":
                 data_from_opener = data_from_opener.loc[:, [self._treated_col]]
             elif self._training_strategy == "aiptw":
-                data_from_opener = data_from_opener.loc[
-                    :, [self._treated_col] + self._cox_fit_cols
-                ]
+                if len(self._cox_fit_cols) > 0:
+                    data_from_opener = data_from_opener.loc[
+                        :, [self._treated_col] + self._cox_fit_cols
+                    ]
+                else:
+                    pass
         else:
             assert self._training_strategy == "webdisco"
             if len(self._cox_fit_cols) > 0:
@@ -648,7 +651,10 @@ class TorchWebDiscoAlgo(TorchAlgo):
             if self._training_strategy == "iptw":
                 X = X.loc[:, [self._treated_col]]
             elif self._training_strategy == "aiptw":
-                X = X.loc[:, [self._treated_col] + self._cox_fit_cols]
+                if len(self._cox_fit_cols) > 0:
+                    X = X.loc[:, [self._treated_col] + self._cox_fit_cols]
+                else:
+                    pass
         else:
             assert self._training_strategy == "webdisco"
             if len(self._cox_fit_cols) > 0:
