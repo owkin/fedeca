@@ -208,7 +208,7 @@ class TestWebDisco(TestTempDir):
             cls.X /= cls.true_stds
 
         if cls.use_propensity:
-            propensity_strategy = "aiptw"
+            training_strategy = "aiptw"
 
             class LogisticRegressionTorch(nn.Module):
                 def __init__(self):
@@ -239,7 +239,7 @@ class TestWebDisco(TestTempDir):
         else:
             propensity_model = None
             cls.weights = None
-            propensity_strategy = "aiptw"  # None is not supported
+            training_strategy = "webdisco"
 
         cls.E = cls.df["E"].to_numpy(cls.dtype)
         cls.df["time_multiplier"] = [2.0 * e - 1.0 for e in cls.df["E"].tolist()]
@@ -254,7 +254,7 @@ class TestWebDisco(TestTempDir):
         cls.NUM_ROUNDS = 8
         torch_dtype = DTYPES_TORCH[cls.dtype]
         if cls.use_propensity:
-            if propensity_strategy == "aiptw":
+            if training_strategy == "aiptw":
                 ndim = cls.X.shape[1]
             else:
                 ndim = 1
@@ -293,7 +293,7 @@ class TestWebDisco(TestTempDir):
                     initial_step_size=initial_step_size,
                     learning_rate_strategy=learning_rate_strategy,
                     propensity_model=propensity_model,
-                    propensity_strategy=propensity_strategy,
+                    training_strategy=training_strategy,
                     store_hessian=True,
                 )
 

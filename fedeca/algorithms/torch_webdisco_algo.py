@@ -42,7 +42,7 @@ class TorchWebDiscoAlgo(TorchAlgo):
         penalizer: float = 0.0,
         l1_ratio: float = 0.0,
         propensity_model: torch.nn.Module = None,
-        propensity_strategy: str = "iptw",
+        training_strategy: str = "iptw",
         cox_fit_cols: Union[None, list] = None,
         propensity_fit_cols: Union[None, list] = None,
         store_hessian: bool = False,
@@ -79,14 +79,17 @@ class TorchWebDiscoAlgo(TorchAlgo):
             Ratio of the L1 penalization, should be in [0, 1]. Defaults to 0.0.
         propensity_model : torch.nn.Module, optional
             Propensity model to use. Defaults to None.
-        propensity_strategy : str, optional
+        training_strategy : str, optional
             Which covariates to use for the Cox model.
             Both give different results because of non-collapsibility:
             https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7986756/
             Defaults to iptw, which will use only the treatment allocation as covariate.
+            Can be iptw, aiptw or webdisco. Aiptw will use both cox_fit_cols
+            and treatment allocation and cox will use cox_fit_cols only.
         cox_fit_cols : Union[None, list], optional
             Columns to use for the Cox model's covariates. Defaults to None for
-            IPTW analysis hence using only the treatment column.
+            IPTW analysis hence using only the treatment column or all columns
+            if propensity strategy is Cox.
         propensity_fit_cols : Union[None, list], optional
             Columns to use for the propensity model's input. Defaults to None
             which means everything.
@@ -102,10 +105,11 @@ class TorchWebDiscoAlgo(TorchAlgo):
         """
         assert "optimizer" not in kwargs, "WebDisco strategy does not uses optimizers"
         assert "criterion" not in kwargs, "WebDisco strategy does not use criterion"
-        assert propensity_strategy in [
+        assert training_strategy in [
             "iptw",
             "aiptw",
-        ], f"""propensity strategy not {propensity_strategy}
+            "webdisco",
+        ], f"""propensity strategy not {training_strategy}
         Implemented"""
 
         super().__init__(
@@ -145,7 +149,7 @@ class TorchWebDiscoAlgo(TorchAlgo):
                 self._treated_col is not None
             ), "If you are using a propensity model you should provide the treated col"
             self._propensity_model.eval()
-        self._propensity_strategy = propensity_strategy
+        self._training_strategy = training_strategy
 
         self._propensity_fit_cols = propensity_fit_cols
         self._cox_fit_cols = cox_fit_cols if cox_fit_cols is not None else []
@@ -281,14 +285,21 @@ class TorchWebDiscoAlgo(TorchAlgo):
         del shared_state  # unused
         # We do not have to do the mean on the target columns
         data_from_opener = data_from_opener.drop(columns=self._target_cols)
+        if self._propensity_model is not None:
+            assert self._treated_col is not None
+            if self._training_strategy == "iptw":
+                data_from_opener = data_from_opener.loc[:, [self._treated_col]]
+            elif self._training_strategy == "aiptw":
+                data_from_opener = data_from_opener.loc[
+                    :, [self._treated_col] + self._cox_fit_cols
+                ]
+        else:
+            assert self._training_strategy == "webdisco"
+            if len(self._cox_fit_cols) > 0:
+                data_from_opener = data_from_opener.loc[:, self._cox_fit_cols]
+            else:
+                pass
 
-        if self._propensity_model is not None and self._propensity_strategy == "iptw":
-            data_from_opener = data_from_opener.loc[:, [self._treated_col]]
-
-        elif self._propensity_strategy == "aiptw":
-            data_from_opener = data_from_opener.loc[
-                :, [self._treated_col] + self._cox_fit_cols
-            ]
         results = {
             f"moment{k}": compute_uncentered_moment(data_from_opener, k)
             for k in range(1, 3)
@@ -632,10 +643,18 @@ class TorchWebDiscoAlgo(TorchAlgo):
         # We drop the targets from X
         columns_to_drop = self._target_cols
         X = data_from_opener.drop(columns=columns_to_drop)
-        if self._propensity_model is not None and self._propensity_strategy == "iptw":
-            X = X.loc[:, [self._treated_col]]
-        elif self._propensity_strategy == "aiptw":
-            X = X.loc[:, [self._treated_col] + self._cox_fit_cols]
+        if self._propensity_model is not None:
+            assert self._treated_col is not None
+            if self._training_strategy == "iptw":
+                X = X.loc[:, [self._treated_col]]
+            elif self._training_strategy == "aiptw":
+                X = X.loc[:, [self._treated_col] + self._cox_fit_cols]
+        else:
+            assert self._training_strategy == "webdisco"
+            if len(self._cox_fit_cols) > 0:
+                X = X.loc[:, self._cox_fit_cols]
+            else:
+                pass
 
         # If X is to be standardized we do it
         if self._standardize_data:
