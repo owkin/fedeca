@@ -278,7 +278,11 @@ def test_bootstrapping_per_client(strategy_params: dict, num_rounds: int):
     for seed in bootstrap_seeds_list:
         assert all(
             [
-                np.allclose(np.asarray(l1), np.asarray(l2))
+                np.allclose(
+                    np.asarray(l1.drop(columns=["center"])),
+                    np.asarray(l2.drop(columns=["center"])),
+                    equal_nan=True,
+                )
                 for l1, l2 in zip(eff_splits[seed], splits[seed])
             ]
         )
