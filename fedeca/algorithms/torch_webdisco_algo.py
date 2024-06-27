@@ -109,7 +109,7 @@ class TorchWebDiscoAlgo(TorchAlgo):
             "iptw",
             "aiptw",
             "webdisco",
-        ], f"""propensity strategy not {training_strategy}
+        ], f"""training strategy {training_strategy} not implemented
         Implemented"""
 
         super().__init__(
