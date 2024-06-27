@@ -138,9 +138,9 @@ def split_dataframe_across_clients(
     # split_method_kwargs
     # Adding float32 conversion to avoid hash differences due to float64 rounding
     # differences on different machines
-    to_hash = hash_pandas_object(df.astype("float32"), index=True).values.tolist() + [
-        split_method_kwargs
-    ]
+    to_hash = hash_pandas_object(
+        df.select_dtypes(include="number").astype("float32"), index=True
+    ).values.tolist() + [split_method_kwargs]
     to_hash = str.encode("".join([str(e) for e in to_hash]))
     hash_df = zlib.adler32(to_hash)
     clients = []
