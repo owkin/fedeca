@@ -73,7 +73,7 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
         initial_step_size: float = 0.95,
         learning_rate_strategy: str = "lifelines",
         dtype: float = "float64",
-        propensity_strategy="iptw",
+        training_strategy: str = "iptw",
         variance_method: str = "naïve",
         n_bootstrap: Union[int, None] = 200,
         bootstrap_seeds: Union[list[int], None] = None,
@@ -147,7 +147,7 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
             Batch size for optimization, by default sys.maxsize.
         dtype : str, optional
             Data type for the model, by default "float64".
-        propensity_strategy: str, optional
+        training_strategy : str, optional
             The propensity strategy to use.
         variance_method : `{"naive", "robust", "bootstrap"}`
             Method for estimating the variance, and therefore the p-value of the
@@ -258,7 +258,7 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
         self.sleep_time = sleep_time
         self.damping_factor_nr = damping_factor_nr
         self.l2_coeff_nr = l2_coeff_nr
-        self.propensity_strategy = propensity_strategy
+        self.training_strategy = training_strategy
         self.variance_method = variance_method
         self.robust = variance_method == "robust"
         self.is_bootstrap = variance_method == "bootstrap"
@@ -395,7 +395,7 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
                     learning_rate_strategy=learning_rate_strategy,
                     store_hessian=True,
                     propensity_model=propensity_model,
-                    propensity_strategy=propensity_strategy,
+                    training_strategy=training_strategy,
                     cox_fit_cols=cox_fit_cols,
                     propensity_fit_cols=propensity_fit_cols,
                     robust=robust,
