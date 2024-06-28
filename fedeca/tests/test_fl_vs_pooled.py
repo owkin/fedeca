@@ -263,7 +263,7 @@ class TestGlobaltBtstFedECAEnd2End(TestFedECAEnd2End):
         cls._treated_col = "treatment"
         cls._event_col = "event"
         cls._duration_col = "time"
-        breakpoint()
+
         cls.pooled_iptw = PooledIPTW(
             treated_col=cls._treated_col,
             event_col=cls._event_col,
@@ -293,7 +293,7 @@ class TestGlobaltBtstFedECAEnd2End(TestFedECAEnd2End):
             clients_names=[f"center{i}" for i in range(cls.n_clients)],
             clients_sizes=[len(indices_client) for indices_client in cls.indices_list],
         )
-        breakpoint()
+
         cls.fed_iptw.fit(
             data=cls.df,
             targets=None,
