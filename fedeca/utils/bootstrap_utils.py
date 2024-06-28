@@ -55,7 +55,10 @@ def make_global_bootstrap_function(
         start_idx = end_idx
     if not isinstance(bootstrap_seeds, list):
         # It is either a number or None
+        # First call as in init of SurvivalEstimator
         rng = np.random.default_rng(bootstrap_seeds)
+        # second call in bootstrap_std
+        rng = np.random.default_rng(rng)
         # We need to make sure the seeds are different as we create a dict with
         # keys being the seed but we want to make sure that the seeds are not valid
         # seed as this is not seeded
@@ -80,10 +83,10 @@ def make_global_bootstrap_function(
         ):
 
             if rng is None:
-                temp_rng = np.random.RandomState(seed)
+                temp_rng = seed
             else:
                 temp_rng = rng
-            # This changes temp_rng (hence rng) on purpose
+            # This changes temp_rng (hence rng) on purpose following bootstrap_std
             global_indices_list = bootstrap_sample(data=global_df, seed=temp_rng)[
                 "indices"
             ].tolist()

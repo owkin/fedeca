@@ -92,9 +92,9 @@ class TestFedECAEnd2End(TestTempDir):
             cls.df["client"] = -1
             for idx, client_indices in enumerate(clients_indices):
                 cls.df["client"].iloc[client_indices] = f"client_{idx}"
-            # the following is neede because 1 we need original indices for
+            # the following is needed because 1 we need original indices for
             # correct broadcasting and 2 we need to drop both client and
-            # original indices at inference time where data si not bootstraped
+            # original indices at inference time where data is not bootstraped
             # We cannot just stringify the indices as the dump on disk would make
             # pandas consider them as integers instead of string that is why we
             # add the _str suffix
@@ -138,7 +138,7 @@ class TestRobustFedECAEnd2End(TestFedECAEnd2End):
         super().setUpClass(variance_method="robust")
 
 
-class TestBtstFedECAEnd2End(TestFedECAEnd2End):
+class TestPerClientBtstFedECAEnd2End(TestFedECAEnd2End):
     """BtstIPTW tests class."""
 
     @classmethod
@@ -222,3 +222,85 @@ class TestBtstFedECAEnd2End(TestFedECAEnd2End):
             seed=42,
             bootstrap_function=bootstrap_function,
         )
+
+
+class TestGlobaltBtstFedECAEnd2End(TestFedECAEnd2End):
+    """BtstIPTW tests class."""
+
+    @classmethod
+    def setUpClass(
+        cls,
+        n_clients=3,
+        ndim=10,
+        nsamples=500,
+        seed=42,
+        n_bootstrap=200,
+    ):
+        """Set up the test class for experiment comparison.
+
+        Parameters
+        ----------
+        n_clients : int
+            The number of clients in the federation
+        nsamples : int
+            The number of samles in total.
+        seed : int
+            The seed to use for the data generation process.
+        n_bootstrap : int
+            The number of bootstrap samples to use.
+        """
+        super().setUpClass()
+
+        cls.n_clients = n_clients
+        cls.nsamples = nsamples
+        cls.seed = seed
+        cls.ndim = ndim
+        cls.bootstrap_seeds = 42
+        cls.n_bootstrap = n_bootstrap
+        data = CoxData(seed=cls.seed, n_samples=cls.nsamples, ndim=cls.ndim)
+        df = data.generate_dataframe()
+        cls.df = df.drop(columns=["propensity_scores"], axis=1)
+        cls._treated_col = "treatment"
+        cls._event_col = "event"
+        cls._duration_col = "time"
+        breakpoint()
+        cls.pooled_iptw = PooledIPTW(
+            treated_col=cls._treated_col,
+            event_col=cls._event_col,
+            duration_col=cls._duration_col,
+            variance_method="bootstrap",
+            seed=cls.seed,
+            n_bootstrap=cls.n_bootstrap,
+        )
+        cls.pooled_iptw.fit(cls.df)
+        cls.pooled_iptw_results = cls.pooled_iptw.results_
+        cls.indices_list = split_control_over_centers(
+            cls.df,
+            n_clients=cls.n_clients,
+            treatment_info=cls._treated_col,
+            seed=42,
+        )
+
+        cls.fed_iptw = FedECA(
+            ndim=cls.ndim,
+            treated_col=cls._treated_col,
+            duration_col=cls._duration_col,
+            event_col=cls._event_col,
+            num_rounds_list=[20, 20],
+            variance_method="bootstrap",
+            bootstrap_function="global",
+            client_identifier="center",
+            clients_names=[f"center{i}" for i in range(cls.n_clients)],
+            clients_sizes=[len(indices_client) for indices_client in cls.indices_list],
+        )
+        breakpoint()
+        cls.fed_iptw.fit(
+            data=cls.df,
+            targets=None,
+            n_clients=cls.n_clients,
+            split_method="split_control_over_centers",
+            split_method_kwargs={"treatment_info": cls._treated_col, "seed": 42},
+            backend_type="simu",
+            data_path=cls.test_dir,
+        )
+        cls.fed_iptw_results = cls.fed_iptw.results_
