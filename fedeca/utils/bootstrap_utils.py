@@ -105,6 +105,7 @@ def make_global_bootstrap_function(
                         if global_idx in client_indices
                     ]
                 )
+
         global_btst_indices[seed] = global_indices_list
 
         # Now we "just" need to translate global_indices in per-client indices
@@ -128,6 +129,7 @@ def make_global_bootstrap_function(
         # we drop the center column so that it doesn't affect FedECA
         data = data.drop(columns=[client_identifier])
         indices_center = per_client_btst_indices[seed][center]
-        return data.iloc[indices_center]
+        output = data.iloc[indices_center]
+        return output
 
     return global_bootstrap, bootstrap_seeds_list, global_btst_indices

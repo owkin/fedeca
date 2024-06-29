@@ -4,6 +4,7 @@ import copy
 import numpy as np
 import pandas as pd
 import pytest
+from substrafl.algorithms.pytorch import TorchNewtonRaphsonAlgo
 
 from fedeca.competitors import PooledIPTW
 from fedeca.fedeca_core import FedECA
@@ -234,7 +235,7 @@ class TestGlobaltBtstFedECAEnd2End(TestTempDir):
         ndim=10,
         nsamples=1000,
         seed=42,
-        n_bootstrap=3,
+        n_bootstrap=200,
     ):
         """Set up the test class for experiment comparison.
 
@@ -259,6 +260,7 @@ class TestGlobaltBtstFedECAEnd2End(TestTempDir):
         data = CoxData(seed=cls.seed, n_samples=cls.nsamples, ndim=cls.ndim)
         df = data.generate_dataframe()
         cls.df = df.drop(columns=["propensity_scores"], axis=1)
+
         cls._treated_col = "treatment"
         cls._event_col = "event"
         cls._duration_col = "time"
@@ -274,11 +276,13 @@ class TestGlobaltBtstFedECAEnd2End(TestTempDir):
 
         cls.pooled_iptw.fit(cls.df)
         cls.pooled_iptw_results = cls.pooled_iptw.results_
+
         cls.indices_list = split_control_over_centers(
             cls.df,
             n_clients=cls.n_clients,
             treatment_info=cls._treated_col,
             seed=42,
+            use_random=False,
         )
 
         cls.fed_iptw = FedECA(
@@ -301,7 +305,11 @@ class TestGlobaltBtstFedECAEnd2End(TestTempDir):
             targets=None,
             n_clients=cls.n_clients,
             split_method="split_control_over_centers",
-            split_method_kwargs={"treatment_info": cls._treated_col, "seed": 42},
+            split_method_kwargs={
+                "treatment_info": cls._treated_col,
+                "seed": 42,
+                "use_random": False,
+            },
             backend_type="simu",
             data_path=cls.test_dir,
         )
