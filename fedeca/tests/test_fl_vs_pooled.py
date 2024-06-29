@@ -250,7 +250,6 @@ class TestGlobaltBtstFedECAEnd2End(TestFedECAEnd2End):
         n_bootstrap : int
             The number of bootstrap samples to use.
         """
-
         cls.n_clients = n_clients
         cls.nsamples = nsamples
         cls.seed = seed
