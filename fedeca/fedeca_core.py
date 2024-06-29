@@ -79,6 +79,7 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
         bootstrap_seeds: Union[list[int], None] = None,
         bootstrap_function: Union[Callable, str] = "global",
         clients_sizes: Union[list, None] = None,
+        indices_in_global_dataset: Union[list, None] = None,
         client_identifier: str = "client",
         clients_names: Union[list, None] = None,
         dp_target_epsilon: Union[float, None] = None,
@@ -179,6 +180,9 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
         clients_sizes : Union[list, None]
             The sizes of the clients to use for the global bootstrap need to be
             ordered exactly as the train data nodes.
+        indinces_in_global_dataset: Union[list, None]
+            The indices in the global dataset of all clients one by one to use
+            for the global bootstrap.
         client_identifier: Union[str, None]
             The column name which contains the client identifier used for the global
             bootstrap. By default None assumes there is no client identifier.
@@ -265,6 +269,7 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
         self.n_bootstrap = n_bootstrap
         self.bootstrap_seeds = bootstrap_seeds
         self.clients_sizes = clients_sizes
+        self.indices_in_global_dataset = indices_in_global_dataset
         self.client_identifier = client_identifier
         self.clients_names = clients_names
         self.bootstrap_function = bootstrap_function
@@ -310,6 +315,7 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
                     bootstrap_seeds=self.bootstrap_seeds,
                     client_identifier=self.client_identifier,
                     clients_names=self.clients_names,
+                    indices_in_global_dataset=self.indices_in_global_dataset,
                 )
 
             elif bootstrap_function == "per-client":

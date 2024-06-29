@@ -1,5 +1,6 @@
 """Tests for Robust IPTW."""
 import copy
+import itertools
 
 import numpy as np
 import pandas as pd
@@ -282,8 +283,9 @@ class TestGlobaltBtstFedECAEnd2End(TestTempDir):
             n_clients=cls.n_clients,
             treatment_info=cls._treated_col,
             seed=42,
-            use_random=False,
         )
+
+        cls.global_clients_indices = list(itertools.chain(*cls.indices_list))
 
         cls.fed_iptw = FedECA(
             ndim=cls.ndim,
@@ -297,6 +299,7 @@ class TestGlobaltBtstFedECAEnd2End(TestTempDir):
             bootstrap_seeds=cls.bootstrap_seeds,
             clients_names=[f"center{i}" for i in range(cls.n_clients)],
             clients_sizes=[len(indices_client) for indices_client in cls.indices_list],
+            indices_in_global_dataset=cls.global_clients_indices,
             n_bootstrap=cls.n_bootstrap,
         )
 
@@ -308,7 +311,6 @@ class TestGlobaltBtstFedECAEnd2End(TestTempDir):
             split_method_kwargs={
                 "treatment_info": cls._treated_col,
                 "seed": 42,
-                "use_random": False,
             },
             backend_type="simu",
             data_path=cls.test_dir,

@@ -15,6 +15,7 @@ def make_global_bootstrap_function(
     bootstrap_seeds: Union[None, list] = None,
     client_identifier: Union[None, str] = None,
     clients_names: Union[None, list] = None,
+    indices_in_global_dataset: Union[None, list] = None,
 ):
     """Create a function that will return a bootstrap sample for a given seed.
 
@@ -28,6 +29,10 @@ def make_global_bootstrap_function(
         List of seeds to use for the bootstrap, by default None
     client_identifier : Union[None, str], optional
         Name of the column that identifies the client, by default None
+    indices_in_global_dataset : Union[None, list], optional
+        List of indices in the global dataset, by default None
+        will assume that all clients are aranged in the order of client's
+        sizes in the global dataframe.
 
     Returns
     -------
@@ -36,15 +41,21 @@ def make_global_bootstrap_function(
     """
     global_btst_indices = {}
     per_client_btst_indices = {}
-    indices = np.arange(sum(clients_sizes))
+    if indices_in_global_dataset is None:
+        indices = np.arange(sum(clients_sizes))
+    else:
+        indices = np.asarray(indices_in_global_dataset)
+        assert indices.shape[0] == sum(
+            clients_sizes
+        ), "your indices and client's sizes are incompatible"
     if clients_names is not None:
         assert len(clients_names) == len(
             clients_sizes
         ), "You should give as many clients names as there are clients"
     else:
-        clients_names = [f"client{i}" for i in range(len(clients_sizes))]
+        clients_names = [f"client{i}" for i in np.arange(sum(clients_sizes))]
     # A bit silly but we want to follow exactly the BootstrapMixin sampling
-    global_df = pd.DataFrame({"indices": indices})
+    global_df = pd.DataFrame({"indices": np.arange(sum(clients_sizes))})
     bootstrap_sample = partial(BootstrapMixin.bootstrap_sample, self=None)
     # We assume data is laid out in the order of the given centers sizes
     # but frankly we do not really care
@@ -106,7 +117,7 @@ def make_global_bootstrap_function(
                     ]
                 )
 
-        global_btst_indices[seed] = global_indices_list
+        global_btst_indices[seed] = [indices[idx] for idx in global_indices_list]
 
         # Now we "just" need to translate global_indices in per-client indices
         for idx_c, client_indices in enumerate(clients_indices_list):
