@@ -122,7 +122,6 @@ class TestFedECAEnd2End(TestTempDir):
 
         We allow ourselves rtol=1e-2 as in the paper.
         """
-        breakpoint()
         pd.testing.assert_frame_equal(
             self.pooled_iptw_results.reset_index()[self.fed_iptw_results.columns],
             self.fed_iptw_results,
@@ -235,7 +234,7 @@ class TestGlobaltBtstFedECAEnd2End(TestFedECAEnd2End):
         ndim=10,
         nsamples=1000,
         seed=42,
-        n_bootstrap=2,
+        n_bootstrap=200,
     ):
         """Set up the test class for experiment comparison.
 
