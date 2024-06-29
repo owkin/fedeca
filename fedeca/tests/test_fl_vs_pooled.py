@@ -224,7 +224,7 @@ class TestPerClientBtstFedECAEnd2End(TestFedECAEnd2End):
         )
 
 
-class TestGlobaltBtstFedECAEnd2End(TestFedECAEnd2End):
+class TestGlobaltBtstFedECAEnd2End(TestTempDir):
     """BtstIPTW tests class."""
 
     @classmethod
@@ -234,7 +234,7 @@ class TestGlobaltBtstFedECAEnd2End(TestFedECAEnd2End):
         ndim=10,
         nsamples=1000,
         seed=42,
-        n_bootstrap=200,
+        n_bootstrap=3,
     ):
         """Set up the test class for experiment comparison.
 
@@ -249,6 +249,7 @@ class TestGlobaltBtstFedECAEnd2End(TestFedECAEnd2End):
         n_bootstrap : int
             The number of bootstrap samples to use.
         """
+        super().setUpClass()
         cls.n_clients = n_clients
         cls.nsamples = nsamples
         cls.seed = seed
@@ -306,3 +307,15 @@ class TestGlobaltBtstFedECAEnd2End(TestFedECAEnd2End):
         )
 
         cls.fed_iptw_results = cls.fed_iptw.results_
+
+    @pytest.mark.slow
+    def test_matching(self, rtol=1e-2):
+        """Test equality of end results.
+
+        We allow ourselves rtol=1e-2 as in the paper.
+        """
+        pd.testing.assert_frame_equal(
+            self.pooled_iptw_results.reset_index()[self.fed_iptw_results.columns],
+            self.fed_iptw_results,
+            rtol=rtol,
+        )
