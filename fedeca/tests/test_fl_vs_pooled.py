@@ -5,7 +5,6 @@ import itertools
 import numpy as np
 import pandas as pd
 import pytest
-from substrafl.algorithms.pytorch import TorchNewtonRaphsonAlgo
 
 from fedeca.competitors import PooledIPTW
 from fedeca.fedeca_core import FedECA
