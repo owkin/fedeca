@@ -1,4 +1,5 @@
 """Bootstrap data globally."""
+import copy
 from functools import partial
 from typing import Union
 
@@ -61,15 +62,18 @@ def make_global_bootstrap_function(
         rng = np.random.default_rng(rng)
         # We need to make sure the seeds are different as we create a dict with
         # keys being the seed but we want to make sure that the seeds are not valid
-        # seed as this is not seeded
+        # seed as this is not seeded and one would not want to give that impression
         assert n_bootstrap is not None
-        bootstrap_seeds_list = [-seed for seed in np.arange(n_bootstrap).tolist()]
+        bootstrap_seeds_list = [
+            -seed for seed in np.arange(1, n_bootstrap + 1).tolist()
+        ]
     else:
         rng = None
-        assert n_bootstrap is not None
+        assert n_bootstrap == len(bootstrap_seeds)
         bootstrap_seeds_list = bootstrap_seeds
 
     client_identifier = client_identifier if client_identifier is not None else "client"
+
     for seed in bootstrap_seeds_list:
         per_client_btst_indices[seed] = {}
         global_indices_list_per_client = [[] for _ in range(len(clients_sizes))]
@@ -86,10 +90,12 @@ def make_global_bootstrap_function(
                 temp_rng = seed
             else:
                 temp_rng = rng
+
             # This changes temp_rng (hence rng) on purpose following bootstrap_std
-            global_indices_list = bootstrap_sample(data=global_df, seed=temp_rng)[
-                "indices"
-            ].tolist()
+            btst_global_df = bootstrap_sample(
+                data=copy.deepcopy(global_df), seed=temp_rng
+            )
+            global_indices_list = btst_global_df["indices"].tolist()
             global_indices_list_per_client = []
             for client_indices in clients_indices_list:
                 global_indices_list_per_client.append(

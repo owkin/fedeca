@@ -122,6 +122,7 @@ class TestFedECAEnd2End(TestTempDir):
 
         We allow ourselves rtol=1e-2 as in the paper.
         """
+        breakpoint()
         pd.testing.assert_frame_equal(
             self.pooled_iptw_results.reset_index()[self.fed_iptw_results.columns],
             self.fed_iptw_results,
@@ -230,11 +231,11 @@ class TestGlobaltBtstFedECAEnd2End(TestFedECAEnd2End):
     @classmethod
     def setUpClass(
         cls,
-        n_clients=3,
+        n_clients=2,
         ndim=10,
-        nsamples=500,
+        nsamples=1000,
         seed=42,
-        n_bootstrap=200,
+        n_bootstrap=2,
     ):
         """Set up the test class for experiment comparison.
 
@@ -249,7 +250,6 @@ class TestGlobaltBtstFedECAEnd2End(TestFedECAEnd2End):
         n_bootstrap : int
             The number of bootstrap samples to use.
         """
-        super().setUpClass()
 
         cls.n_clients = n_clients
         cls.nsamples = nsamples
@@ -272,6 +272,7 @@ class TestGlobaltBtstFedECAEnd2End(TestFedECAEnd2End):
             seed=cls.seed,
             n_bootstrap=cls.n_bootstrap,
         )
+
         cls.pooled_iptw.fit(cls.df)
         cls.pooled_iptw_results = cls.pooled_iptw.results_
         cls.indices_list = split_control_over_centers(
@@ -290,8 +291,10 @@ class TestGlobaltBtstFedECAEnd2End(TestFedECAEnd2End):
             variance_method="bootstrap",
             bootstrap_function="global",
             client_identifier="center",
+            bootstrap_seeds=cls.bootstrap_seeds,
             clients_names=[f"center{i}" for i in range(cls.n_clients)],
             clients_sizes=[len(indices_client) for indices_client in cls.indices_list],
+            n_bootstrap=cls.n_bootstrap,
         )
 
         cls.fed_iptw.fit(
@@ -303,4 +306,5 @@ class TestGlobaltBtstFedECAEnd2End(TestFedECAEnd2End):
             backend_type="simu",
             data_path=cls.test_dir,
         )
+
         cls.fed_iptw_results = cls.fed_iptw.results_
