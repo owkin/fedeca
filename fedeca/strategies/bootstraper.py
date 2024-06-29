@@ -388,7 +388,7 @@ def _bootstrap_local_function(
                 data = data_from_opener
             else:
                 # Useful for remote debugging if logs are enabled
-                print(f"Bootstrapping: seed seeds[{idx}]={seed}")
+                # print(f"Bootstrapping: seed seeds[{idx}]={seed}")
                 data = bootstrap_function(data=data_from_opener, seed=seed)
 
             if shared_state is None:

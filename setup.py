@@ -31,7 +31,7 @@ setup(
     install_requires=[
         # We cannot use the git+https / git+ssh syntax here because of docker
         # build issues related to git not being installed
-        "substrafl==0.45.0",
+        "substrafl==0.46.0",
         "argparse",
         "numpy",
         "pandas",

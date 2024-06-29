@@ -118,7 +118,7 @@ class WDAlgo(TorchWebDiscoAlgo):
             learning_rate_strategy="lifelines",
             store_hessian=True,
             propensity_model=propensity_model,
-            propensity_strategy="iptw",
+            training_strategy="iptw",
             robust=robust,
         )
         self._propensity_model = propensity_model
@@ -278,7 +278,10 @@ def test_bootstrapping_per_client(strategy_params: dict, num_rounds: int):
     for seed in bootstrap_seeds_list:
         assert all(
             [
-                np.allclose(np.asarray(l1), np.asarray(l2))
+                np.allclose(
+                    np.asarray(l1.drop(columns=["center"])),
+                    np.asarray(l2.drop(columns=["center"])),
+                )
                 for l1, l2 in zip(eff_splits[seed], splits[seed])
             ]
         )
@@ -444,7 +447,7 @@ def test_bootstrapping_per_client_end2end():
 
 
 def test_global_bootstrapping_indices():
-    """Tests of data generation with constant cate."""
+    """Tests of global bootstrap indices generation within each client."""
     # Let's generate 1000 data samples with 10 covariates
     data = CoxData(seed=42, n_samples=1000, ndim=50, overlap=10.0, propensity="linear")
     original_df = data.generate_dataframe()
@@ -484,7 +487,19 @@ def test_global_bootstrapping_indices():
                     if global_idx in client_indices
                 ]
             )
-        for client in range(N_CLIENTS):
+        dfs_btst = []
+        for client in range(len(clients_sizes)):
             assert global_bootstrap(dfs[client], seed).equals(
                 original_df.iloc[global_indices_list_per_client[client]]
             )
+            dfs_btst.append(global_bootstrap(dfs[client], seed))
+        # Reconstructed btst df should be equal up to permutation
+        rec_df = pd.concat(dfs_btst, ignore_index=True).reset_index(drop=True)
+        rec_df = rec_df.sort_values(by=rec_df.columns.tolist()).reset_index(drop=True)
+
+        target_df = original_df.iloc[global_btst_indices[seed]]
+        target_df = target_df.sort_values(by=target_df.columns.tolist()).reset_index(
+            drop=True
+        )
+
+        assert rec_df.equals(target_df)

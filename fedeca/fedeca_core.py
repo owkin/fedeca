@@ -51,7 +51,7 @@ logger = logging.getLogger(__name__)
 
 
 class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
-    """FedECA class tthat performs Federated IPTW."""
+    """FedECA class that performs Federated IPTW or AIPTW."""
 
     def __init__(
         self,
@@ -62,6 +62,8 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
         event_col: str = "E",
         duration_col: str = "T",
         ps_col="propensity_scores",
+        propensity_fit_cols: Union[None, list] = None,
+        cox_fit_cols: Union[None, list] = None,
         num_rounds_list: list[int] = [10, 10],
         damping_factor_nr: float = 0.8,
         l2_coeff_nr: float = 0.0,
@@ -71,12 +73,13 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
         initial_step_size: float = 0.95,
         learning_rate_strategy: str = "lifelines",
         dtype: float = "float64",
-        propensity_strategy="iptw",
+        training_strategy: str = "iptw",
         variance_method: str = "naïve",
         n_bootstrap: Union[int, None] = 200,
         bootstrap_seeds: Union[list[int], None] = None,
         bootstrap_function: Union[Callable, str] = "global",
         clients_sizes: Union[list, None] = None,
+        indices_in_global_dataset: Union[list, None] = None,
         client_identifier: str = "client",
         clients_names: Union[list, None] = None,
         dp_target_epsilon: Union[float, None] = None,
@@ -96,7 +99,7 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
         evaluation_frequency=None,
         partner_client: Union[None, Client] = None,
     ):
-        """Initialize the Federated IPTW class.
+        """Initialize the Federated (A))IPTW class.
 
         Implements the FedECA algorithm which combines
         an estimation of propensity scores using logistic regression
@@ -109,13 +112,22 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
         train_data_nodes : list
             List of data nodes participating in the federated training.
         ndim : int
-            Number of dimensions (features) in the dataset.
+            Number of dimensions (features) in the dataset not counting treatment.
         treated_col : str, optional
             Column name indicating treatment status, by default "treated".
         event_col : str, optional
             Column name indicating event occurrence, by default "E".
         duration_col : str, optional
             Column name indicating time to event or censoring, by default "T".
+        ps_col : str, optional
+            Column name indicating propensity scores, by default "propensity_scores".
+        propensity_fit_cols : list, optional
+            Columns to use for fitting the propensity model, by default None
+            will use all columns minus the client identifier column.
+        cox_fit_cols : list, optional
+            Columns to use for fitting the Cox model, by default None uses only
+            the propensity score (IPTW). If provided can do AIPTW using additional
+            columns.
         num_rounds_list : list, optional
             List of number of rounds for each stage, by default [10, 10].
         damping_factor_nr : float, optional
@@ -136,7 +148,7 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
             Batch size for optimization, by default sys.maxsize.
         dtype : str, optional
             Data type for the model, by default "float64".
-        propensity_strategy: str, optional
+        training_strategy : str, optional
             The propensity strategy to use.
         variance_method : `{"naive", "robust", "bootstrap"}`
             Method for estimating the variance, and therefore the p-value of the
@@ -168,9 +180,12 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
         clients_sizes : Union[list, None]
             The sizes of the clients to use for the global bootstrap need to be
             ordered exactly as the train data nodes.
-        client_identifier: str
-            The column name which contains the client identifier for the global
-            bootstrap. By default "client".
+        indinces_in_global_dataset: Union[list, None]
+            The indices in the global dataset of all clients one by one to use
+            for the global bootstrap.
+        client_identifier: Union[str, None]
+            The column name which contains the client identifier used for the global
+            bootstrap. By default None assumes there is no client identifier.
         clients_names: Union[list, None]
             The different names found in the client_identifier column to categorize
             each client.
@@ -226,6 +241,16 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
         self.event_col = event_col
         self.duration_col = duration_col
         self.ps_col = ps_col
+        self.propensity_fit_cols = (
+            None
+            if propensity_fit_cols is None
+            else [col for col in propensity_fit_cols if col != client_identifier]
+        )
+        self.cox_fit_cols = (
+            None
+            if cox_fit_cols is None
+            else [col for col in cox_fit_cols if col != client_identifier]
+        )
         self.seed = seed
         self.penalizer = penalizer
         self.l1_ratio = l1_ratio
@@ -237,13 +262,14 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
         self.sleep_time = sleep_time
         self.damping_factor_nr = damping_factor_nr
         self.l2_coeff_nr = l2_coeff_nr
-        self.propensity_strategy = propensity_strategy
+        self.training_strategy = training_strategy
         self.variance_method = variance_method
         self.robust = variance_method == "robust"
         self.is_bootstrap = variance_method == "bootstrap"
         self.n_bootstrap = n_bootstrap
         self.bootstrap_seeds = bootstrap_seeds
         self.clients_sizes = clients_sizes
+        self.indices_in_global_dataset = indices_in_global_dataset
         self.client_identifier = client_identifier
         self.clients_names = clients_names
         self.bootstrap_function = bootstrap_function
@@ -263,18 +289,22 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
             )
             "of clients for global bootstrap by passing num_clients"
             if bootstrap_function == "global":
+                assert self.client_identifier is not None, "You need to provide the"
+                " name of the client identifier column by passing client_identifier"
                 assert self.clients_sizes is not None, "You need to provide the total"
                 " size of the dataset for global bootstrap by setting clients_sizes"
                 print(
-                    "WARNING: global bootstrap necessitates that the opener returns"
+                    "WARNING: global bootstrap will now assume the opener returns"
                     f" a column {self.client_identifier} with levels="
-                    f" {self.clients_names} so that tasks know in which client"
-                    " they occur so that they can select the right global"
-                    " indices (note that you can set the levels of the column by"
-                    " passing clients_names)"
+                    f"{self.clients_names} which will be used so that tasks know"
+                    " in which client they occur so that they can select the"
+                    " right global indices (note that you can set the levels of"
+                    " the column by passing clients_names)"
                 )
                 print("Client identifier column is:", self.client_identifier)
-                print("Clients' names found in this column are:", self.clients_names)
+                print(
+                    "Clients' names to be found in this column are:", self.clients_names
+                )
                 (
                     self.bootstrap_function,
                     self.bootstrap_seeds,
@@ -284,7 +314,10 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
                     n_bootstrap=self.n_bootstrap,
                     bootstrap_seeds=self.bootstrap_seeds,
                     client_identifier=self.client_identifier,
+                    clients_names=self.clients_names,
+                    indices_in_global_dataset=self.indices_in_global_dataset,
                 )
+
             elif bootstrap_function == "per-client":
                 self.bootstrap_function = None
         else:
@@ -316,24 +349,37 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
 
         # Note that we don't use self attributes because substrafl classes are messed up
         # and we don't want confusion
-        self.logreg_model = LogisticRegressionTorch(self.ndim, self.torch_dtype)
+        self.logreg_model = LogisticRegressionTorch(
+            self.ndim
+            if self.propensity_fit_cols is None
+            else len(self.propensity_fit_cols),
+            self.torch_dtype,
+        )
         self.logreg_dataset_class = make_substrafl_torch_dataset_class(
             [self.treated_col],
             self.event_col,
             self.duration_col,
+            fit_cols=self.propensity_fit_cols,
             dtype=dtype,
             return_torch_tensors=True,
+            client_identifier=self.client_identifier,
         )
         # Set propensity model training to DP or not DP mode
         self.set_propensity_model_strategy()
 
-        # We use only the treatment variable in the model
-        cox_model = CoxPHModelTorch(ndim=1, torch_dtype=self.torch_dtype)
+        # We use only the treatment variable in the model otherwise it's AIPTW
+        # so treatment variable + other columns given in cox_fit_cols
+        cox_model = CoxPHModelTorch(
+            ndim=1 if self.cox_fit_cols is None else len(self.cox_fit_cols) + 1,
+            torch_dtype=self.torch_dtype,
+        )
         survival_dataset_class = make_substrafl_torch_dataset_class(
             [self.duration_col, self.event_col],
             self.event_col,
             self.duration_col,
+            fit_cols=self.cox_fit_cols,
             dtype=dtype,
+            client_identifier=self.client_identifier,
         )
 
         # no self attributes in this class !!!!!!
@@ -356,7 +402,9 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
                     learning_rate_strategy=learning_rate_strategy,
                     store_hessian=True,
                     propensity_model=propensity_model,
-                    propensity_strategy=propensity_strategy,
+                    training_strategy=training_strategy,
+                    cox_fit_cols=cox_fit_cols,
+                    propensity_fit_cols=propensity_fit_cols,
                     robust=robust,
                 )
                 self._propensity_model = propensity_model

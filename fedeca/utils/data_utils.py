@@ -136,7 +136,11 @@ def split_dataframe_across_clients(
     """
     # Deterministic hashing of non human-readable objects: df and
     # split_method_kwargs
-    to_hash = hash_pandas_object(df, index=True).values.tolist() + [split_method_kwargs]
+    # Adding float32 conversion to avoid hash differences due to float64 rounding
+    # differences on different machines
+    to_hash = hash_pandas_object(
+        df.select_dtypes(include="number").astype("float32"), index=True
+    ).values.tolist() + [split_method_kwargs]
     to_hash = str.encode("".join([str(e) for e in to_hash]))
     hash_df = zlib.adler32(to_hash)
     clients = []
@@ -192,7 +196,8 @@ def split_dataframe_across_clients(
 
     for i in range(n_clients):
         os.makedirs(data_path / f"center{i}", exist_ok=True)
-        cdf = df.iloc[clients_indices_list[i]]
+        cdf = copy.deepcopy(df.iloc[clients_indices_list[i]])
+        cdf["center"] = f"center{i}"
         df_path = data_path / f"center{i}" / "data.csv"
         if df_path.exists():
             df_path.unlink()

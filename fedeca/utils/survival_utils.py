@@ -108,7 +108,8 @@ class BootstrapMixin(BootstrapMixinProtocol):
     ) -> pd.DataFrame:
         """Resampling with replacement."""
         rng = np.random.default_rng(seed)
-        return data.sample(data.shape[0], replace=True, random_state=rng)
+        bootstrapped_data = data.sample(data.shape[0], replace=True, random_state=rng)
+        return bootstrapped_data
 
     def bootstrap_std(
         self, data: pd.DataFrame, n_bootstrap: int, seed: _SeedType = None
