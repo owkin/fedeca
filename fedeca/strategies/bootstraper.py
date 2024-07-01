@@ -145,14 +145,19 @@ def make_bootstrap_strategy(
         bootstrap_seeds_list = np.random.randint(0, 2**32, n_bootstrap).tolist()
     else:
         if n_bootstrap is not None:
-            if len(bootstrap_seeds) != n_bootstrap:
-                print(
-                    "Careful len(bootstrap_seeds) and n_bootstrap are different"
-                    "therefore bootstrap seeds will take precedence and n_bootstrap "
-                    "will be ignored."
-                )
-
-        bootstrap_seeds_list = bootstrap_seeds
+            if isinstance(bootstrap_seeds, list):
+                if len(bootstrap_seeds) != n_bootstrap:
+                    print(
+                        "Careful len(bootstrap_seeds) and n_bootstrap are different"
+                        "therefore bootstrap seeds will take precedence and "
+                        "n_bootstrap will be ignored."
+                    )
+                bootstrap_seeds_list = bootstrap_seeds
+            else:
+                np.random.seed(bootstrap_seeds)
+                bootstrap_seeds_list = np.random.randint(
+                    0, 2**32, n_bootstrap
+                ).tolist()
 
     # Below is where the magic happens.
     # As a reminder we are trying to hook all caught methods above to make them
