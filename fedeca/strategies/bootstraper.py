@@ -149,8 +149,8 @@ def make_bootstrap_strategy(
                 if len(bootstrap_seeds) != n_bootstrap:
                     print(
                         "Careful len(bootstrap_seeds) and n_bootstrap are different"
-                        "therefore bootstrap seeds will take precedence and n_bootstrap "
-                        "will be ignored."
+                        "therefore bootstrap seeds will take precedence and "
+                        "n_bootstrap will be ignored."
                     )
                 bootstrap_seeds_list = bootstrap_seeds
             else:
