@@ -287,7 +287,14 @@ class Experiment:
                     eval_frequency=self.evaluation_frequency[i],
                 )
             current_kwargs["evaluation_strategy"] = evaluation_strategy
-            current_kwargs["name"] = f"Fedeca: {strategy.__class__.__name__}"
+            # Clearer name for the experiment
+            if hasattr(strategy, "individual_strategies"):
+                name_strat = (
+                    "Btst" + strategy.individual_strategies[0].__class__.__name__
+                )
+            else:
+                name_strat = strategy.__class__.__name__
+            current_kwargs["name"] = f"Fedeca: {name_strat}"
 
             if not self.simu_mode:
                 xp_output = execute_experiment(**current_kwargs)
