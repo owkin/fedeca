@@ -138,10 +138,10 @@ def make_bootstrap_strategy(
     # Now we have the list of local computations and aggregations names for both
     # strategy and algo.
     # first let's seed the bootstrappping
+    assert (
+        n_bootstrap is not None or bootstrap_seeds is not None
+    ), "You should provide either n_bootstrap or bootstrap_seeds"
     if bootstrap_seeds is None:
-        assert (
-            n_bootstrap is not None
-        ), "n_bootstrap must be given in the absence of seeds"
         bootstrap_seeds_list = np.random.randint(0, 2**32, n_bootstrap).tolist()
     else:
         if n_bootstrap is not None:
@@ -158,6 +158,8 @@ def make_bootstrap_strategy(
                 bootstrap_seeds_list = np.random.randint(
                     0, 2**32, n_bootstrap
                 ).tolist()
+        else:
+            bootstrap_seeds_list = bootstrap_seeds
 
     # Below is where the magic happens.
     # As a reminder we are trying to hook all caught methods above to make them
