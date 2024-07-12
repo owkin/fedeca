@@ -1352,3 +1352,215 @@ def robust_sandwich_variance_pooled(
     delta_betas = score_residuals.dot(scaled_variance_matrix)
     tested_var = delta_betas.T.dot(delta_betas)
     return np.sqrt(np.diag(tested_var))
+
+
+def km_curve(t, n, d, tmax=5000):
+    """Computes Kaplan-Meier (KM) curve based on unique event times, number of
+    individuals at risk and number of deaths.
+
+    This function is typically used in conjunction with
+    `compute_events_statistics`. Note that the variance is computed
+    based on Greenwood's formula, not its exponential variant (see refs).
+
+    Parameters
+    ----------
+    t : np.array
+        Array containing the unique times of events, sorted in ascending order
+    n : np.array
+        Array containing the number of individuals at risk at each
+        corresponding time `t`
+    d : np.array
+        Array containing the number of individuals with an event (death) at
+        each corresponding time `t`
+    tmax : int, optional
+        Maximal time point for the KM curve, by default 5000
+
+    Returns
+    -------
+    tuple
+        Tuple of length 3 containing:
+        - `grid`: 1D array containing the time points at which the survival
+          curve is evaluated. It is `np.arange(0, t_max+1)`
+        - `s`: 1D array with the value of the survival function as obtained
+          by the Kaplan-Meier formula.
+        - `var_s`: `np.array` containing the variance of the Kaplan-Meier curve
+          at each point of `grid`
+
+    Examples
+    --------
+    .. code-block:: python
+       :linenos:
+       # Define times and events
+       times = np.random.randint(0, 3000, size=(10,))
+       events = np.random.rand(10) > 0.5
+       # Compute events statistics
+       t, n, d = compute_events_statistics(times, events)
+       # Get Kaplan-Meier curve
+       grid, s, var_s = km_curve(t, n, d)
+
+       # Plot KM curve
+       plt.figure()
+       plt.plot(grid, s)
+       plt.fill_between(grid, s-np.sqrt(var_s), s+np.sqrt(var_s))
+
+    References
+    ----------
+    https://en.wikipedia.org/wiki/Kaplan%E2%80%93Meier_estimator
+    https://www.math.wustl.edu/~sawyer/handouts/greenwood.pdf
+    """
+    grid = np.arange(0, tmax + 1)
+    # precompute for KM
+    q = 1.0 - d / n
+    cprod_q = np.cumprod(q)
+    # precompute for var
+    csum_var = np.cumsum(d / (n * (n - d)))
+    # initialize
+    s = np.zeros(grid.shape)
+    var_s = np.zeros(grid.shape)
+    # the following sum relies on the assumption that unique_events_times is sorted!
+    index_closest = np.sum(grid.reshape(-1, 1) - t.reshape(1, -1) >= 0, axis=1) - 1
+    not_found = index_closest < 0
+    found = index_closest >= 0
+    # attribute
+    s[not_found] = 1.0
+    s[found] = cprod_q[index_closest[found]]
+    var_s[found] = (s[found] ** 2) * csum_var[index_closest[found]]
+    return grid, s, var_s
+
+
+def compute_events_statistics(times, events):
+    """Compute unique times, number of individuals at risk at these times and number of
+    events at these times based on the raw list of individual times and events, for a
+    survival framework.
+
+    The method is vectorized with numpy to ensure fast computations. As a
+    side-effect, memory consumption scales as
+    `num_unique_times * num_individuals`.
+
+    Parameters
+    ----------
+    times : np.array
+        1D array containing the individual observed times, which are either
+        censored times or true event times depending on the corresponding value
+        of the `events` array
+    events : np.array
+        1D array with boolean entries, such that `events[i] == True` if and
+        only if a true event was observed for individual `i` at time `times[i]`
+
+    Returns
+    -------
+    tuple
+        Tuple of length 3 containing, in this order:
+        - `unique_times`: `np.array` containing the unique times of events,
+          in ascending order
+        - `num_at_risk_at_times`: `np.array` containing the number of individuals
+          at risk at each corresponding `unique_times`
+        - `num_death_at_times`: `np.array` containing the number of individuals
+          with an event (death) at each corresponding `unique_times`
+
+    Examples
+    --------
+    .. code-block:: python
+       :linenos:
+       # Define times and events
+       times = np.random.randint(0, 3000, size=(10,))
+       events = np.random.rand(10) > 0.5
+       # Compute events statistics
+       t, n, d = compute_events_statistics(times, events)
+    """
+    # NB, both censored and uncensored, otherwise impossible to aggregate exactly
+    unique_times = np.unique(times)
+    num_death_at_times = np.sum(
+        (unique_times.reshape(-1, 1) - times[events].reshape(1, -1)) == 0, axis=1
+    )
+    num_at_risk_at_times = np.sum(
+        (times.reshape(1, -1) - unique_times.reshape(-1, 1)) >= 0, axis=1
+    )
+    return unique_times, num_at_risk_at_times, num_death_at_times
+
+
+def aggregate_events_statistics(list_t_n_d):
+    """Aggregates (sums) events statistics from different centers, returning a single
+    tuple with the same format.
+
+    Parameters
+    ----------
+    list_t_n_d : tuple
+        List of event statistics from different centers. Each entry in the list
+        should follow the output format of `compute_events_statistics`
+
+    Returns
+    -------
+    tuple
+        Tuple of size 3 containing, in this order:
+        - `t_agg`: `np.array` containing the unique times of events,
+          in ascending order
+        - `n_agg`: `np.array` containing the number of individuals
+          at risk at each corresponding `t_agg`
+        - `d_agg`: `np.array` containing the number of individuals
+          with an event (death) at each corresponding `t_agg`
+    """
+    # Step 1: get the unique times
+    unique_times_list = [t for (t, n, d) in list_t_n_d]
+    t_agg = np.unique(np.concatenate(unique_times_list))
+    # Step 2: extend to common grid
+    n_ext, d_ext = extend_events_to_common_grid(list_t_n_d, t_agg)
+    # Step 3:sum across centers
+    n_agg = np.sum(n_ext, axis=0)
+    d_agg = np.sum(d_ext, axis=0)
+    return t_agg, n_agg, d_agg
+
+
+def extend_events_to_common_grid(list_t_n_d, t_common):
+    """Extends a list of heterogeneous times, number of people at risk and number of
+    death on a common grid.
+
+    This method is an internal utility for `aggregate_events_statistics`.
+
+    Parameters
+    ----------
+    list_t_n_d : List[tuple]
+        List of tuples, each item in the list being an output of
+        `compute_events_statistics`, i.e. each tuple is of size 3 and contains
+        - `t`: 1D array with unique event times, sorted in ascending order
+        - `n`: 1D array with the number of individuals at risk for each time point
+        - `d`: 1D array with the number of events for each time point
+    t_common : np.ndarray
+        Common grid on which to compute the aggregated times.
+
+    Returns
+    -------
+    tuple
+        Tuple with 2 values, each being a 2D array of size
+        `len(list_t_n_d) * t_common.size`
+        - `n_ext`: number of individuals at risk for each center and time
+          point in `t_common`
+        - `d_ext`: number of events for each center and each time point
+          in `t_common`
+    """
+    num_clients = len(list_t_n_d)
+
+    d_ext = np.zeros((num_clients, t_common.size))
+    n_ext = np.zeros((num_clients, t_common.size))
+
+    for k, (t, n, d) in enumerate(list_t_n_d):
+        diff = t - t_common.reshape(-1, 1)
+        diff_abs = np.abs(diff)
+        # identify times which were in the client vs those not
+        is_in_subset = diff_abs.min(axis=1) == 0
+        not_in_subset = diff_abs.min(axis=1) > 0
+        # make a correspondence for those that were in
+        corr_in_subset = np.zeros(t_common.size, dtype=int)
+        corr_in_subset[is_in_subset] = diff_abs[is_in_subset].argmin(axis=1)
+        # for those that were not, but which are inside the grid, we can extend n
+        diff_relu = np.maximum(diff, 0)
+        has_match = (diff_relu.max(axis=1) > 0) & not_in_subset
+        # we rely on the fact that t is ordered!
+        corr_in_subset[has_match] = np.sum(diff_relu == 0, axis=1)[has_match]
+        # Get the deaths: 0 if no time, the value if it was inside
+        d_ext[k, is_in_subset] = d[corr_in_subset[is_in_subset]]
+        # Get the people at risk for those in subset
+        n_ext[k, is_in_subset] = n[corr_in_subset[is_in_subset]]
+        # For those not in subset but with a match, extend in a piecewise constant fashion
+        n_ext[k, has_match] = n[corr_in_subset[has_match]]
+    return n_ext, d_ext
