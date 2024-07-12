@@ -17,7 +17,7 @@ from fedeca.utils.survival_utils import (
 class FedKaplan(ComputePlanBuilder):
     def __init__(
         self,
-        treatment_col: Union[None, str] = None,
+        treated_col: Union[None, str] = None,
         propensity_model: Union[None, nn.Module] = None,
     ):
         """FedKaplan strategy. This class implements a federated version of Kaplan Meier
@@ -25,7 +25,7 @@ class FedKaplan(ComputePlanBuilder):
 
         Parameters
         ----------
-        treatment_col : Union[None, str], optional
+        treated_col : Union[None, str], optional
             The column describing the treatment, by default None
         propensity_model : Union[None, nn.Module], optional
             _description_, by default None
@@ -33,9 +33,9 @@ class FedKaplan(ComputePlanBuilder):
 
         super().__init__()
         assert not (
-            (treatment_col is None) and (propensity_model is not None)
+            (treated_col is None) and (propensity_model is not None)
         ), "if propensity model is provided, treatment_col should be provided as well"
-        self._treatment_col = treatment_col
+        self._treated_col = treated_col
         self._propensity_model = propensity_model
 
     def build_compute_plan(
