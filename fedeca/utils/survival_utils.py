@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import copy
+from math import sqrt
 from typing import Final, Literal, Optional, Protocol
 
 import numpy as np
@@ -9,6 +10,7 @@ import numpy.typing as npt
 import pandas as pd
 import torch
 from numpy.typing import NDArray
+from pandas.api.types import is_numeric_dtype
 from scipy import stats
 from scipy.linalg import toeplitz
 from sklearn.base import BaseEstimator
@@ -1564,3 +1566,178 @@ def extend_events_to_common_grid(list_t_n_d, t_common):
         # For those not in subset but with a match, extend in a piecewise constant fashion
         n_ext[k, has_match] = n[corr_in_subset[has_match]]
     return n_ext, d_ext
+
+
+def build_X_y_function(
+    data_from_opener,
+    event_col,
+    duration_col,
+    treated_col,
+    target_cols=None,
+    standardize_data=True,
+    propensity_model=None,
+    cox_fit_cols=None,
+    propensity_fit_cols=None,
+    tol=1e-16,
+    training_strategy="webdisco",
+    shared_state={},
+    global_moments={},
+):
+    """Build the inputs for a propensity model and for a Cox model as well as y directly
+    from the output of the opener.
+
+    This function 1. uses the event column to inject the censorship
+    information present in the duration column (given in absolute values)
+    in the form of a negative sign producing y.
+    2. Drops the raw survival columns (given in target_cols) now that y is built.
+    2. Drops some covariates differently for Cox and for the propensity model
+    according to the training_strategy argument as well as cox and propensity
+    fit cols.
+    4. Standardize the data if standardize_data. It will use either the shared_state
+    or the global moments variable depending on what is given. If both given
+    uses shared_state. If not given does not err but does not standardize.
+    5. Return the Cox model input X as well as the (unstandardized) input to the
+    propensity model Xprop if necessary as well as the treated column to be able
+    to compute the propensity weights.
+
+    Parameters
+    ----------
+    data_from_opener : pd.DataFrame
+        The output of the opener
+    shared_state : dict, optional
+        Outmodel containing global means and stds.
+        by default {}
+
+    Returns
+    -------
+    tuple
+        standardized X, signed times, treatment column and unstandardized
+        propensity model input
+    """
+    # We need y to be in the format (2*event-1)*duration
+    data_from_opener["time_multiplier"] = [
+        2.0 * e - 1.0 for e in data_from_opener[event_col].tolist()
+    ]
+    # No funny business irrespective of the convention used
+    y = np.abs(data_from_opener[duration_col]) * data_from_opener["time_multiplier"]
+    y = y.to_numpy().astype("float64")
+    data_from_opener = data_from_opener.drop(columns=["time_multiplier"])
+    # dangerous but we need to do it
+    string_columns = [
+        col
+        for col in data_from_opener.columns
+        if not (is_numeric_dtype(data_from_opener[col]))
+    ]
+    data_from_opener = data_from_opener.drop(columns=string_columns)
+
+    # We drop the targets from X
+    if target_cols is None:
+        target_cols = [event_col, duration_col]
+    columns_to_drop = target_cols
+    X = data_from_opener.drop(columns=columns_to_drop)
+    if propensity_model is not None:
+        assert treated_col is not None
+        if training_strategy == "iptw":
+            X = X.loc[:, [treated_col]]
+        elif training_strategy == "aiptw":
+            if len(cox_fit_cols) > 0:
+                X = X.loc[:, [treated_col] + cox_fit_cols]
+            else:
+                pass
+    else:
+        assert training_strategy == "webdisco"
+        if len(cox_fit_cols) > 0:
+            X = X.loc[:, cox_fit_cols]
+        else:
+            pass
+
+    # If X is to be standardized we do it
+    if standardize_data:
+        if shared_state:
+            # Careful this shouldn't happen apart from the predict
+            means = shared_state["global_uncentered_moment_1"]
+            vars = shared_state["global_centered_moment_2"]
+            # Careful we need to match pandas and use unbiased estimator
+            bias_correction = (shared_state["total_n_samples"]) / float(
+                shared_state["total_n_samples"] - 1
+            )
+            global_moments = {
+                "means": means,
+                "vars": vars,
+                "bias_correction": bias_correction,
+            }
+            stds = vars.transform(lambda x: sqrt(x * bias_correction + tol))
+            X = X.sub(means)
+            X = X.div(stds)
+        else:
+            X = X.sub(global_moments["means"])
+            stds = global_moments["vars"].transform(
+                lambda x: sqrt(x * global_moments["bias_correction"] + tol)
+            )
+            X = X.div(stds)
+
+    X = X.to_numpy().astype("float64")
+
+    # If we have a propensity model we need to build X without the targets AND the
+    # treated column
+    if propensity_model is not None:
+        # We do not normalize the data for the propensity model !!!
+        Xprop = data_from_opener.drop(columns=columns_to_drop + [treated_col])
+        if propensity_fit_cols is not None:
+            Xprop = Xprop[propensity_fit_cols]
+        Xprop = Xprop.to_numpy().astype("float64")
+    else:
+        Xprop = None
+
+    # If WebDisco is used without propensity treated column does not exist
+    if treated_col is not None:
+        treated = (
+            data_from_opener[treated_col].to_numpy().astype("float64").reshape((-1, 1))
+        )
+    else:
+        treated = None
+
+    return (X, y, treated, Xprop, global_moments)
+
+
+def compute_X_y_and_propensity_weights_function(
+    X, y, treated, Xprop, propensity_model, tol=1e-16
+):
+    """Build appropriate X, y and weights from raw output of opener.
+
+    Uses the helper function build_X_y and the propensity model to build the
+    weights.
+
+    Parameters
+    ----------
+    data_from_opener : pd.DataFrame
+        Raw output from opener
+    shared_state : dict, optional
+        Outmodel containing global means and stds, by default {}
+
+    Returns
+    -------
+    tuple
+        _description_
+    """
+
+    if propensity_model is not None:
+        assert (
+            treated is not None
+        ), f"""If you are using a propensity model the Treated
+        column should be available"""
+        assert np.all(
+            np.in1d(np.unique(treated.astype("uint8"))[0], [0, 1])
+        ), "The treated column should have all its values in set([0, 1])"
+        Xprop = torch.from_numpy(Xprop)
+        with torch.no_grad():
+            propensity_scores = propensity_model(Xprop)
+
+        propensity_scores = propensity_scores.detach().numpy()
+        # We robustify the division
+        weights = treated * 1.0 / np.maximum(propensity_scores, tol) + (
+            1 - treated
+        ) * 1.0 / (np.maximum(1.0 - propensity_scores, tol))
+    else:
+        weights = np.ones((X.shape[0], 1))
+    return X, y, weights
