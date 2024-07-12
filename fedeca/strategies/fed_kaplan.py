@@ -28,6 +28,8 @@ class FedKaplan(ComputePlanBuilder):
         """FedKaplan strategy. This class implements a federated version of Kaplan Meier
         estimates.
 
+        This code is an adaptation of a previous implementation by Constance Beguier.
+
         Parameters
         ----------
         treated_col : Union[None, str], optional
