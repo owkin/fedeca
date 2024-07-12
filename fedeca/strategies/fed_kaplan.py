@@ -9,7 +9,9 @@ from torch import nn
 
 from fedeca.utils.survival_utils import (
     aggregate_events_statistics,
+    build_X_y_function,
     compute_events_statistics,
+    compute_X_y_and_propensity_weights_function,
     km_curve,
 )
 
@@ -17,8 +19,11 @@ from fedeca.utils.survival_utils import (
 class FedKaplan(ComputePlanBuilder):
     def __init__(
         self,
+        duration_col,
+        event_col,
         treated_col: Union[None, str] = None,
         propensity_model: Union[None, nn.Module] = None,
+        tol: float = 1e-16,
     ):
         """FedKaplan strategy. This class implements a federated version of Kaplan Meier
         estimates.
@@ -35,8 +40,11 @@ class FedKaplan(ComputePlanBuilder):
         assert not (
             (treated_col is None) and (propensity_model is not None)
         ), "if propensity model is provided, treatment_col should be provided as well"
+        self._duration_col = duration_col
+        self._event_col = event_col
         self._treated_col = treated_col
         self._propensity_model = propensity_model
+        self._tol = tol
 
     def build_compute_plan(
         self,
@@ -46,11 +54,9 @@ class FedKaplan(ComputePlanBuilder):
         num_rounds: Optional[int],
         clean_models: Optional[bool] = True,
     ):
-
-        assert len(self.local_computations) == len(self.aggregations)
-        agg_shared_state = None
-        step_idx = 0
-
+        del num_rounds
+        del evaluation_strategy
+        del clean_models
         shared_states = []
         for node in train_data_nodes:
             # define composite tasks (do not submit yet)
@@ -59,11 +65,11 @@ class FedKaplan(ComputePlanBuilder):
             _, next_shared_state = node.update_states(
                 self.compute_events_statistics(
                     node.data_sample_keys,
-                    shared_state=agg_shared_state,
+                    shared_state=None,
                     _algo_name="Compute Events Statistics",
                 ),
                 local_state=None,
-                round_idx=step_idx,
+                round_idx=0,
                 authorized_ids=set([node.organization_id]),
                 aggregation_id=aggregation_node.organization_id,
                 clean_models=False,
@@ -76,7 +82,7 @@ class FedKaplan(ComputePlanBuilder):
                 shared_states=shared_states,
                 _algo_name="Aggregate Events Statistics",
             ),
-            round_idx=step_idx,
+            round_idx=0,
             authorized_ids=set(
                 train_data_node.organization_id for train_data_node in train_data_nodes
             ),
@@ -105,9 +111,26 @@ class FedKaplan(ComputePlanBuilder):
         Placeholder
             Method output or placeholder thereof.
         """
+        del shared_state
         # we only use survival times
-        X, y, weights = self.compute_X_y_and_propensity_weights(datasamples, None)
-        weighted_X = weights * X
+        X, y, treated, Xprop, _ = build_X_y_function(
+            datasamples,
+            self._event_col,
+            self._duration_col,
+            self._treated_col,
+            self._target_cols,
+            False,
+            self._propensity_model,
+            None,
+            self._propensity_fit_cols,
+            self._tol,
+            "iptw",
+        )
+        _, y, weights = compute_X_y_and_propensity_weights_function(
+            X, y, treated, Xprop, self._propensity_model, self._tol
+        )
+        # TODO actually use weights
+        del weights
         # retrieve times and events
         times = np.abs(y)
         events = y > 0
