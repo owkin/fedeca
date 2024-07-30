@@ -136,10 +136,24 @@ class Experiment:
         if algo_dependencies is None:
             algo_dependencies = []
 
-        self.algo_dependencies = Dependency(
-            pypi_dependencies=algo_dependencies,
-            local_installable_dependencies=[wheel_path],
-        )
+        dependencies_kwargs = {
+            "local_code": [],
+            "local_installable_dependencies": [],
+            "pypi_dependencies": [],
+        }
+        for alg_dep in algo_dependencies:
+            if str(alg_dep).endswith(".py"):
+                dependencies_kwargs["local_code"].append(alg_dep)
+            elif str(alg_dep).enswith(".whl"):
+                dependencies_kwargs["local_installable_dependencies"].append(alg_dep)
+
+            else:
+                dependencies_kwargs["pypi_dependencies"].append(alg_dep)
+
+        dependencies_kwargs["local_installable_dependencies"].append(wheel_path)
+
+        breakpoint()
+        self.algo_dependencies = Dependency(**dependencies_kwargs)
 
         self.experiment_path = str(Path(self.experiment_folder))
         os.makedirs(self.experiment_path, exist_ok=True)
