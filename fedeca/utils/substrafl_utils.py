@@ -152,7 +152,6 @@ class Experiment:
 
         dependencies_kwargs["local_installable_dependencies"].append(wheel_path)
 
-        breakpoint()
         self.algo_dependencies = Dependency(**dependencies_kwargs)
 
         self.experiment_path = str(Path(self.experiment_folder))
