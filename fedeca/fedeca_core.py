@@ -495,8 +495,8 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
                 )
             elif (
                 status == ComputePlanStatus.doing
-                or status == ComputePlanStatus.todo
-                or status == ComputePlanStatus.waiting
+                or status == ComputePlanStatus.unknown
+                or status == ComputePlanStatus.created
             ):
                 pass
             else:
