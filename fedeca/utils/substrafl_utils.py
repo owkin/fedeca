@@ -144,7 +144,7 @@ class Experiment:
         for alg_dep in algo_dependencies:
             if str(alg_dep).endswith(".py"):
                 dependencies_kwargs["local_code"].append(alg_dep)
-            elif str(alg_dep).enswith(".whl"):
+            elif str(alg_dep).endswith(".whl"):
                 dependencies_kwargs["local_installable_dependencies"].append(alg_dep)
 
             else:
