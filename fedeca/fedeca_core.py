@@ -8,6 +8,7 @@ from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
+import substra
 import torch
 from pandas.api.types import is_numeric_dtype
 from scipy.linalg import inv
