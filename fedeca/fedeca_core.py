@@ -483,7 +483,8 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
                 ).status
             except substra.sdk.exceptions.ConnectionError:
                 logger.warning(
-                    f"Connection error while checking {model_name} {training_type} status"
+                    f"Connection error while checking {model_name} {training_type}"
+                    " status"
                 )
                 time.sleep(self.sleep_time)
                 continue
