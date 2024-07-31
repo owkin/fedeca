@@ -8,6 +8,7 @@ from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
+import substra
 import torch
 from pandas.api.types import is_numeric_dtype
 from scipy.linalg import inv
@@ -476,9 +477,18 @@ class FedECA(Experiment, BaseSurvivalEstimator, BootstrapMixin):
         t1 = time.time()
         t2 = t1
         while (t2 - t1) < self.timeout:
-            status = self.ds_client.get_compute_plan(
-                self.compute_plan_keys[idx].key
-            ).status
+            try:
+                status = self.ds_client.get_compute_plan(
+                    self.compute_plan_keys[idx].key
+                ).status
+            except substra.sdk.exceptions.ConnectionError:
+                logger.warning(
+                    f"Connection error while checking {model_name} {training_type}"
+                    " status"
+                )
+                time.sleep(self.sleep_time)
+                continue
+
             if status == ComputePlanStatus.done:
                 logger.info(
                     f"""Compute plan {self.compute_plan_keys[0].key} of {model_name} has
