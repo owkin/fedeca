@@ -1,7 +1,10 @@
-from typing import List, Optional
+import pickle as pk
+from pathlib import Path
+from typing import Any, List, Optional
 
 import numpy as np
 import pandas as pd
+import torch
 from substrafl import ComputePlanBuilder
 from substrafl.evaluation_strategy import EvaluationStrategy
 from substrafl.nodes import AggregationNodeProtocol, TrainDataNodeProtocol
@@ -17,10 +20,10 @@ from fedeca.utils.survival_utils import (
 class FedSMD(ComputePlanBuilder):
     def __init__(
         self,
-        duration_col,
-        event_col,
-        treated_col: str = None,
-        propensity_model=None,
+        duration_col: str,
+        event_col: str,
+        treated_col: str,
+        propensity_model: torch.nn.Module,
         tol: float = 1e-16,
     ):
         """FedSMD strategy. This class computes weighted SMD.
@@ -41,8 +44,17 @@ class FedSMD(ComputePlanBuilder):
         self._duration_col = duration_col
         self._event_col = event_col
         self._treated_col = treated_col
+        self._target_cols = [self._duration_col, self._event_col]
         self._propensity_model = propensity_model
+        self._propensity_fit_cols = None
         self._tol = tol
+        self.statistics_result = None
+        # Populating kwargs for reinstatiation
+        self.kwargs["duration_col"] = duration_col
+        self.kwargs["event_col"] = event_col
+        self.kwargs["treated_col"] = treated_col
+        self.kwargs["propensity_model"] = propensity_model
+        self.kwargs["tol"] = tol
 
     def build_compute_plan(
         self,
@@ -90,7 +102,7 @@ class FedSMD(ComputePlanBuilder):
     @remote_data
     def compute_local_moments_per_group(
         self,
-        datasamples,
+        data_from_opener,
         shared_state=None,
     ):
         """Computes events statistics for a subset of data.
@@ -113,11 +125,11 @@ class FedSMD(ComputePlanBuilder):
         # we only use survival times
         cols = [
             col
-            for col in datasamples.columns
+            for col in data_from_opener.columns
             if col not in [self._duration_col, self._event_col, self._treated_col]
         ]
         X, y, treated, Xprop, _ = build_X_y_function(
-            datasamples,
+            data_from_opener,
             self._event_col,
             self._duration_col,
             self._treated_col,
@@ -150,7 +162,9 @@ class FedSMD(ComputePlanBuilder):
                 for k in range(1, 3)
             }
             results[res_name]["n_samples"] = (
-                datasamples[mask_treatment].select_dtypes(include=np.number).count()
+                data_from_opener[mask_treatment]
+                .select_dtypes(include=np.number)
+                .count()
             )
         return results
 
@@ -201,3 +215,35 @@ class FedSMD(ComputePlanBuilder):
         smd_weighted = std_mean_differences(treated_weighted, untreated_weighted)
 
         return {"weighted_smd": smd_weighted, "unweighted_smd": smd_raw}
+
+    def save_local_state(self, path: Path):
+        """Save the object on the disk.
+
+        Should be used only by the backend, to define the local_state.
+
+        Parameters
+        ----------
+        path : Path
+            Where to save the object.
+        """
+        with open(path, "wb") as file:
+            pk.dump(self.statistics_result, file)
+
+    def load_local_state(self, path: Path) -> Any:
+        """Load the object from the disk.
+
+        Should be used only by the backend, to define the local_state.
+
+        Parameters
+        ----------
+        path : Path
+            Where to find the object.
+
+        Returns
+        -------
+        Any
+            Previously saved instance.
+        """
+        with open(path, "rb") as file:
+            self.statistics_result = pk.load(file)
+        return self
