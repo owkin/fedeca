@@ -1,17 +1,13 @@
-from typing import List, Optional, Union
+from typing import List, Optional
 
 import numpy as np
+import pandas as pd
 from substrafl import ComputePlanBuilder
 from substrafl.evaluation_strategy import EvaluationStrategy
 from substrafl.nodes import AggregationNodeProtocol, TrainDataNodeProtocol
 from substrafl.remote import remote, remote_data
-from torch import nn
 
-from fedeca.utils.moments_utils import (
-    aggregation_mean,
-    compute_centered_moment,
-    compute_uncentered_moment,
-)
+from fedeca.utils.moments_utils import compute_global_moments, compute_uncentered_moment
 from fedeca.utils.survival_utils import build_X_y_function
 
 
@@ -164,30 +160,6 @@ class FedSMD(ComputePlanBuilder):
         Placeholder
             Method output or placeholder thereof.
         """
-
-        def compute_global_moments(shared_states):
-            tot_uncentered_moments = [
-                aggregation_mean(
-                    [s[f"moment{k}"] for s in shared_states],
-                    [s["n_samples"] for s in shared_states],
-                )
-                for k in range(1, 2 + 1)
-            ]
-            n_samples = sum([s["n_samples"].iloc[0] for s in shared_states])
-            results = {
-                f"global_centered_moment_{k}": compute_centered_moment(
-                    tot_uncentered_moments[:k]
-                )
-                for k in range(1, 2 + 1)
-            }
-            results.update(
-                {
-                    f"global_uncentered_moment_{k+1}": moment
-                    for k, moment in enumerate(tot_uncentered_moments)
-                }
-            )
-            results.update({"total_n_samples": n_samples})
-            return results
 
         def std_mean_differences(x, y):
             """Compute standardized mean differences."""

@@ -107,3 +107,40 @@ def aggregation_mean(local_means: List[Any], n_local_samples: List[int]):
         tot_samples += n_sample
 
     return tot_mean
+
+
+def compute_global_moments(shared_states):
+    """Aggregates local moments.
+
+    Parameters
+    ----------
+    shared_states : list
+        list of outputs from compute_uncentered_moment.
+
+    Returns
+    -------
+    dict
+        The results of the aggregation with both centered and uncentered moments.
+    """
+    tot_uncentered_moments = [
+        aggregation_mean(
+            [s[f"moment{k}"] for s in shared_states],
+            [s["n_samples"] for s in shared_states],
+        )
+        for k in range(1, 2 + 1)
+    ]
+    n_samples = sum([s["n_samples"].iloc[0] for s in shared_states])
+    results = {
+        f"global_centered_moment_{k}": compute_centered_moment(
+            tot_uncentered_moments[:k]
+        )
+        for k in range(1, 2 + 1)
+    }
+    results.update(
+        {
+            f"global_uncentered_moment_{k+1}": moment
+            for k, moment in enumerate(tot_uncentered_moments)
+        }
+    )
+    results.update({"total_n_samples": n_samples})
+    return results
