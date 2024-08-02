@@ -8,7 +8,10 @@ from substrafl.nodes import AggregationNodeProtocol, TrainDataNodeProtocol
 from substrafl.remote import remote, remote_data
 
 from fedeca.utils.moments_utils import compute_global_moments, compute_uncentered_moment
-from fedeca.utils.survival_utils import build_X_y_function
+from fedeca.utils.survival_utils import (
+    build_X_y_function,
+    compute_X_y_and_propensity_weights_function,
+)
 
 
 class FedSMD(ComputePlanBuilder):
@@ -113,7 +116,7 @@ class FedSMD(ComputePlanBuilder):
             for col in datasamples.columns
             if col not in [self._duration_col, self._event_col, self._treated_col]
         ]
-        X, _, treated, Xprop, _ = build_X_y_function(
+        X, y, treated, Xprop, _ = build_X_y_function(
             datasamples,
             self._event_col,
             self._duration_col,
@@ -126,8 +129,11 @@ class FedSMD(ComputePlanBuilder):
             self._tol,
             "iptw",
         )
+        X, _, weights = compute_X_y_and_propensity_weights_function(
+            X, y, treated, Xprop, self._propensity_model, self._tol
+        )
         raw_data = pd.DataFrame(X, columns=cols)
-        weighted_data = pd.DataFrame(Xprop, columns=cols)
+        weighted_data = pd.DataFrame(weights * X, columns=cols)
         results = {}
         for treatment in [0, 1]:
             mask_treatment = treated == treatment
