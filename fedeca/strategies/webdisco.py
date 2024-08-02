@@ -16,7 +16,7 @@ from substrafl.remote import remote
 # from substrafl.schemas import WebDiscoSharedState
 from substrafl.strategies.strategy import Strategy
 
-from fedeca.utils.moments_utils import aggregation_mean, compute_centered_moment
+from fedeca.utils.moments_utils import compute_global_moments
 
 
 class StrategyName(str, Enum):
@@ -633,29 +633,7 @@ class WebDisco(Strategy):
             Global results to be shared with train nodes via shared_state.
         """
         # aggregate the moments.
-
-        tot_uncentered_moments = [
-            aggregation_mean(
-                [s[f"moment{k}"] for s in shared_states],
-                [s["n_samples"] for s in shared_states],
-            )
-            for k in range(1, 2 + 1)
-        ]
-        n_samples = sum([s["n_samples"].iloc[0] for s in shared_states])
-        results = {
-            f"global_centered_moment_{k}": compute_centered_moment(
-                tot_uncentered_moments[:k]
-            )
-            for k in range(1, 2 + 1)
-        }
-        results.update(
-            {
-                f"global_uncentered_moment_{k+1}": moment
-                for k, moment in enumerate(tot_uncentered_moments)
-            }
-        )
-        results.update({"total_n_samples": n_samples})
-        return results
+        return compute_global_moments(shared_states)
 
     def perform_evaluation(
         self,
