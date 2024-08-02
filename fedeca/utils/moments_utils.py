@@ -98,6 +98,9 @@ def aggregation_mean(local_means: List[Any], n_local_samples: List[int]):
     Any
         Aggregated mean. Same type of the local means
     """
+    from remote_pdb import RemotePdb
+
+    RemotePdb("127.0.0.1", 4444).set_trace()
     tot_samples = np.copy(n_local_samples[0])
     tot_mean = np.copy(local_means[0])
     for mean, n_sample in zip(local_means[1:], n_local_samples[1:]):

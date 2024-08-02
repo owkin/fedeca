@@ -1621,14 +1621,14 @@ def build_X_y_function(
     # No funny business irrespective of the convention used
     y = np.abs(data_from_opener[duration_col]) * data_from_opener["time_multiplier"]
     y = y.to_numpy().astype("float64")
-    data_from_opener = data_from_opener.drop(columns=["time_multiplier"])
+    data_from_opener.drop(columns=["time_multiplier"], inplace=True)
     # dangerous but we need to do it
     string_columns = [
         col
         for col in data_from_opener.columns
         if not (is_numeric_dtype(data_from_opener[col]))
     ]
-    data_from_opener = data_from_opener.drop(columns=string_columns)
+    data_from_opener.drop(columns=string_columns, inplace=True)
 
     # We drop the targets from X
     if target_cols is None:

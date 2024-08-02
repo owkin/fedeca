@@ -24,6 +24,7 @@ class FedSMD(ComputePlanBuilder):
         event_col: str,
         treated_col: str,
         propensity_model: torch.nn.Module,
+        client_identifier: str,
         tol: float = 1e-16,
     ):
         """FedSMD strategy. This class computes weighted SMD.
@@ -47,13 +48,16 @@ class FedSMD(ComputePlanBuilder):
         self._target_cols = [self._duration_col, self._event_col]
         self._propensity_model = propensity_model
         self._propensity_fit_cols = None
+        self._client_identifier = client_identifier
         self._tol = tol
         self.statistics_result = None
+
         # Populating kwargs for reinstatiation
         self.kwargs["duration_col"] = duration_col
         self.kwargs["event_col"] = event_col
         self.kwargs["treated_col"] = treated_col
         self.kwargs["propensity_model"] = propensity_model
+        self.kwargs["client_identifier"] = client_identifier
         self.kwargs["tol"] = tol
 
     def build_compute_plan(
@@ -123,11 +127,18 @@ class FedSMD(ComputePlanBuilder):
         """
         del shared_state
         # we only use survival times
-        cols = [
+        propensity_cols = [
             col
             for col in data_from_opener.columns
-            if col not in [self._duration_col, self._event_col, self._treated_col]
+            if col
+            not in [
+                self._duration_col,
+                self._event_col,
+                self._treated_col,
+                self._client_identifier,
+            ]
         ]
+
         X, y, treated, Xprop, _ = build_X_y_function(
             data_from_opener,
             self._event_col,
@@ -137,15 +148,18 @@ class FedSMD(ComputePlanBuilder):
             False,
             self._propensity_model,
             None,
-            self._propensity_fit_cols,
+            propensity_cols,
             self._tol,
             "iptw",
         )
+
         X, _, weights = compute_X_y_and_propensity_weights_function(
             X, y, treated, Xprop, self._propensity_model, self._tol
         )
-        raw_data = pd.DataFrame(X, columns=cols)
-        weighted_data = pd.DataFrame(weights * X, columns=cols)
+        raw_data = pd.DataFrame(Xprop, columns=propensity_cols)
+        weighted_data = pd.DataFrame(
+            np.multiply(weights, Xprop), columns=propensity_cols
+        )
         results = {}
         for treatment in [0, 1]:
             mask_treatment = treated == treatment
@@ -161,7 +175,9 @@ class FedSMD(ComputePlanBuilder):
                 f"moment{k}": compute_uncentered_moment(raw_data[mask_treatment], k)
                 for k in range(1, 3)
             }
-            results[res_name]["n_samples"] = (
+            results[res_name]["unweighted"]["n_samples"] = results[res_name][
+                "weighted"
+            ]["n_samples"] = (
                 data_from_opener[mask_treatment]
                 .select_dtypes(include=np.number)
                 .count()
