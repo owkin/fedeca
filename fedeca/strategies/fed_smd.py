@@ -36,7 +36,7 @@ class FedSMD(ComputePlanBuilder):
         client_identifier: str,
         tol: float = 1e-16,
     ):
-        """FedSMD strategy.
+        """Initialize FedSMD strategy.
 
         This class computes weighted SMD.
 
@@ -50,7 +50,6 @@ class FedSMD(ComputePlanBuilder):
         propensity_model : Union[None, nn.Module], optional
             _description_, by default None
         """
-
         super().__init__()
 
         self._duration_col = duration_col
@@ -117,7 +116,7 @@ class FedSMD(ComputePlanBuilder):
             # keep the states in a list: one/organization
             shared_states.append(next_shared_state)
 
-        agg_shared_state = aggregation_node.update_states(
+        aggregation_node.update_states(
             self.compute_smd(
                 shared_states=shared_states,
                 _algo_name="compute smd for weighted and unweighted data",
@@ -216,7 +215,7 @@ class FedSMD(ComputePlanBuilder):
         self,
         shared_states,
     ):
-        """Computes Kaplan-Meier curve for a subset of data.
+        """Compute Kaplan-Meier curve for a subset of data.
 
         Parameters
         ----------
