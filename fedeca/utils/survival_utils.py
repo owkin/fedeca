@@ -1588,8 +1588,9 @@ def build_X_y_function(
     shared_state={},
     global_moments={},
 ):
-    """Build the inputs for a propensity model and for a Cox model as well as y directly
-    from the output of the opener.
+    """Build the inputs for a propensity model and for a Cox model and y.
+
+    Does that directly on data from opener.
 
     This function 1. uses the event column to inject the censorship
     information present in the duration column (given in absolute values)
@@ -1729,7 +1730,7 @@ def compute_X_y_and_propensity_weights_function(
     if propensity_model is not None:
         assert (
             treated is not None
-        ), f"""If you are using a propensity model the Treated
+        ), """If you are using a propensity model the Treated
         column should be available"""
         assert np.all(
             np.in1d(np.unique(treated.astype("uint8"))[0], [0, 1])

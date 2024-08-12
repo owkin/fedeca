@@ -26,7 +26,6 @@ def compute_uncentered_moment(data, order):
     NotImplementedError
         Raised if the data type is not Dataframe nor np.ndarray.
     """
-
     if isinstance(data, (pd.DataFrame, pd.Series)):
         moment = data.select_dtypes(include=np.number).pow(order).mean(skipna=True)
     elif isinstance(data, np.ndarray):
@@ -99,7 +98,6 @@ def aggregation_mean(local_means: List[Any], n_local_samples: List[int]):
     Any
         Aggregated mean. Same type of the local means
     """
-
     tot_samples = np.nan_to_num(np.copy(n_local_samples[0]), nan=0, copy=False)
     tot_mean = np.nan_to_num(np.copy(local_means[0]), nan=0, copy=False)
     for mean, n_sample in zip(local_means[1:], n_local_samples[1:]):
