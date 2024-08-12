@@ -1438,9 +1438,10 @@ def km_curve(t, n, d, tmax=5000):
 
 
 def compute_events_statistics(times, events):
-    """Compute unique times, number of individuals at risk at these times and number of
-    events at these times based on the raw list of individual times and events, for a
-    survival framework.
+    """Compute unique times, number of individuals at risk at these times, etc.
+
+    Also computes number of events at these times based on the raw list of individual
+    times and events, for a survival framework.
 
     The method is vectorized with numpy to ensure fast computations. As a
     side-effect, memory consumption scales as
@@ -1568,7 +1569,8 @@ def extend_events_to_common_grid(list_t_n_d, t_common):
         d_ext[k, is_in_subset] = d[corr_in_subset[is_in_subset]]
         # Get the people at risk for those in subset
         n_ext[k, is_in_subset] = n[corr_in_subset[is_in_subset]]
-        # For those not in subset but with a match, extend in a piecewise constant fashion
+        # For those not in subset but with a match, extend in a piecewise constant
+        # fashion
         n_ext[k, has_match] = n[corr_in_subset[has_match]]
     return n_ext, d_ext
 
@@ -1726,7 +1728,6 @@ def compute_X_y_and_propensity_weights_function(
     tuple
         _description_
     """
-
     if propensity_model is not None:
         assert (
             treated is not None
