@@ -18,7 +18,7 @@ from fedeca.utils.survival_utils import (
 
 
 class FedKaplan(ComputePlanBuilder):
-    """_summary_
+    """Instantiate a federated version of Kaplan Meier estimates.
 
     Parameters
     ----------
@@ -202,7 +202,7 @@ class FedKaplan(ComputePlanBuilder):
 
     @remote
     def compute_agg_km_curve(self, shared_states):
-        """_summary_
+        """Compute the aggregated Kaplan-Meier curve.
 
         Parameters
         ----------
