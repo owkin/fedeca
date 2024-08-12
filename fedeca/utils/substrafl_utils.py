@@ -366,10 +366,11 @@ class Experiment:
         self.test_data_nodes = None
         # We need to avoid persistence of DB in between runs, this is an obscure
         # hack but it's working
-        database = self.ds_client._backend._db._db._data
-        if len(database.keys()) > 1:
-            for k in list(database.keys()):
-                database.pop(k)
+        if hasattr(self.ds_client, "_backend"):
+            database = self.ds_client._backend._db._db._data
+            if len(database.keys()) > 1:
+                for k in list(database.keys()):
+                    database.pop(k)
 
 
 def get_outmodel_function(
