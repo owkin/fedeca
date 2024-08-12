@@ -1,7 +1,6 @@
 """Module testing substraFL moments strategy."""
 import os
 import subprocess
-import unittest
 from pathlib import Path
 
 import git
