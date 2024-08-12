@@ -152,10 +152,15 @@ class FedSMD(ComputePlanBuilder):
             self._tol,
             "iptw",
         )
+        # X contains only the treatment column (strategy == iptw)
 
         X, _, weights = compute_X_y_and_propensity_weights_function(
             X, y, treated, Xprop, self._propensity_model, self._tol
         )
+
+        # X contains only the treatment column (strategy == iptw)
+        # we use Xprop which contain all propensity columns, which
+        # are the only ones we are interested in
         raw_data = pd.DataFrame(Xprop, columns=propensity_cols)
         weighted_data = pd.DataFrame(
             np.multiply(weights, Xprop), columns=propensity_cols
@@ -178,9 +183,7 @@ class FedSMD(ComputePlanBuilder):
             results[res_name]["unweighted"]["n_samples"] = results[res_name][
                 "weighted"
             ]["n_samples"] = (
-                data_from_opener[mask_treatment]
-                .select_dtypes(include=np.number)
-                .count()
+                raw_data[mask_treatment].select_dtypes(include=np.number).count()
             )
         return results
 
@@ -207,7 +210,7 @@ class FedSMD(ComputePlanBuilder):
             # we match nump std with 0 ddof contrary to standarization for Cox
             stds_y = np.sqrt(y["global_centered_moment_2"] + self._tol)
 
-            smd_df = means_x.substract(means_y).div(
+            smd_df = means_x.subtract(means_y).div(
                 stds_x.pow(2).add(stds_y.pow(2)).div(2).pow(0.5)
             )
             return smd_df
