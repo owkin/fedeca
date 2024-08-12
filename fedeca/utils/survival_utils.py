@@ -1510,7 +1510,7 @@ def aggregate_events_statistics(list_t_n_d):
           with an event (death) at each corresponding `t_agg`
     """
     # Step 1: get the unique times
-    unique_times_list = [t for (t, n, d) in list_t_n_d]
+    unique_times_list = [t for (t, _, _) in list_t_n_d]
     t_agg = np.unique(np.concatenate(unique_times_list))
     # Step 2: extend to common grid
     n_ext, d_ext = extend_events_to_common_grid(list_t_n_d, t_agg)
@@ -1552,6 +1552,8 @@ def extend_events_to_common_grid(list_t_n_d, t_common):
     n_ext = np.zeros((num_clients, t_common.size))
 
     for k, (t, n, d) in enumerate(list_t_n_d):
+        if t.size == 0:
+            continue
         diff = t - t_common.reshape(-1, 1)
         diff_abs = np.abs(diff)
         # identify times which were in the client vs those not

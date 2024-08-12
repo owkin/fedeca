@@ -1,8 +1,10 @@
 """Compute federated Kaplan-Meier estimates."""
 import pickle as pk
-from typing import List, Optional, Union
+from pathlib import Path
+from typing import Any, List, Optional, Union
 
 import numpy as np
+import pandas as pd
 from substrafl import ComputePlanBuilder
 from substrafl.evaluation_strategy import EvaluationStrategy
 from substrafl.nodes import AggregationNodeProtocol, TrainDataNodeProtocol
@@ -29,9 +31,10 @@ class FedKaplan(ComputePlanBuilder):
 
     def __init__(
         self,
-        duration_col,
-        event_col,
-        treated_col: Union[None, str] = None,
+        duration_col: str,
+        event_col: str,
+        treated_col: str,
+        client_identifier: str,
         propensity_model: Union[None, nn.Module] = None,
         tol: float = 1e-16,
     ):
@@ -54,11 +57,15 @@ class FedKaplan(ComputePlanBuilder):
         self._event_col = event_col
         self._treated_col = treated_col
         self._propensity_model = propensity_model
+        self._client_identifier = client_identifier
+        self._target_cols = [self._duration_col, self._event_col]
         self._tol = tol
+        self.statistics_result = None
         self.kwargs["duration_col"] = duration_col
         self.kwargs["event_col"] = event_col
         self.kwargs["treated_col"] = treated_col
         self.kwargs["propensity_model"] = propensity_model
+        self.kwargs["client_identifier"] = client_identifier
         self.kwargs["tol"] = tol
 
     def build_compute_plan(
@@ -122,7 +129,7 @@ class FedKaplan(ComputePlanBuilder):
     @remote_data
     def compute_events_statistics(
         self,
-        datasamples,
+        data_from_opener: pd.DataFrame,
         shared_state=None,
     ):
         """Compute events statistics for a subset of data.
@@ -131,8 +138,8 @@ class FedKaplan(ComputePlanBuilder):
         ----------
         datasamples : _type_
             _description_
-        shared_state : _type_, optional
-            _description_, by default None
+        shared_state : _type_
+            _description_
 
         Returns
         -------
@@ -141,8 +148,20 @@ class FedKaplan(ComputePlanBuilder):
         """
         del shared_state
         # we only use survival times
+        propensity_cols = [
+            col
+            for col in data_from_opener.columns
+            if col
+            not in [
+                self._duration_col,
+                self._event_col,
+                self._treated_col,
+                self._client_identifier,
+            ]
+        ]
+
         X, y, treated, Xprop, _ = build_X_y_function(
-            datasamples,
+            data_from_opener,
             self._event_col,
             self._duration_col,
             self._treated_col,
@@ -150,61 +169,28 @@ class FedKaplan(ComputePlanBuilder):
             False,
             self._propensity_model,
             None,
-            self._propensity_fit_cols,
+            propensity_cols,
             self._tol,
             "iptw",
         )
-        _, y, weights = compute_X_y_and_propensity_weights_function(
+        # X contains only the treatment column (strategy == iptw)
+
+        X, _, weights = compute_X_y_and_propensity_weights_function(
             X, y, treated, Xprop, self._propensity_model, self._tol
         )
+
         # TODO actually use weights
         del weights
         # retrieve times and events
         times = np.abs(y)
         events = y > 0
-        return compute_events_statistics(times, events)
+        assert np.allclose(events, data_from_opener[self._event_col].values)
+        treated = treated.astype(bool).flatten()
 
-    @remote_data
-    def compute_km_curve(
-        self,
-        datasamples,
-    ):
-        """Compute Kaplan-Meier curve for a subset of data.
-
-        Parameters
-        ----------
-        datasamples : _type_
-            _description_
-
-        Returns
-        -------
-        Placeholder
-            Method output or placeholder thereof.
-        """
-        t, n, d = self.compute_events_statistics(
-            datasamples=datasamples,
-            _skip=True,
-        )
-        return km_curve(t, n, d)
-
-    @remote
-    def aggregate_events_statistics(
-        self,
-        shared_states,
-    ):
-        """Aggregate events statistics.
-
-        Parameters
-        ----------
-        shared_states : _type_
-            _description_
-
-        Returns
-        -------
-        _type_
-            _description_
-        """
-        return aggregate_events_statistics(shared_states)
+        return {
+            "treated": compute_events_statistics(times[treated], events[treated]),
+            "untreated": compute_events_statistics(times[~treated], events[~treated]),
+        }
 
     @remote
     def compute_agg_km_curve(self, shared_states):
@@ -220,8 +206,21 @@ class FedKaplan(ComputePlanBuilder):
         _type_
             _description_
         """
-        t_agg, n_agg, d_agg = aggregate_events_statistics(shared_states)
-        return km_curve(t_agg, n_agg, d_agg)
+        from remote_pdb import RemotePdb
+
+        RemotePdb("127.0.0.1", 4444).set_trace()
+        treated_untreated_tnd_agg = {
+            "treated": aggregate_events_statistics(
+                [sh["treated"] for sh in shared_states]
+            ),
+            "untreated": aggregate_events_statistics(
+                [sh["untreated"] for sh in shared_states]
+            ),
+        }
+        return {
+            "treated": km_curve(*treated_untreated_tnd_agg["treated"]),
+            "untreated": km_curve(*treated_untreated_tnd_agg["untreated"]),
+        }
 
     def save_local_state(self, path: Path):
         """Save the object on the disk.
