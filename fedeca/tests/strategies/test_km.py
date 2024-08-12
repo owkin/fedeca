@@ -5,7 +5,6 @@ from pathlib import Path
 
 import git
 import numpy as np
-import pandas as pd
 import torch
 from lifelines import KaplanMeierFitter as KMF
 from substrafl.dependency import Dependency
@@ -19,7 +18,7 @@ from fedeca.fedeca_core import LogisticRegressionTorch
 from fedeca.strategies.fed_kaplan import FedKaplan
 from fedeca.tests.common import TestTempDir
 from fedeca.utils.data_utils import split_dataframe_across_clients
-from fedeca.utils.survival_utils import CoxData, compute_events_statistics, km_curve
+from fedeca.utils.survival_utils import CoxData
 
 
 class TestKM(TestTempDir):
