@@ -1,7 +1,6 @@
 """Implement webdisco algorithm with Torch."""
 import copy
 from copy import deepcopy
-from math import sqrt
 from pathlib import Path
 from typing import Any, List, Optional, Union
 
@@ -11,7 +10,6 @@ import torch
 from autograd import elementwise_grad
 from autograd import numpy as anp
 from lifelines.utils import StepSizer
-from pandas.api.types import is_numeric_dtype
 from scipy.linalg import norm
 from scipy.linalg import solve as spsolve
 from substrafl.algorithms.pytorch import weight_manager
