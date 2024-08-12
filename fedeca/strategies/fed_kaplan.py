@@ -206,9 +206,6 @@ class FedKaplan(ComputePlanBuilder):
         _type_
             _description_
         """
-        from remote_pdb import RemotePdb
-
-        RemotePdb("127.0.0.1", 4444).set_trace()
         treated_untreated_tnd_agg = {
             "treated": aggregate_events_statistics(
                 [sh["treated"] for sh in shared_states]
