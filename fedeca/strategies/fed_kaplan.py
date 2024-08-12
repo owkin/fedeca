@@ -1,3 +1,4 @@
+"""Compute federated Kaplan-Meier estimates."""
 from typing import List, Optional, Union
 
 import numpy as np
@@ -25,8 +26,7 @@ class FedKaplan(ComputePlanBuilder):
         propensity_model: Union[None, nn.Module] = None,
         tol: float = 1e-16,
     ):
-        """FedKaplan strategy. This class implements a federated version of Kaplan Meier
-        estimates.
+        """Implement a federated version of Kaplan Meier estimates.
 
         This code is an adaptation of a previous implementation by Constance Beguier.
 
@@ -37,7 +37,6 @@ class FedKaplan(ComputePlanBuilder):
         propensity_model : Union[None, nn.Module], optional
             _description_, by default None
         """
-
         super().__init__()
         assert not (
             (treated_col is None) and (propensity_model is not None)
@@ -56,6 +55,21 @@ class FedKaplan(ComputePlanBuilder):
         num_rounds: Optional[int],
         clean_models: Optional[bool] = True,
     ):
+        """_summary_
+
+        Parameters
+        ----------
+        train_data_nodes : Optional[List[TrainDataNodeProtocol]]
+            _description_
+        aggregation_node : Optional[List[AggregationNodeProtocol]]
+            _description_
+        evaluation_strategy : Optional[EvaluationStrategy]
+            _description_
+        num_rounds : Optional[int]
+            _description_
+        clean_models : Optional[bool], optional
+            _description_, by default True
+        """
         del num_rounds
         del evaluation_strategy
         del clean_models
@@ -79,7 +93,7 @@ class FedKaplan(ComputePlanBuilder):
             # keep the states in a list: one/organization
             shared_states.append(next_shared_state)
 
-        agg_shared_state = aggregation_node.update_states(
+        aggregation_node.update_states(
             self.compute_agg_km_curve(
                 shared_states=shared_states,
                 _algo_name="Aggregate Events Statistics",
@@ -97,21 +111,19 @@ class FedKaplan(ComputePlanBuilder):
         datasamples,
         shared_state=None,
     ):
-        """Computes events statistics for a subset of data.
-        group_triplet : HyperParameter, optional
-            Triplet describing the subpopulation to use, by default None.
-            This triplet has the format: `(column_index, op, cutoff_val)`
-            where `column_index` is the index of the column on which the
-            selection should take place, `op` the operator to use, as a
-            string (one of `"<"`, `"<="`, `">"`, `">="`), and `cutoff_val`
-            the value to cut. If the dataset is stored in matrix `X`, this
-            means we select samples satisfying
-            `X[:, column_index] op cutoff_val`
+        """_summary_
+
+        Parameters
+        ----------
+        datasamples : _type_
+            _description_
+        shared_state : _type_, optional
+            _description_, by default None
 
         Returns
         -------
-        Placeholder
-            Method output or placeholder thereof.
+        _type_
+            _description_
         """
         del shared_state
         # we only use survival times
@@ -143,7 +155,12 @@ class FedKaplan(ComputePlanBuilder):
         self,
         datasamples,
     ):
-        """Computes Kaplan-Meier curve for a subset of data.
+        """Compute Kaplan-Meier curve for a subset of data.
+
+        Parameters
+        ----------
+        datasamples : _type_
+            _description_
 
         Returns
         -------
@@ -161,11 +178,33 @@ class FedKaplan(ComputePlanBuilder):
         self,
         shared_states,
     ):
-        """Aggregates events statistics for a subset of data."""
+        """_summary_
+
+        Parameters
+        ----------
+        shared_states : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return aggregate_events_statistics(shared_states)
 
     @remote
     def compute_agg_km_curve(self, shared_states):
-        """Computes the aggregated Kaplan-Meier curve."""
+        """_summary_
+
+        Parameters
+        ----------
+        shared_states : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         t_agg, n_agg, d_agg = aggregate_events_statistics(shared_states)
         return km_curve(t_agg, n_agg, d_agg)
