@@ -1,3 +1,4 @@
+"""Tests for the survival utils related to Kaplan Meier."""
 import numpy as np
 from lifelines import KaplanMeierFitter
 
@@ -5,6 +6,7 @@ from fedeca.utils.survival_utils import compute_events_statistics, km_curve
 
 
 def test_compute_events_statistics():
+    """Test the computation of events statistics."""
     times = np.array([0.0, 3.2, 3.2, 5.5, 5.5, 10.0])
     events = np.array([True, True, False, True, True, False])
     unique_times_gt = np.array([0.0, 3.2, 5.5, 10.0])
@@ -24,6 +26,7 @@ def test_compute_events_statistics():
 
 
 def test_km_curve():
+    """Test the computation of the Kaplan Meier curve."""
     rng = np.random.RandomState(42)
     num_samples = 100
     times = rng.randint(0, high=21, size=(num_samples,))

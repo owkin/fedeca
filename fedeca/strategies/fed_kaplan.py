@@ -18,6 +18,14 @@ from fedeca.utils.survival_utils import (
 
 
 class FedKaplan(ComputePlanBuilder):
+    """_summary_
+
+    Parameters
+    ----------
+    ComputePlanBuilder : _type_
+        _description_
+    """
+
     def __init__(
         self,
         duration_col,
@@ -55,7 +63,7 @@ class FedKaplan(ComputePlanBuilder):
         num_rounds: Optional[int],
         clean_models: Optional[bool] = True,
     ):
-        """_summary_
+        """Build the computation plan.
 
         Parameters
         ----------
@@ -111,7 +119,7 @@ class FedKaplan(ComputePlanBuilder):
         datasamples,
         shared_state=None,
     ):
-        """_summary_
+        """Compute events statistics for a subset of data.
 
         Parameters
         ----------
@@ -178,7 +186,7 @@ class FedKaplan(ComputePlanBuilder):
         self,
         shared_states,
     ):
-        """_summary_
+        """Aggregate events statistics.
 
         Parameters
         ----------
