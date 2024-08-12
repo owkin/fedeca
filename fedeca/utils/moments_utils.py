@@ -110,7 +110,7 @@ def aggregation_mean(local_means: List[Any], n_local_samples: List[int]):
 
 
 def compute_global_moments(shared_states):
-    """Aggregates local moments.
+    """Aggregate local moments.
 
     Parameters
     ----------

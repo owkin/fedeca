@@ -1,3 +1,4 @@
+"""Compute SMD for weighted and unweighted data in FL."""
 import pickle as pk
 from pathlib import Path
 from typing import Any, List, Optional
@@ -18,6 +19,14 @@ from fedeca.utils.survival_utils import (
 
 
 class FedSMD(ComputePlanBuilder):
+    """Compute SMD for weighted and unweighted data in FL.
+
+    Parameters
+    ----------
+    ComputePlanBuilder : ComputePlanBuilder
+        Analytics strategy.
+    """
+
     def __init__(
         self,
         duration_col: str,
@@ -27,7 +36,9 @@ class FedSMD(ComputePlanBuilder):
         client_identifier: str,
         tol: float = 1e-16,
     ):
-        """FedSMD strategy. This class computes weighted SMD.
+        """FedSMD strategy.
+
+        This class computes weighted SMD.
 
         Parameters
         ----------
@@ -68,6 +79,21 @@ class FedSMD(ComputePlanBuilder):
         num_rounds: Optional[int],
         clean_models: Optional[bool] = True,
     ):
+        """Build the computation plan.
+
+        Parameters
+        ----------
+        train_data_nodes : Optional[List[TrainDataNodeProtocol]]
+            _description_
+        aggregation_node : Optional[List[AggregationNodeProtocol]]
+            _description_
+        evaluation_strategy : Optional[EvaluationStrategy]
+            _description_
+        num_rounds : Optional[int]
+            _description_
+        clean_models : Optional[bool], optional
+            _description_, by default True
+        """
         del num_rounds
         del evaluation_strategy
         del clean_models
@@ -109,20 +135,18 @@ class FedSMD(ComputePlanBuilder):
         data_from_opener,
         shared_state=None,
     ):
-        """Computes events statistics for a subset of data.
-        group_triplet : HyperParameter, optional
-            Triplet describing the subpopulation to use, by default None.
-            This triplet has the format: `(column_index, op, cutoff_val)`
-            where `column_index` is the index of the column on which the
-            selection should take place, `op` the operator to use, as a
-            string (one of `"<"`, `"<="`, `">"`, `">="`), and `cutoff_val`
-            the value to cut. If the dataset is stored in matrix `X`, this
-            means we select samples satisfying
-            `X[:, column_index] op cutoff_val`
+        """Compute events statistics for a subset of data.
+
+        Parameters
+        ----------
+        data_from_opener: pd.DataFrame
+            Data to compute statistics on.
+        shared_state: list[pd.DataFrame]
+            List of shared states.
 
         Returns
         -------
-        Placeholder
+        dict
             Method output or placeholder thereof.
         """
         del shared_state
@@ -194,9 +218,14 @@ class FedSMD(ComputePlanBuilder):
     ):
         """Computes Kaplan-Meier curve for a subset of data.
 
+        Parameters
+        ----------
+        shared_states: list
+            List of shared states.
+
         Returns
         -------
-        Placeholder
+        dict
             Method output or placeholder thereof.
         """
 
