@@ -1730,6 +1730,7 @@ def compute_X_y_and_propensity_weights_function(
             np.in1d(np.unique(treated.astype("uint8"))[0], [0, 1])
         ), "The treated column should have all its values in set([0, 1])"
         Xprop = torch.from_numpy(Xprop)
+
         with torch.no_grad():
             propensity_scores = propensity_model(Xprop)
 
