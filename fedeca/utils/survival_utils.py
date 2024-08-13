@@ -1667,13 +1667,15 @@ def build_X_y_function(
     y = np.abs(data_from_opener[duration_col]) * data_from_opener["time_multiplier"]
     y = y.to_numpy().astype("float64")
     data_from_opener.drop(columns=["time_multiplier"], inplace=True)
-    # dangerous but we need to do it
+
+    # TODO very dangerous, to replace by removing client_identifier
+    # in both cases this SHOULD NOT BE inplace
     string_columns = [
         col
         for col in data_from_opener.columns
         if not (is_numeric_dtype(data_from_opener[col]))
     ]
-    data_from_opener.drop(columns=string_columns, inplace=True)
+    data_from_opener = data_from_opener.drop(columns=string_columns)
 
     # We drop the targets from X
     if target_cols is None:

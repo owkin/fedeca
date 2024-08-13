@@ -193,7 +193,7 @@ def split_dataframe_across_clients(
     assert len(all_indices) == len(df.index)
     assert set(all_indices) == set(range(len(df.index)))
     dfs = []
-
+    breakpoint()
     for i in range(n_clients):
         os.makedirs(data_path / f"center{i}", exist_ok=True)
         cdf = copy.deepcopy(df.iloc[clients_indices_list[i]])
