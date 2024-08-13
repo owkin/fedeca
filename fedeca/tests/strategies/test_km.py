@@ -135,7 +135,7 @@ class TestKM(TestTempDir):
         ]
         s_gts = [kmf.survival_function_["KM_estimate"].to_numpy() for kmf in kms]
         grid_gts = [kmf.survival_function_.index.to_numpy() for kmf in kms]
-        breakpoint()
+
         fl_grid_treated, fl_s_treated, _ = fl_results["treated"]
         fl_grid_untreated, fl_s_untreated, _ = fl_results["untreated"]
 

@@ -1426,11 +1426,13 @@ def km_curve(t, n, d, tmax=None):
     https://en.wikipedia.org/wiki/Kaplan%E2%80%93Meier_estimator
     https://www.math.wustl.edu/~sawyer/handouts/greenwood.pdf
     """
-    if tmax is None:
-        # Number of unique events + 0 ("birth")
-        tmax = len(t)
     # We compute the grid on which we will want to plot S(t)
-    grid = np.linspace(0, t.max(), tmax + 1)
+    if tmax is None:
+        # Unique events + 0 ("birth") as in lifelines
+        grid = np.array([0] + t.tolist())
+    else:
+        # Not sure if useful but...
+        grid = np.linspace(0, t.max(), tmax + 1)
     # KM estimator but wo filtering terms out
     q = 1.0 - d / n
     cprod_q = np.cumprod(q)
