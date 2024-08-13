@@ -1511,8 +1511,6 @@ def compute_events_statistics(times, events, weights=None):
     if weights is None:
         weights = np.ones_like(times)
 
-    # from remote_pdb import RemotePdb
-    # RemotePdb('127.0.0.1', 4444).set_trace()
     num_death_at_times = np.sum(
         weights[events].reshape(1, -1)
         * ((unique_times.reshape(-1, 1) - times[events].reshape(1, -1)) == 0),
