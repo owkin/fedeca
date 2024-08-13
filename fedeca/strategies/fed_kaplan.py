@@ -183,7 +183,7 @@ class FedKaplan(ComputePlanBuilder):
         del weights
         # retrieve times and events
         times = np.abs(y)
-        events = y > 0
+        events = y >= 0
         assert np.allclose(events, data_from_opener[self._event_col].values)
         treated = treated.astype(bool).flatten()
 
@@ -214,6 +214,7 @@ class FedKaplan(ComputePlanBuilder):
                 [sh["untreated"] for sh in shared_states]
             ),
         }
+
         return {
             "treated": km_curve(*treated_untreated_tnd_agg["treated"]),
             "untreated": km_curve(*treated_untreated_tnd_agg["untreated"]),

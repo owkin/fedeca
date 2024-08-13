@@ -414,6 +414,15 @@ class CoxData:
                 if not reached:
                     raise ValueError("This should not happen, lower percent_ties")
                 times = times.reshape((-1))
+                # 0-1 scale
+                times /= float(nbins)
+                # With this Kbins discretizer, times start always at 0.
+                # 0, 1, 2, 3, ...
+                # there should be no time at exactly 0. otherwise lifelines
+                # (rightfully) will act in a weird way. See the birth outer join in
+                # https://github.com/CamDavidsonPilon/lifelines/blob/4377caf5a6224941ee3ab34c413ad668d4173274/lifelines/utils/__init__.py#L567
+                # therefore we add a small quantity to every time
+                times += np.random.uniform(1.0 / nbins, 1.0, size=1)
 
             else:
                 raise ValueError("Choose a larger number of ties")
@@ -1364,7 +1373,7 @@ def robust_sandwich_variance_pooled(
     return np.sqrt(np.diag(tested_var))
 
 
-def km_curve(t, n, d, tmax=5000):
+def km_curve(t, n, d, tmax=None):
     """Compute Kaplan-Meier (KM) curve.
 
     This function is typically used in conjunction with
@@ -1382,7 +1391,7 @@ def km_curve(t, n, d, tmax=5000):
         Array containing the number of individuals with an event (death) at
         each corresponding time `t`
     tmax : int, optional
-        Maximal time point for the KM curve, by default 5000
+        Number of grid points, Default to the number of unique events + 1.
 
     Returns
     -------
@@ -1417,23 +1426,38 @@ def km_curve(t, n, d, tmax=5000):
     https://en.wikipedia.org/wiki/Kaplan%E2%80%93Meier_estimator
     https://www.math.wustl.edu/~sawyer/handouts/greenwood.pdf
     """
-    grid = np.arange(0, tmax + 1)
-    # precompute for KM
+    if tmax is None:
+        # Number of unique events + 0 ("birth")
+        tmax = len(t)
+    # We compute the grid on which we will want to plot S(t)
+    grid = np.linspace(0, t.max(), tmax + 1)
+    # KM estimator but wo filtering terms out
     q = 1.0 - d / n
     cprod_q = np.cumprod(q)
-    # precompute for var
+
+    # Same for Greenwood's formula
     csum_var = np.cumsum(d / (n * (n - d)))
-    # initialize
+
+    # Now we just need for each point of the grid to filter out terms that are
+    # bigger than them
+    # we initialize by filtering out everything
     s = np.zeros(grid.shape)
     var_s = np.zeros(grid.shape)
-    # the following sum relies on the assumption that unique_events_times is sorted!
-    index_closest = np.sum(grid.reshape(-1, 1) - t.reshape(1, -1) >= 0, axis=1) - 1
-    not_found = index_closest < 0
-    found = index_closest >= 0
-    # attribute
-    s[not_found] = 1.0
-    s[found] = cprod_q[index_closest[found]]
-    var_s[found] = (s[found] ** 2) * csum_var[index_closest[found]]
+
+    # we need, for each element in the grid, the index of the cumprod/cumsum
+    # it should go to, which would by design filter out the right terms
+    # to respect KM's formula
+    mask = grid.reshape(-1, 1) - t.reshape(1, -1) >= 0  # (grid.shape, t.shape)
+    index_in_cum_vec = np.sum(mask, axis=1) - 1
+    # We can now compute the survival function for each point in the grid
+    # Survival function starts at 1.
+    s[index_in_cum_vec < 0.0] = 1.0
+    s[index_in_cum_vec >= 0.0] = cprod_q[index_in_cum_vec[index_in_cum_vec >= 0]]
+
+    # And now similarly we derive Greenwood
+    var_s[index_in_cum_vec >= 0] = (s[index_in_cum_vec >= 0] ** 2) * csum_var[
+        index_in_cum_vec[index_in_cum_vec >= 0]
+    ]
     return grid, s, var_s
 
 
@@ -1510,7 +1534,7 @@ def aggregate_events_statistics(list_t_n_d):
           with an event (death) at each corresponding `t_agg`
     """
     # Step 1: get the unique times
-    unique_times_list = [t for (t, _, _) in list_t_n_d]
+    unique_times_list = [t for (t, _, _) in list_t_n_d if t.size != 0]
     t_agg = np.unique(np.concatenate(unique_times_list))
     # Step 2: extend to common grid
     n_ext, d_ext = extend_events_to_common_grid(list_t_n_d, t_agg)

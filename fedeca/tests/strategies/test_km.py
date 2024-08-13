@@ -30,7 +30,7 @@ class TestKM(TestTempDir):
     def setUp(self, backend_type="subprocess", ndim=10) -> None:
         """Set up the quantities needed for the tests."""
         # Let's generate 1000 data samples with 10 covariates
-        data = CoxData(seed=42, n_samples=1000, ndim=ndim)
+        data = CoxData(seed=42, n_samples=1000, ndim=ndim, percent_ties=0.2)
         self.df = data.generate_dataframe()
 
         # We remove the true propensity score
@@ -135,6 +135,7 @@ class TestKM(TestTempDir):
         ]
         s_gts = [kmf.survival_function_["KM_estimate"].to_numpy() for kmf in kms]
         grid_gts = [kmf.survival_function_.index.to_numpy() for kmf in kms]
+        breakpoint()
         fl_grid_treated, fl_s_treated, _ = fl_results["treated"]
         fl_grid_untreated, fl_s_untreated, _ = fl_results["untreated"]
 
