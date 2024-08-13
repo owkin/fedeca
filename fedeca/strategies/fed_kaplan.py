@@ -180,7 +180,7 @@ class FedKaplan(ComputePlanBuilder):
         )
 
         # TODO actually use weights
-        del weights
+        # del weights
         # retrieve times and events
         times = np.abs(y)
         events = y >= 0
@@ -188,8 +188,12 @@ class FedKaplan(ComputePlanBuilder):
         treated = treated.astype(bool).flatten()
 
         return {
-            "treated": compute_events_statistics(times[treated], events[treated]),
-            "untreated": compute_events_statistics(times[~treated], events[~treated]),
+            "treated": compute_events_statistics(
+                times[treated], events[treated], weights[treated]
+            ),
+            "untreated": compute_events_statistics(
+                times[~treated], events[~treated], weights[~treated]
+            ),
         }
 
     @remote

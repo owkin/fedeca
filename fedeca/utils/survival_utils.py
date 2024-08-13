@@ -1463,7 +1463,7 @@ def km_curve(t, n, d, tmax=None):
     return grid, s, var_s
 
 
-def compute_events_statistics(times, events):
+def compute_events_statistics(times, events, weights=None):
     """Compute unique times, number of individuals at risk at these times, etc.
 
     Also computes number of events at these times based on the raw list of individual
@@ -1482,6 +1482,8 @@ def compute_events_statistics(times, events):
     events : np.array
         1D array with boolean entries, such that `events[i] == True` if and
         only if a true event was observed for individual `i` at time `times[i]`
+    weights : np.array, optional
+        Weights from a propensity model.
 
     Returns
     -------
@@ -1506,11 +1508,20 @@ def compute_events_statistics(times, events):
     """
     # NB, both censored and uncensored, otherwise impossible to aggregate exactly
     unique_times = np.unique(times)
+    if weights is None:
+        weights = np.ones_like(times)
+
+    # from remote_pdb import RemotePdb
+    # RemotePdb('127.0.0.1', 4444).set_trace()
     num_death_at_times = np.sum(
-        (unique_times.reshape(-1, 1) - times[events].reshape(1, -1)) == 0, axis=1
+        weights[events].reshape(1, -1)
+        * ((unique_times.reshape(-1, 1) - times[events].reshape(1, -1)) == 0),
+        axis=1,
     )
     num_at_risk_at_times = np.sum(
-        (times.reshape(1, -1) - unique_times.reshape(-1, 1)) >= 0, axis=1
+        weights.reshape(1, -1)
+        * ((times.reshape(1, -1) - unique_times.reshape(-1, 1)) >= 0),
+        axis=1,
     )
     return unique_times, num_at_risk_at_times, num_death_at_times
 

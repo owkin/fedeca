@@ -122,14 +122,14 @@ class TestKM(TestTempDir):
         weights = self.df["treatment"] * 1.0 / propensity_scores + (
             1 - self.df["treatment"]
         ) * 1.0 / (1.0 - propensity_scores)
-        weights = weights.values
+
         treatments = [1, 0]
         # TODO test with weights
         kms = [
             KMF().fit(
                 durations=self.df.loc[self.df["treatment"] == t]["time"],
                 event_observed=self.df.loc[self.df["treatment"] == t]["event"],
-                weights=None,
+                weights=weights.loc[self.df["treatment"] == t],
             )
             for t in treatments
         ]
