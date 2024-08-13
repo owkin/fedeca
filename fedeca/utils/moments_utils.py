@@ -98,8 +98,8 @@ def aggregation_mean(local_means: List[Any], n_local_samples: List[int]):
     Any
         Aggregated mean. Same type of the local means
     """
-    tot_samples = np.copy(n_local_samples[0])
-    tot_mean = np.copy(local_means[0])
+    tot_samples = np.nan_to_num(np.copy(n_local_samples[0]), nan=0, copy=False)
+    tot_mean = np.nan_to_num(np.copy(local_means[0]), nan=0, copy=False)
     for mean, n_sample in zip(local_means[1:], n_local_samples[1:]):
         mean = np.nan_to_num(mean, nan=0, copy=False)
         tot_mean *= tot_samples / (tot_samples + n_sample)
@@ -107,3 +107,40 @@ def aggregation_mean(local_means: List[Any], n_local_samples: List[int]):
         tot_samples += n_sample
 
     return tot_mean
+
+
+def compute_global_moments(shared_states):
+    """Aggregate local moments.
+
+    Parameters
+    ----------
+    shared_states : list
+        list of outputs from compute_uncentered_moment.
+
+    Returns
+    -------
+    dict
+        The results of the aggregation with both centered and uncentered moments.
+    """
+    tot_uncentered_moments = [
+        aggregation_mean(
+            [s[f"moment{k}"] for s in shared_states],
+            [s["n_samples"] for s in shared_states],
+        )
+        for k in range(1, 2 + 1)
+    ]
+    n_samples = sum([s["n_samples"].iloc[0] for s in shared_states])
+    results = {
+        f"global_centered_moment_{k}": compute_centered_moment(
+            tot_uncentered_moments[:k]
+        )
+        for k in range(1, 2 + 1)
+    }
+    results.update(
+        {
+            f"global_uncentered_moment_{k+1}": moment
+            for k, moment in enumerate(tot_uncentered_moments)
+        }
+    )
+    results.update({"total_n_samples": n_samples})
+    return results

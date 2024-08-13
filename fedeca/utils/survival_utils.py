@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import copy
+from math import sqrt
 from typing import Final, Literal, Optional, Protocol
 
 import numpy as np
@@ -9,6 +10,7 @@ import numpy.typing as npt
 import pandas as pd
 import torch
 from numpy.typing import NDArray
+from pandas.api.types import is_numeric_dtype
 from scipy import stats
 from scipy.linalg import toeplitz
 from sklearn.base import BaseEstimator
@@ -412,6 +414,15 @@ class CoxData:
                 if not reached:
                     raise ValueError("This should not happen, lower percent_ties")
                 times = times.reshape((-1))
+                # 0-1 scale
+                times /= float(nbins)
+                # With this Kbins discretizer, times start always at 0.
+                # 0, 1, 2, 3, ...
+                # there should be no time at exactly 0. otherwise lifelines
+                # (rightfully) will act in a weird way. See the birth outer join in
+                # https://github.com/CamDavidsonPilon/lifelines/blob/4377caf5a6224941ee3ab34c413ad668d4173274/lifelines/utils/__init__.py#L567
+                # therefore we add a small quantity to every time
+                times += np.random.uniform(1.0 / nbins, 1.0, size=1)
 
             else:
                 raise ValueError("Choose a larger number of ties")
@@ -1295,6 +1306,9 @@ def robust_sandwich_variance_pooled(
     model. The sandwich variance estimator is a robust estimator of the variance
     which accounts for the lack of dependence between the samples due to the
     introduction of weights for example.
+
+    Parameters
+    ----------
     X_norm : np.ndarray or torch.Tensor
         Input feature matrix of shape (n_samples, n_features).
     y : np.ndarray or torch.Tensor
@@ -1307,6 +1321,11 @@ def robust_sandwich_variance_pooled(
         Weights associated with each sample, with shape (n_samples,)
     scaled_variance_matrix : np.ndarray or torch.Tensor
         Classical scaled variance of the Cox model estimator.
+
+    Returns
+    -------
+    np.ndarray
+        The robust sandwich variance estimator.
     """
     n_samples, n_features = X_norm.shape
 
@@ -1352,3 +1371,420 @@ def robust_sandwich_variance_pooled(
     delta_betas = score_residuals.dot(scaled_variance_matrix)
     tested_var = delta_betas.T.dot(delta_betas)
     return np.sqrt(np.diag(tested_var))
+
+
+def km_curve(t, n, d, tmax=None):
+    """Compute Kaplan-Meier (KM) curve.
+
+    This function is typically used in conjunction with
+    `compute_events_statistics`. Note that the variance is computed
+    based on Greenwood's formula, not its exponential variant (see refs).
+
+    Parameters
+    ----------
+    t : np.array
+        Array containing the unique times of events, sorted in ascending order
+    n : np.array
+        Array containing the number of individuals at risk at each
+        corresponding time `t`
+    d : np.array
+        Array containing the number of individuals with an event (death) at
+        each corresponding time `t`
+    tmax : int, optional
+        Number of grid points, Default to the number of unique events + 1.
+
+    Returns
+    -------
+    tuple
+        Tuple of length 3 containing:
+        - `grid`: 1D array containing the time points at which the survival
+          curve is evaluated. It is `np.arange(0, t_max+1)`
+        - `s`: 1D array with the value of the survival function as obtained
+          by the Kaplan-Meier formula.
+        - `var_s`: `np.array` containing the variance of the Kaplan-Meier curve
+          at each point of `grid`
+
+    Examples
+    --------
+    .. code-block:: python
+       :linenos:
+       # Define times and events
+       times = np.random.randint(0, 3000, size=(10,))
+       events = np.random.rand(10) > 0.5
+       # Compute events statistics
+       t, n, d = compute_events_statistics(times, events)
+       # Get Kaplan-Meier curve
+       grid, s, var_s = km_curve(t, n, d)
+
+       # Plot KM curve
+       plt.figure()
+       plt.plot(grid, s)
+       plt.fill_between(grid, s-np.sqrt(var_s), s+np.sqrt(var_s))
+
+    References
+    ----------
+    https://en.wikipedia.org/wiki/Kaplan%E2%80%93Meier_estimator
+    https://www.math.wustl.edu/~sawyer/handouts/greenwood.pdf
+    """
+    # We compute the grid on which we will want to plot S(t)
+    if tmax is None:
+        # Unique events + 0 ("birth") as in lifelines
+        grid = np.array([0] + t.tolist())
+    else:
+        # Not sure if useful but...
+        grid = np.linspace(0, t.max(), tmax + 1)
+    # KM estimator but wo filtering terms out
+    q = 1.0 - d / n
+    cprod_q = np.cumprod(q)
+
+    # Same for Greenwood's formula
+    csum_var = np.cumsum(d / (n * (n - d)))
+
+    # Now we just need for each point of the grid to filter out terms that are
+    # bigger than them
+    # we initialize by filtering out everything
+    s = np.zeros(grid.shape)
+    var_s = np.zeros(grid.shape)
+
+    # we need, for each element in the grid, the index of the cumprod/cumsum
+    # it should go to, which would by design filter out the right terms
+    # to respect KM's formula
+    mask = grid.reshape(-1, 1) - t.reshape(1, -1) >= 0  # (grid.shape, t.shape)
+    index_in_cum_vec = np.sum(mask, axis=1) - 1
+    # We can now compute the survival function for each point in the grid
+    # Survival function starts at 1.
+    s[index_in_cum_vec < 0.0] = 1.0
+    s[index_in_cum_vec >= 0.0] = cprod_q[index_in_cum_vec[index_in_cum_vec >= 0]]
+
+    # And now similarly we derive Greenwood
+    var_s[index_in_cum_vec >= 0] = (s[index_in_cum_vec >= 0] ** 2) * csum_var[
+        index_in_cum_vec[index_in_cum_vec >= 0]
+    ]
+    return grid, s, var_s
+
+
+def compute_events_statistics(times, events, weights=None):
+    """Compute unique times, number of individuals at risk at these times, etc.
+
+    Also computes number of events at these times based on the raw list of individual
+    times and events, for a survival framework.
+
+    The method is vectorized with numpy to ensure fast computations. As a
+    side-effect, memory consumption scales as
+    `num_unique_times * num_individuals`.
+
+    Parameters
+    ----------
+    times : np.array
+        1D array containing the individual observed times, which are either
+        censored times or true event times depending on the corresponding value
+        of the `events` array
+    events : np.array
+        1D array with boolean entries, such that `events[i] == True` if and
+        only if a true event was observed for individual `i` at time `times[i]`
+    weights : np.array, optional
+        Weights from a propensity model.
+
+    Returns
+    -------
+    tuple
+        Tuple of length 3 containing, in this order:
+        - `unique_times`: `np.array` containing the unique times of events,
+          in ascending order
+        - `num_at_risk_at_times`: `np.array` containing the number of individuals
+          at risk at each corresponding `unique_times`
+        - `num_death_at_times`: `np.array` containing the number of individuals
+          with an event (death) at each corresponding `unique_times`
+
+    Examples
+    --------
+    .. code-block:: python
+       :linenos:
+       # Define times and events
+       times = np.random.randint(0, 3000, size=(10,))
+       events = np.random.rand(10) > 0.5
+       # Compute events statistics
+       t, n, d = compute_events_statistics(times, events)
+    """
+    # NB, both censored and uncensored, otherwise impossible to aggregate exactly
+    unique_times = np.unique(times)
+    if weights is None:
+        weights = np.ones_like(times)
+
+    num_death_at_times = np.sum(
+        weights[events].reshape(1, -1)
+        * ((unique_times.reshape(-1, 1) - times[events].reshape(1, -1)) == 0),
+        axis=1,
+    )
+    num_at_risk_at_times = np.sum(
+        weights.reshape(1, -1)
+        * ((times.reshape(1, -1) - unique_times.reshape(-1, 1)) >= 0),
+        axis=1,
+    )
+    return unique_times, num_at_risk_at_times, num_death_at_times
+
+
+def aggregate_events_statistics(list_t_n_d):
+    """Aggregate (sums) events statistics from different centers.
+
+    Parameters
+    ----------
+    list_t_n_d : tuple
+        List of event statistics from different centers. Each entry in the list
+        should follow the output format of `compute_events_statistics`
+
+    Returns
+    -------
+    tuple
+        Tuple of size 3 containing, in this order:
+        - `t_agg`: `np.array` containing the unique times of events,
+          in ascending order
+        - `n_agg`: `np.array` containing the number of individuals
+          at risk at each corresponding `t_agg`
+        - `d_agg`: `np.array` containing the number of individuals
+          with an event (death) at each corresponding `t_agg`
+    """
+    # Step 1: get the unique times
+    unique_times_list = [t for (t, _, _) in list_t_n_d if t.size != 0]
+    t_agg = np.unique(np.concatenate(unique_times_list))
+    # Step 2: extend to common grid
+    n_ext, d_ext = extend_events_to_common_grid(list_t_n_d, t_agg)
+    # Step 3:sum across centers
+    n_agg = np.sum(n_ext, axis=0)
+    d_agg = np.sum(d_ext, axis=0)
+    return t_agg, n_agg, d_agg
+
+
+def extend_events_to_common_grid(list_t_n_d, t_common):
+    """Extend a list of heterogeneous times, number of people at risk on common grid.
+
+    This method is an internal utility for `aggregate_events_statistics`.
+
+    Parameters
+    ----------
+    list_t_n_d : List[tuple]
+        List of tuples, each item in the list being an output of
+        `compute_events_statistics`, i.e. each tuple is of size 3 and contains
+        - `t`: 1D array with unique event times, sorted in ascending order
+        - `n`: 1D array with the number of individuals at risk for each time point
+        - `d`: 1D array with the number of events for each time point
+    t_common : np.ndarray
+        Common grid on which to compute the aggregated times.
+
+    Returns
+    -------
+    tuple
+        Tuple with 2 values, each being a 2D array of size
+        `len(list_t_n_d) * t_common.size`
+        - `n_ext`: number of individuals at risk for each center and time
+          point in `t_common`
+        - `d_ext`: number of events for each center and each time point
+          in `t_common`
+    """
+    num_clients = len(list_t_n_d)
+
+    d_ext = np.zeros((num_clients, t_common.size))
+    n_ext = np.zeros((num_clients, t_common.size))
+
+    for k, (t, n, d) in enumerate(list_t_n_d):
+        if t.size == 0:
+            continue
+        diff = t - t_common.reshape(-1, 1)
+        diff_abs = np.abs(diff)
+        # identify times which were in the client vs those not
+        is_in_subset = diff_abs.min(axis=1) == 0
+        not_in_subset = diff_abs.min(axis=1) > 0
+        # make a correspondence for those that were in
+        corr_in_subset = np.zeros(t_common.size, dtype=int)
+        corr_in_subset[is_in_subset] = diff_abs[is_in_subset].argmin(axis=1)
+        # for those that were not, but which are inside the grid, we can extend n
+        diff_relu = np.maximum(diff, 0)
+        has_match = (diff_relu.max(axis=1) > 0) & not_in_subset
+        # we rely on the fact that t is ordered!
+        corr_in_subset[has_match] = np.sum(diff_relu == 0, axis=1)[has_match]
+        # Get the deaths: 0 if no time, the value if it was inside
+        d_ext[k, is_in_subset] = d[corr_in_subset[is_in_subset]]
+        # Get the people at risk for those in subset
+        n_ext[k, is_in_subset] = n[corr_in_subset[is_in_subset]]
+        # For those not in subset but with a match, extend in a piecewise constant
+        # fashion
+        n_ext[k, has_match] = n[corr_in_subset[has_match]]
+    return n_ext, d_ext
+
+
+def build_X_y_function(
+    data_from_opener,
+    event_col,
+    duration_col,
+    treated_col,
+    target_cols=None,
+    standardize_data=True,
+    propensity_model=None,
+    cox_fit_cols=None,
+    propensity_fit_cols=None,
+    tol=1e-16,
+    training_strategy="webdisco",
+    shared_state={},
+    global_moments={},
+):
+    """Build the inputs for a propensity model and for a Cox model and y.
+
+    Does that directly on data from opener.
+
+    This function 1. uses the event column to inject the censorship
+    information present in the duration column (given in absolute values)
+    in the form of a negative sign producing y.
+    2. Drops the raw survival columns (given in target_cols) now that y is built.
+    2. Drops some covariates differently for Cox and for the propensity model
+    according to the training_strategy argument as well as cox and propensity
+    fit cols.
+    4. Standardize the data if standardize_data. It will use either the shared_state
+    or the global moments variable depending on what is given. If both given
+    uses shared_state. If not given does not err but does not standardize.
+    5. Return the Cox model input X as well as the (unstandardized) input to the
+    propensity model Xprop if necessary as well as the treated column to be able
+    to compute the propensity weights.
+
+    Parameters
+    ----------
+    data_from_opener : pd.DataFrame
+        The output of the opener
+    shared_state : dict, optional
+        Outmodel containing global means and stds.
+        by default {}
+
+    Returns
+    -------
+    tuple
+        standardized X, signed times, treatment column and unstandardized
+        propensity model input
+    """
+    # We need y to be in the format (2*event-1)*duration
+    data_from_opener["time_multiplier"] = [
+        2.0 * e - 1.0 for e in data_from_opener[event_col].tolist()
+    ]
+    # No funny business irrespective of the convention used
+    y = np.abs(data_from_opener[duration_col]) * data_from_opener["time_multiplier"]
+    y = y.to_numpy().astype("float64")
+    data_from_opener.drop(columns=["time_multiplier"], inplace=True)
+
+    # TODO very dangerous, to replace by removing client_identifier
+    # in both cases this SHOULD NOT BE inplace
+    string_columns = [
+        col
+        for col in data_from_opener.columns
+        if not (is_numeric_dtype(data_from_opener[col]))
+    ]
+    data_from_opener = data_from_opener.drop(columns=string_columns)
+
+    # We drop the targets from X
+    if target_cols is None:
+        target_cols = [event_col, duration_col]
+    columns_to_drop = target_cols
+    X = data_from_opener.drop(columns=columns_to_drop)
+    if propensity_model is not None:
+        assert treated_col is not None
+        if training_strategy == "iptw":
+            X = X.loc[:, [treated_col]]
+        elif training_strategy == "aiptw":
+            if len(cox_fit_cols) > 0:
+                X = X.loc[:, [treated_col] + cox_fit_cols]
+            else:
+                pass
+    else:
+        assert training_strategy == "webdisco"
+        if len(cox_fit_cols) > 0:
+            X = X.loc[:, cox_fit_cols]
+        else:
+            pass
+
+    # If X is to be standardized we do it
+    if standardize_data:
+        if shared_state:
+            # Careful this shouldn't happen apart from the predict
+            means = shared_state["global_uncentered_moment_1"]
+            vars = shared_state["global_centered_moment_2"]
+            # Careful we need to match pandas and use unbiased estimator
+            bias_correction = (shared_state["total_n_samples"]) / float(
+                shared_state["total_n_samples"] - 1
+            )
+            global_moments = {
+                "means": means,
+                "vars": vars,
+                "bias_correction": bias_correction,
+            }
+            stds = vars.transform(lambda x: sqrt(x * bias_correction + tol))
+            X = X.sub(means)
+            X = X.div(stds)
+        else:
+            X = X.sub(global_moments["means"])
+            stds = global_moments["vars"].transform(
+                lambda x: sqrt(x * global_moments["bias_correction"] + tol)
+            )
+            X = X.div(stds)
+
+    X = X.to_numpy().astype("float64")
+
+    # If we have a propensity model we need to build X without the targets AND the
+    # treated column
+    if propensity_model is not None:
+        # We do not normalize the data for the propensity model !!!
+        Xprop = data_from_opener.drop(columns=columns_to_drop + [treated_col])
+        if propensity_fit_cols is not None:
+            Xprop = Xprop[propensity_fit_cols]
+        Xprop = Xprop.to_numpy().astype("float64")
+    else:
+        Xprop = None
+
+    # If WebDisco is used without propensity treated column does not exist
+    if treated_col is not None:
+        treated = (
+            data_from_opener[treated_col].to_numpy().astype("float64").reshape((-1, 1))
+        )
+    else:
+        treated = None
+
+    return (X, y, treated, Xprop, global_moments)
+
+
+def compute_X_y_and_propensity_weights_function(
+    X, y, treated, Xprop, propensity_model, tol=1e-16
+):
+    """Build appropriate X, y and weights from raw output of opener.
+
+    Uses the helper function build_X_y and the propensity model to build the
+    weights.
+
+    Parameters
+    ----------
+    data_from_opener : pd.DataFrame
+        Raw output from opener
+    shared_state : dict, optional
+        Outmodel containing global means and stds, by default {}
+
+    Returns
+    -------
+    tuple
+        _description_
+    """
+    if propensity_model is not None:
+        assert (
+            treated is not None
+        ), """If you are using a propensity model the Treated
+        column should be available"""
+        assert np.all(
+            np.in1d(np.unique(treated.astype("uint8"))[0], [0, 1])
+        ), "The treated column should have all its values in set([0, 1])"
+        Xprop = torch.from_numpy(Xprop)
+
+        with torch.no_grad():
+            propensity_scores = propensity_model(Xprop)
+
+        propensity_scores = propensity_scores.detach().numpy()
+        # We robustify the division
+        weights = treated * 1.0 / np.maximum(propensity_scores, tol) + (
+            1 - treated
+        ) * 1.0 / (np.maximum(1.0 - propensity_scores, tol))
+    else:
+        weights = np.ones((X.shape[0], 1))
+    return X, y, weights
