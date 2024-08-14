@@ -422,7 +422,7 @@ class CoxData:
                 # (rightfully) will act in a weird way. See the birth outer join in
                 # https://github.com/CamDavidsonPilon/lifelines/blob/4377caf5a6224941ee3ab34c413ad668d4173274/lifelines/utils/__init__.py#L567
                 # therefore we add a small quantity to every time
-                times += rng.random.uniform(1.0 / nbins, 1.0, size=1)
+                times += rng.uniform(1.0 / nbins, 1.0, size=1)
 
             else:
                 raise ValueError("Choose a larger number of ties")
