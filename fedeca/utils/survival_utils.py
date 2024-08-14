@@ -1462,7 +1462,8 @@ def km_curve(t, n, d, tmax=None):
         index_in_cum_vec[index_in_cum_vec >= 0]
     ]
     # This is hat{V} in the exponential Greenwood
-    # var_s_exp[index_in_cum_vec >= 0] = 1. / (np.log(s[index_in_cum_vec >= 0]) ** 2) * csum_var[
+    # var_s_exp[index_in_cum_vec >= 0] = 1. /
+    # (np.log(s[index_in_cum_vec >= 0]) ** 2) * csum_var[
     #     index_in_cum_vec[index_in_cum_vec >= 0]
     # ]
 

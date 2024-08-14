@@ -186,9 +186,11 @@ class TestKM(TestTempDir):
         # plt.savefig("lifelines_km.png")
         # plt.clf()
 
-        # fed_treated_plot = fed_km_plot(fl_grid_treated, fl_s_treated, fl_var_s_treated, fl_cumsum_treated)
+        # fed_treated_plot = fed_km_plot(fl_grid_treated, fl_s_treated,
+        # fl_var_s_treated, fl_cumsum_treated)
 
-        # fed_untreated_plot = fed_km_plot(fl_grid_untreated, fl_s_untreated, fl_var_s_untreated, fl_cumsum_untreated)
+        # fed_untreated_plot = fed_km_plot(fl_grid_untreated, fl_s_untreated,
+        # fl_var_s_untreated, fl_cumsum_untreated)
 
         # plt.legend()
         # plt.savefig("fed_km.png")
