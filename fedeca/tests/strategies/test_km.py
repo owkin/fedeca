@@ -18,6 +18,7 @@ from fedeca.fedeca_core import LogisticRegressionTorch
 from fedeca.strategies.fed_kaplan import FedKaplan
 from fedeca.tests.common import TestTempDir
 from fedeca.utils.data_utils import split_dataframe_across_clients
+from fedeca.utils.plot_fed_kaplan import compute_ci
 from fedeca.utils.survival_utils import CoxData
 
 
@@ -136,10 +137,58 @@ class TestKM(TestTempDir):
         s_gts = [kmf.survival_function_["KM_estimate"].to_numpy() for kmf in kms]
         grid_gts = [kmf.survival_function_.index.to_numpy() for kmf in kms]
 
-        fl_grid_treated, fl_s_treated, _ = fl_results["treated"]
-        fl_grid_untreated, fl_s_untreated, _ = fl_results["untreated"]
+        fl_grid_treated, fl_s_treated, fl_var_s_treated, fl_cumsum_treated = fl_results[
+            "treated"
+        ]
+        (
+            fl_grid_untreated,
+            fl_s_untreated,
+            fl_var_s_untreated,
+            fl_cumsum_untreated,
+        ) = fl_results["untreated"]
 
         assert np.allclose(fl_grid_treated, grid_gts[0], rtol=1e-2)
         assert np.allclose(fl_s_treated, s_gts[0], rtol=1e-2)
         assert np.allclose(fl_grid_untreated, grid_gts[1], rtol=1e-2)
         assert np.allclose(fl_s_untreated, s_gts[1], rtol=1e-2)
+        # treated_sq = kms[0]._cumulative_sq_.values
+        treated_lower = kms[0].confidence_interval_["KM_estimate_lower_0.95"].values
+        treated_upper = kms[0].confidence_interval_["KM_estimate_upper_0.95"].values
+        # untreated_sq = kms[1]._cumulative_sq_.values
+        untreated_lower = kms[1].confidence_interval_["KM_estimate_lower_0.95"].values
+        untreated_upper = kms[1].confidence_interval_["KM_estimate_upper_0.95"].values
+        treated_fl_lower, treated_fl_upper = compute_ci(
+            fl_s_treated,
+            fl_var_s_treated,
+            fl_cumsum_treated,
+            alpha=0.05,
+            ci="exp_greenwood",
+        )
+        untreated_fl_lower, untreated_fl_upper = compute_ci(
+            fl_s_untreated,
+            fl_var_s_untreated,
+            fl_cumsum_untreated,
+            alpha=0.05,
+            ci="exp_greenwood",
+        )
+
+        assert np.allclose(treated_fl_lower, treated_lower, rtol=1e-2)
+        assert np.allclose(treated_fl_upper, treated_upper, rtol=1e-2)
+        assert np.allclose(untreated_fl_lower, untreated_lower, rtol=1e-2)
+        assert np.allclose(untreated_fl_upper, untreated_upper, rtol=1e-2)
+
+        # import matplotlib.pyplot as plt
+        # from fedeca.utils.plot_fed_kaplan import fed_km_plot
+        # treated_plot = kms[0].plot_survival_function()
+
+        # untreated_plot = kms[1].plot_survival_function()
+
+        # plt.savefig("lifelines_km.png")
+        # plt.clf()
+
+        # fed_treated_plot = fed_km_plot(fl_grid_treated, fl_s_treated, fl_var_s_treated, fl_cumsum_treated)
+
+        # fed_untreated_plot = fed_km_plot(fl_grid_untreated, fl_s_untreated, fl_var_s_untreated, fl_cumsum_untreated)
+
+        # plt.legend()
+        # plt.savefig("fed_km.png")

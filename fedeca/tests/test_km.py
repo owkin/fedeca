@@ -33,7 +33,7 @@ def test_km_curve():
     events = rng.rand(num_samples) > 0.5
     # Get KM curve
     t, n, d = compute_events_statistics(times, events)
-    grid, s, _ = km_curve(t, n, d, tmax=20)
+    grid, s, _, _ = km_curve(t, n, d, tmax=20)
     # Compute the one from lifelines
     kmf = KaplanMeierFitter()
     kmf.fit(times, event_observed=events)

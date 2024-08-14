@@ -1436,7 +1436,7 @@ def km_curve(t, n, d, tmax=None):
     # KM estimator but wo filtering terms out
     q = 1.0 - d / n
     cprod_q = np.cumprod(q)
-
+    # T
     # Same for Greenwood's formula
     csum_var = np.cumsum(d / (n * (n - d)))
 
@@ -1445,6 +1445,7 @@ def km_curve(t, n, d, tmax=None):
     # we initialize by filtering out everything
     s = np.zeros(grid.shape)
     var_s = np.zeros(grid.shape)
+    # var_s_exp = np.zeros(grid.shape)
 
     # we need, for each element in the grid, the index of the cumprod/cumsum
     # it should go to, which would by design filter out the right terms
@@ -1460,7 +1461,17 @@ def km_curve(t, n, d, tmax=None):
     var_s[index_in_cum_vec >= 0] = (s[index_in_cum_vec >= 0] ** 2) * csum_var[
         index_in_cum_vec[index_in_cum_vec >= 0]
     ]
-    return grid, s, var_s
+    # This is hat{V} in the exponential Greenwood
+    # var_s_exp[index_in_cum_vec >= 0] = 1. / (np.log(s[index_in_cum_vec >= 0]) ** 2) * csum_var[
+    #     index_in_cum_vec[index_in_cum_vec >= 0]
+    # ]
+
+    csum_var_to_grid = np.array(
+        [0] * sum(index_in_cum_vec < 0)
+        + csum_var[index_in_cum_vec[index_in_cum_vec >= 0]].tolist()
+    )
+
+    return grid, s, var_s, csum_var_to_grid
 
 
 def compute_events_statistics(times, events, weights=None):
