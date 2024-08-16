@@ -4,7 +4,6 @@ import subprocess
 from pathlib import Path
 
 import git
-import numpy as np
 import pandas as pd
 import torch
 from substrafl.dependency import Dependency
@@ -28,7 +27,9 @@ class TestSMD(TestTempDir):
     Tests the FL computation of SMD is the same as in pandas-pooled version
     """
 
-    def setUp(self, backend_type="subprocess", ndim=10) -> None:
+    def setUp(
+        self, backend_type="subprocess", ndim=10, use_unweighted_variance=True
+    ) -> None:
         """Set up the quantities needed for the tests."""
         # Let's generate 1000 data samples with 10 covariates
         data = CoxData(seed=42, n_samples=1000, ndim=ndim)
@@ -78,6 +79,7 @@ class TestSMD(TestTempDir):
                 size=self.propensity_model.fc1.bias.data.shape, dtype=torch.float64
             )
         )
+        self.use_unweighted_variance = use_unweighted_variance
 
     def test_end_to_end(self):
         """Compare a FL and pooled computation of Moments.
@@ -91,6 +93,7 @@ class TestSMD(TestTempDir):
             event_col="event",
             propensity_model=self.propensity_model,
             client_identifier="center",
+            use_unweighted_variance=self.use_unweighted_variance,
         )
 
         compute_plan = execute_experiment(
@@ -124,29 +127,44 @@ class TestSMD(TestTempDir):
         weights = self.df["treatment"] * 1.0 / propensity_scores + (
             1 - self.df["treatment"]
         ) * 1.0 / (1.0 - propensity_scores)
-        weights = weights.values
+        weights = weights.values.flatten()
 
-        X_weighted = (Xprop * weights[:, np.newaxis]).numpy()
-        X_weighted_df = pd.DataFrame(X_weighted, columns=covariates)
         X_df = pd.DataFrame(Xprop.numpy(), columns=covariates)
 
         standardized_mean_diff_pooled_weighted = standardized_mean_diff(
-            X_weighted_df,
+            X_df,
             self.df["treatment"] == 1,
+            weights=weights,
+            use_unweighted_variance=self.use_unweighted_variance,
         ).div(100.0)
         standardized_mean_diff_pooled_unweighted = standardized_mean_diff(
             X_df,
             self.df["treatment"] == 1,
+            use_unweighted_variance=self.use_unweighted_variance,
         ).div(100.0)
 
         # We check equality of FL computation and pooled results
-        pd.testing.assert_series_equal(
-            standardized_mean_diff_pooled_weighted,
-            fl_results["weighted_smd"],
-            rtol=1e-2,
-        )
         pd.testing.assert_series_equal(
             standardized_mean_diff_pooled_unweighted,
             fl_results["unweighted_smd"],
             rtol=1e-2,
         )
+        pd.testing.assert_series_equal(
+            standardized_mean_diff_pooled_weighted,
+            fl_results["weighted_smd"],
+            rtol=1e-2,
+        )
+
+
+class TestSMDWeightedVar(TestSMD):
+    """Test SMD with weighted variance.
+
+    Parameters
+    ----------
+    TestSMD : _type_
+        _description_
+    """
+
+    def setUp(self) -> None:
+        """Set SMD test with weighted variance."""
+        super().setUp(use_unweighted_variance=False)

@@ -6,7 +6,7 @@ import pandas as pd
 from scipy.special import binom
 
 
-def compute_uncentered_moment(data, order):
+def compute_uncentered_moment(data, order, weights=None):
     """Compute the uncentered moment.
 
     Parameters
@@ -15,6 +15,8 @@ def compute_uncentered_moment(data, order):
         dataframe.
     order : int
         order of the moment.
+    weights : np.array
+        weight for the aggregation.
 
     Returns
     -------
@@ -26,10 +28,23 @@ def compute_uncentered_moment(data, order):
     NotImplementedError
         Raised if the data type is not Dataframe nor np.ndarray.
     """
+    if weights is None:
+        weights = np.ones(len(data.index))
+
+    # TODO categorical variables need a special treatment
+
     if isinstance(data, (pd.DataFrame, pd.Series)):
-        moment = data.select_dtypes(include=np.number).pow(order).mean(skipna=True)
+        moment = data.select_dtypes(include=np.number).pow(order)
+        moment = moment.mul(weights, axis=0)
+        moment = moment.sum(skipna=True)
+        moment /= weights.sum()
+
     elif isinstance(data, np.ndarray):
-        moment = np.nanmean(np.power(data, order), axis=0)
+        moment = np.power(data, order)
+        moment = np.multiply(moment, weights)
+        moment = np.sum(moment, axis=0)
+        moment /= weights.sum()
+
     else:
         raise NotImplementedError(
             "Only DataFrame or numpy array are currently handled."
@@ -130,17 +145,21 @@ def compute_global_moments(shared_states):
         for k in range(1, 2 + 1)
     ]
     n_samples = sum([s["n_samples"].iloc[0] for s in shared_states])
+
     results = {
         f"global_centered_moment_{k}": compute_centered_moment(
             tot_uncentered_moments[:k]
         )
         for k in range(1, 2 + 1)
     }
+
     results.update(
         {
             f"global_uncentered_moment_{k+1}": moment
             for k, moment in enumerate(tot_uncentered_moments)
         }
     )
+
     results.update({"total_n_samples": n_samples})
+
     return results
