@@ -124,15 +124,14 @@ class TestSMD(TestTempDir):
         weights = self.df["treatment"] * 1.0 / propensity_scores + (
             1 - self.df["treatment"]
         ) * 1.0 / (1.0 - propensity_scores)
-        weights = weights.values
+        weights = weights.values.flatten()
 
-        X_weighted = (Xprop * weights[:, np.newaxis]).numpy()
-        X_weighted_df = pd.DataFrame(X_weighted, columns=covariates)
         X_df = pd.DataFrame(Xprop.numpy(), columns=covariates)
 
         standardized_mean_diff_pooled_weighted = standardized_mean_diff(
-            X_weighted_df,
+            X_df,
             self.df["treatment"] == 1,
+            weights=weights,
         ).div(100.0)
         standardized_mean_diff_pooled_unweighted = standardized_mean_diff(
             X_df,
