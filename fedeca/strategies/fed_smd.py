@@ -193,7 +193,7 @@ class FedSMD(ComputePlanBuilder):
         raw_data = pd.DataFrame(Xprop, columns=propensity_cols)
 
         weights_df = pd.DataFrame(
-            np.repeat(weights[:, None], Xprop.shape[1]), columns=propensity_cols
+            np.repeat(weights, Xprop.shape[1], axis=1), columns=propensity_cols
         )
 
         results = {}
@@ -204,7 +204,7 @@ class FedSMD(ComputePlanBuilder):
             # Here we pass weights
             results[res_name]["weighted"] = {
                 f"moment{k}": compute_uncentered_moment(
-                    raw_data[mask_treatment], k, weights
+                    raw_data[mask_treatment], k, weights[mask_treatment]
                 )
                 for k in range(1, 3)
             }
