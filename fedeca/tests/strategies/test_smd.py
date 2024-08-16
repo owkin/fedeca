@@ -28,7 +28,9 @@ class TestSMD(TestTempDir):
     Tests the FL computation of SMD is the same as in pandas-pooled version
     """
 
-    def setUp(self, backend_type="subprocess", ndim=10) -> None:
+    def setUp(
+        self, backend_type="subprocess", ndim=10, use_unweighted_variance=True
+    ) -> None:
         """Set up the quantities needed for the tests."""
         # Let's generate 1000 data samples with 10 covariates
         data = CoxData(seed=42, n_samples=1000, ndim=ndim)
@@ -78,6 +80,7 @@ class TestSMD(TestTempDir):
                 size=self.propensity_model.fc1.bias.data.shape, dtype=torch.float64
             )
         )
+        self.use_unweighted_variance = use_unweighted_variance
 
     def test_end_to_end(self):
         """Compare a FL and pooled computation of Moments.
@@ -91,6 +94,7 @@ class TestSMD(TestTempDir):
             event_col="event",
             propensity_model=self.propensity_model,
             client_identifier="center",
+            use_unweighted_variance=self.use_unweighted_variance,
         )
 
         compute_plan = execute_experiment(
@@ -132,10 +136,12 @@ class TestSMD(TestTempDir):
             X_df,
             self.df["treatment"] == 1,
             weights=weights,
+            use_unweighted_variance=self.use_unweighted_variance,
         ).div(100.0)
         standardized_mean_diff_pooled_unweighted = standardized_mean_diff(
             X_df,
             self.df["treatment"] == 1,
+            use_unweighted_variance=self.use_unweighted_variance,
         ).div(100.0)
 
         # We check equality of FL computation and pooled results
@@ -149,3 +155,8 @@ class TestSMD(TestTempDir):
             fl_results["weighted_smd"],
             rtol=1e-2,
         )
+
+
+class TestSMDWeightedVar(TestSMD):
+    def setUp(self) -> None:
+        super().setUp(use_unweighted_variance=False)
