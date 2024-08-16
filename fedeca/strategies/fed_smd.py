@@ -223,14 +223,16 @@ class FedSMD(ComputePlanBuilder):
             if not self._use_unweighted_variance:
                 # We add these numbers for scaling variance as in https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4626409/  # noqa: E501
                 results[res_name]["weighted"]["weights"]["moment1_sum"] = (
-                    weights_df[mask_treatment].select_dtypes(include=np.number).sum()
+                    weights_df[mask_treatment]
+                    .select_dtypes(include=np.number)
+                    .sum(axis=0)
                 )
                 # Here we compute squared weights sum
                 results[res_name]["weighted"]["weights"]["moment2_sum"] = (
                     weights_df[mask_treatment]
                     .pow(2)
                     .select_dtypes(include=np.number)
-                    .sum()
+                    .sum(axis=0)
                 )
 
         return results
@@ -312,7 +314,7 @@ class FedSMD(ComputePlanBuilder):
 
             untreated_weighted["global_centered_moment_2"] *= var_scaler_untreated
 
-        if self._use_unweighted_variance:
+        else:
             treated_weighted["global_centered_moment_2"] = treated_raw[
                 "global_centered_moment_2"
             ]

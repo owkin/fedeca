@@ -143,4 +143,5 @@ def standardized_mean_diff(
     smd_cat *= 100
 
     smd = pd.concat([smd_continuous, smd_cat])
+    smd = smd.reindex(confounders.columns)
     return smd

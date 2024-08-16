@@ -140,12 +140,12 @@ class TestSMD(TestTempDir):
 
         # We check equality of FL computation and pooled results
         pd.testing.assert_series_equal(
-            standardized_mean_diff_pooled_weighted,
-            fl_results["weighted_smd"],
+            standardized_mean_diff_pooled_unweighted,
+            fl_results["unweighted_smd"],
             rtol=1e-2,
         )
         pd.testing.assert_series_equal(
-            standardized_mean_diff_pooled_unweighted,
-            fl_results["unweighted_smd"],
+            standardized_mean_diff_pooled_weighted,
+            fl_results["weighted_smd"],
             rtol=1e-2,
         )
