@@ -4,7 +4,9 @@ import numpy as np
 import pandas as pd
 
 
-def standardized_mean_diff(confounders, treated, weights=None):
+def standardized_mean_diff(
+    confounders, treated, weights=None, use_unweighted_variance=True
+):
     """Compute the Standardized Mean Differences (SMD).
 
     Compute the Standardized Mean Differences between
@@ -18,6 +20,10 @@ def standardized_mean_diff(confounders, treated, weights=None):
         mask of booleans giving information about treated patients.
     weights : np.ndarray
         weights for the aggregation
+    use_unweighted_variance : bool
+        if True, the variance is computed without weights. To follow
+        https://stats.stackexchange.com/questions/618643/formula-for-standardized-mean-difference-in-cobalt-package-for-categorical-varia  # noqa: E501
+        If False use recalibrated variance as in https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4626409/.  # noqa: E501
 
     Returns
     -------
@@ -27,13 +33,18 @@ def standardized_mean_diff(confounders, treated, weights=None):
     if weights is None:
         weights = np.ones_like(confounders)
 
+    if use_unweighted_variance:
+        weights_var = np.ones_like(weights)
+    else:
+        weights_var = weights
+
     # unbiased var estimator see https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4626409/  # noqa: E501
-    var_scaler_treated = weights[treated].sum() ** 2 / (
-        weights[treated].sum() ** 2 - np.power(weights[treated], 2).sum()
-    )  # noqa: E501
-    var_scaler_untreated = weights[~treated].sum() ** 2 / (
-        weights[~treated].sum() ** 2 - np.power(weights[~treated], 2).sum()
-    )  # noqa: E501
+    var_scaler_treated = weights_var[treated].sum() ** 2 / (
+        weights_var[treated].sum() ** 2 - np.power(weights_var[treated], 2).sum()
+    )
+    var_scaler_untreated = weights_var[~treated].sum() ** 2 / (
+        weights_var[~treated].sum() ** 2 - np.power(weights_var[~treated], 2).sum()
+    )
 
     n_unique = confounders.nunique()
     cat_variables = n_unique == 2
@@ -64,7 +75,7 @@ def standardized_mean_diff(confounders, treated, weights=None):
                         - treated_confounders_avg,
                         2,
                     ),
-                    weights=weights[treated],
+                    weights=weights_var[treated],
                     axis=0,
                 )
                 + var_scaler_untreated
@@ -74,7 +85,7 @@ def standardized_mean_diff(confounders, treated, weights=None):
                         - untreated_confounders_avg,
                         2,
                     ),
-                    weights=weights[~treated],
+                    weights=weights_var[~treated],
                     axis=0,
                 )
             )
@@ -103,14 +114,14 @@ def standardized_mean_diff(confounders, treated, weights=None):
                 * treated_cat_confounders_avg
                 * np.average(
                     1 - confounders.loc[treated, cat_columns],
-                    weights=weights[treated],
+                    weights=weights_var[treated],
                     axis=0,
                 )
                 + var_scaler_untreated
                 * untreated_cat_confounders_avg
                 * np.average(
                     1 - confounders.loc[~treated, cat_columns],
-                    weights=weights[~treated],
+                    weights=weights_var[~treated],
                     axis=0,
                 )
             )
