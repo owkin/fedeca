@@ -30,7 +30,6 @@ def standardized_mean_diff(
     smd: np.ndarray
         standardized mean differences of the confounders.
     """
-
     if weights is None:
         weights = np.ones((len(confounders.index)))
 

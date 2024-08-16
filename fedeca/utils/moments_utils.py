@@ -28,7 +28,6 @@ def compute_uncentered_moment(data, order, weights=None):
     NotImplementedError
         Raised if the data type is not Dataframe nor np.ndarray.
     """
-
     if weights is None:
         weights = np.ones(len(data.index))
 

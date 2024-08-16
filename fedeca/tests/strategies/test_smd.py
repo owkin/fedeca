@@ -158,5 +158,14 @@ class TestSMD(TestTempDir):
 
 
 class TestSMDWeightedVar(TestSMD):
+    """Test SMD with weighted variance.
+
+    Parameters
+    ----------
+    TestSMD : _type_
+        _description_
+    """
+
     def setUp(self) -> None:
+        """Setup SMD with weighted variance."""
         super().setUp(use_unweighted_variance=False)
