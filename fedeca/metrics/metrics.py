@@ -44,7 +44,7 @@ def standardized_mean_diff(confounders, treated, weights=None):
     smd_continuous /= np.sqrt(
         (
             np.average(
-                np.pow(
+                np.power(
                     confounders.loc[treated, continuous_variables]
                     - treated_confounders_avg,
                     order=2,
@@ -53,7 +53,7 @@ def standardized_mean_diff(confounders, treated, weights=None):
                 axis=0,
             )
             + np.average(
-                np.pow(
+                np.power(
                     confounders.loc[~treated, continuous_variables]
                     - untreated_confounders_avg,
                     order=2,
