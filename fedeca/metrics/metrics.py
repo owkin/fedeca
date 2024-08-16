@@ -39,6 +39,7 @@ def standardized_mean_diff(
         weights_var = weights
 
     # unbiased var estimator see https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4626409/  # noqa: E501
+    # when use_unweighted_variance is True this just is n / (n - 1) for unbiasedness
     var_scaler_treated = weights_var[treated].sum() ** 2 / (
         weights_var[treated].sum() ** 2 - np.power(weights_var[treated], 2).sum()
     )
@@ -61,6 +62,7 @@ def standardized_mean_diff(
         weights=weights[~treated],
         axis=0,
     )
+
     # Returning back to a Series object as would .mean() do
     smd_continuous = pd.Series(
         treated_confounders_avg - untreated_confounders_avg, index=cont_columns
@@ -72,7 +74,11 @@ def standardized_mean_diff(
                 * np.average(
                     np.power(
                         confounders.loc[treated, cont_columns]
-                        - treated_confounders_avg,
+                        - np.average(
+                            confounders.loc[treated, cont_columns],
+                            weights=weights_var[treated],
+                            axis=0,
+                        ),
                         2,
                     ),
                     weights=weights_var[treated],
@@ -82,7 +88,11 @@ def standardized_mean_diff(
                 * np.average(
                     np.power(
                         confounders.loc[~treated, cont_columns]
-                        - untreated_confounders_avg,
+                        - np.average(
+                            confounders.loc[~treated, cont_columns],
+                            weights=weights_var[~treated],
+                            axis=0,
+                        ),
                         2,
                     ),
                     weights=weights_var[~treated],
