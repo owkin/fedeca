@@ -4,7 +4,6 @@ import subprocess
 from pathlib import Path
 
 import git
-import numpy as np
 import pandas as pd
 import torch
 from substrafl.dependency import Dependency
@@ -167,5 +166,5 @@ class TestSMDWeightedVar(TestSMD):
     """
 
     def setUp(self) -> None:
-        """Setup SMD with weighted variance."""
+        """Set SMD test with weighted variance."""
         super().setUp(use_unweighted_variance=False)
