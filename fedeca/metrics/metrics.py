@@ -27,9 +27,13 @@ def standardized_mean_diff(confounders, treated, weights=None):
     if weights is None:
         weights = np.ones_like(confounders)
 
-    # unbiased var estimater
-    var_scaler_treated = weights[treated].sum() / (weights[treated].sum() - 1)
-    var_scaler_untreated = weights[~treated].sum() / (weights[~treated].sum() - 1)
+    # unbiased var estimator see https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4626409/  # noqa: E501
+    var_scaler_treated = weights[treated].sum() ** 2 / (
+        weights[treated].sum() ** 2 - np.power(weights[treated], 2).sum()
+    )  # noqa: E501
+    var_scaler_untreated = weights[~treated].sum() ** 2 / (
+        weights[~treated].sum() ** 2 - np.power(weights[~treated], 2).sum()
+    )  # noqa: E501
 
     n_unique = confounders.nunique()
     cat_variables = n_unique == 2
@@ -95,13 +99,15 @@ def standardized_mean_diff(confounders, treated, weights=None):
     smd_cat /= pd.Series(
         np.sqrt(
             (
-                treated_cat_confounders_avg
+                var_scaler_treated
+                * treated_cat_confounders_avg
                 * np.average(
                     1 - confounders.loc[treated, cat_columns],
                     weights=weights[treated],
                     axis=0,
                 )
-                + untreated_cat_confounders_avg
+                + var_scaler_untreated
+                * untreated_cat_confounders_avg
                 * np.average(
                     1 - confounders.loc[~treated, cat_columns],
                     weights=weights[~treated],
