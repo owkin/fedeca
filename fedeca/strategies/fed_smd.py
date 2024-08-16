@@ -259,7 +259,9 @@ class FedSMD(ComputePlanBuilder):
             means_y = y["global_uncentered_moment_1"]
             var_x = x["global_centered_moment_2"]
             var_y = y["global_centered_moment_2"]
-            smd_df = means_x.subtract(means_y).div(var_x.add(var_y).div(2).pow(0.5))
+            smd_df = means_x.subtract(means_y).div(
+                var_x.add(var_y).div(2).pow(0.5).add(self._tol)
+            )
             return smd_df
 
         # First we compute means and vars wo weights
