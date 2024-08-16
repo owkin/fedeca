@@ -47,7 +47,7 @@ def standardized_mean_diff(confounders, treated, weights=None):
                 np.power(
                     confounders.loc[treated, continuous_variables]
                     - treated_confounders_avg,
-                    order=2,
+                    2,
                 ),
                 weights=weights[treated],
                 axis=0,
@@ -56,7 +56,7 @@ def standardized_mean_diff(confounders, treated, weights=None):
                 np.power(
                     confounders.loc[~treated, continuous_variables]
                     - untreated_confounders_avg,
-                    order=2,
+                    2,
                 ),
                 weights=weights[~treated],
                 axis=0,
