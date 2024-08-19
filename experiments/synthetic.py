@@ -13,7 +13,8 @@ from lifelines.exceptions import ConvergenceError
 from omegaconf.dictconfig import DictConfig
 
 from fedeca.fedeca_core import FedECA
-from fedeca.utils.experiment_utils import effective_sample_size, std_mean_differences
+from fedeca.metrics.metrics import standardized_mean_diff
+from fedeca.utils.experiment_utils import effective_sample_size
 from fedeca.utils.survival_utils import CoxData
 from fedeca.utils.typing import _SeedType
 
@@ -99,7 +100,7 @@ def single_experiment(
     )
     df_smd_raw = (
         data[covariates]
-        .apply(lambda s: std_mean_differences(s[mask_treated], s[~mask_treated]))
+        .apply(lambda s: standardized_mean_diff(s[mask_treated], s[~mask_treated]))
         .to_frame()
         .transpose()
         .add_prefix("smd_raw_")
@@ -167,10 +168,9 @@ def single_experiment(
                 ess = effective_sample_size(model.weights_[mask_treated])
                 df_smd_weighted = (
                     data[covariates]
-                    .multiply(model.weights_, axis=0)
                     .apply(
-                        lambda s: std_mean_differences(
-                            s[mask_treated], s[~mask_treated]
+                        lambda s: standardized_mean_diff(
+                            s[mask_treated], s[~mask_treated], weights=model.weights_.detach().cpu().numpy(),
                         )
                     )
                     .to_frame()
