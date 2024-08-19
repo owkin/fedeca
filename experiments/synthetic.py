@@ -94,13 +94,10 @@ def single_experiment(
     covariates = [x for x in data.columns if x not in non_cov]
 
     mask_treated = data[treated_col].eq(1)
-    smd_true_ps = std_mean_differences(
-        data[ps_col][mask_treated],
-        data[ps_col][~mask_treated],
-    )
+    smd_true_ps = standardized_mean_diff(data[ps_col], mask_treated)
     df_smd_raw = (
         data[covariates]
-        .apply(lambda s: standardized_mean_diff(s[mask_treated], s[~mask_treated]))
+        .apply(lambda s: standardized_mean_diff(s, mask_treated))
         .to_frame()
         .transpose()
         .add_prefix("smd_raw_")
@@ -159,9 +156,9 @@ def single_experiment(
             smd_estim_ps = None
             ess = None
             if model.propensity_scores_ is not None:
-                smd_estim_ps = std_mean_differences(
-                    model.propensity_scores_[mask_treated],
-                    model.propensity_scores_[~mask_treated],
+                smd_estim_ps = standardized_mean_diff(
+                    model.propensity_scores_,
+                    mask_treated,
                 )
 
             if model.weights_ is not None:
@@ -170,7 +167,9 @@ def single_experiment(
                     data[covariates]
                     .apply(
                         lambda s: standardized_mean_diff(
-                            s[mask_treated], s[~mask_treated], weights=model.weights_.detach().cpu().numpy(),
+                            s,
+                            mask_treated,
+                            weights=model.weights_.detach().cpu().numpy(),
                         )
                     )
                     .to_frame()
