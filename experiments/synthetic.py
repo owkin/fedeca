@@ -94,14 +94,14 @@ def single_experiment(
     covariates = [x for x in data.columns if x not in non_cov]
 
     mask_treated = data[treated_col].eq(1)
-    smd_true_ps = standardized_mean_diff(data[ps_col], mask_treated)
+    smd_true_ps = standardized_mean_diff(data[ps_col], mask_treated).to_frame().T
+
     df_smd_raw = (
-        data[covariates]
-        .apply(lambda s: standardized_mean_diff(s, mask_treated))
+        standardized_mean_diff(data[covariates], mask_treated)
         .to_frame()
-        .transpose()
-        .add_prefix("smd_raw_")
+        .T.add_prefix("smd_raw_")
     )
+
     ate_true = data_gen.average_treatment_effect_
     percent_ties = data_gen.percent_ties
     models_fit_times: dict[str, Optional[float]] = {
@@ -156,25 +156,28 @@ def single_experiment(
             smd_estim_ps = None
             ess = None
             if model.propensity_scores_ is not None:
-                smd_estim_ps = standardized_mean_diff(
-                    model.propensity_scores_,
-                    mask_treated,
+                dummy_df = pd.DataFrame(
+                    model.propensity_scores_, columns=["empirical propensity"]
+                )
+                smd_estim_ps = (
+                    standardized_mean_diff(
+                        dummy_df,
+                        mask_treated,
+                    )
+                    .to_frame()
+                    .T
                 )
 
             if model.weights_ is not None:
                 ess = effective_sample_size(model.weights_[mask_treated])
                 df_smd_weighted = (
-                    data[covariates]
-                    .apply(
-                        lambda s: standardized_mean_diff(
-                            s,
-                            mask_treated,
-                            weights=model.weights_.detach().cpu().numpy(),
-                        )
+                    standardized_mean_diff(
+                        data[covariates],
+                        mask_treated,
+                        weights=model.weights_,
                     )
                     .to_frame()
-                    .transpose()
-                    .add_prefix("smd_weighted_")
+                    .T.add_prefix("smd_weighted_")
                 )
 
             log_likelihood = model.log_likelihood_
