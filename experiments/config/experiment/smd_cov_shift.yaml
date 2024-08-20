@@ -26,7 +26,6 @@ models:
       robust: True
   FedECA:
     ndim: ${data.ndim}
-    fedeca_path: "/home/owkin/federated-eca-code/"
 
 # config fit FedECA
 fit_fedeca:
@@ -50,7 +49,7 @@ parameters:
 
 hydra:
   sweep:
-    dir: "/home/owkin/project/results_experiments/smd_cov_shift"
+    dir: "./results_experiments/smd_cov_shift"
   sweeper:
     params:
       data.overlap: range(-1,4,1)

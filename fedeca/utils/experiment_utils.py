@@ -58,13 +58,15 @@ def param_grid_from_dict(param_dict: dict[str, Any]) -> pd.DataFrame:
     )
 
 
-def std_mean_differences(x, y):
-    """Compute standardized mean differences."""
-    std_x = np.std(x)
-    std_y = np.std(y)
-    if (std_x == 0) and (std_y == 0):
-        return np.mean(x) - np.mean(y)
-    return (np.mean(x) - np.mean(y)) / np.sqrt((std_x**2 + std_y**2) / 2)
+# def std_mean_differences(x, y):
+#     """Compute standardized mean differences."""
+#     print("WARNING this function cannot be used with weighted data !!!")
+#     print("Use instead standardized_mean_diff in metrics/metrics.py")
+#     std_x = np.std(x)
+#     std_y = np.std(y)
+#     if (std_x == 0) and (std_y == 0):
+#         return np.mean(x) - np.mean(y)
+#     return (np.mean(x) - np.mean(y)) / np.sqrt((std_x**2 + std_y**2) / 2)
 
 
 def ratio_variances(x, y):
