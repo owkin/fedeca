@@ -130,7 +130,7 @@ for i, method in enumerate(selected_methods):
         df_smd[df_smd['method'] == method]['upper'],
         color=dict_colors[method], alpha=0.4
     )
-
+plt.axhline(y=10, color="black", linestyle="--", alpha=0.2, linewidth=5)
 axarr.set_xlabel("Covariate shift", fontsize=20)
 axarr.set_ylabel("Mean absolute standardized \n mean difference",  fontsize=20)
 
