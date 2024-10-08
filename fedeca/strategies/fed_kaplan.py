@@ -179,12 +179,9 @@ class FedKaplan(ComputePlanBuilder):
             X, y, treated, Xprop, self._propensity_model, self._tol
         )
 
-        # TODO actually use weights
-        # del weights
-        # retrieve times and events
         times = np.abs(y)
-        events = y >= 0
-        assert np.allclose(events, data_from_opener[self._event_col].values)
+        events = data_from_opener[self._event_col].values.astype(bool)
+
         treated = treated.astype(bool).flatten()
 
         return {
