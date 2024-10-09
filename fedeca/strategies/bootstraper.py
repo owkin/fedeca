@@ -399,10 +399,6 @@ def _bootstrap_local_function(
                 print("=======")
             else:
                 # Useful for remote debugging if logs are enabled
-                print(f"Bootstrapping: seed seeds[{idx}]={seed}")
-                print(data.columns)
-                print(len(data.index))
-                print("=======")
                 data = bootstrap_function(data=data_from_opener, seed=seed)
 
             if shared_state is None:
