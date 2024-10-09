@@ -16,7 +16,6 @@ from substra.sdk.models import ComputePlanStatus
 from substrafl.algorithms.pytorch import TorchNewtonRaphsonAlgo
 from substrafl.model_loading import download_algo_state
 from substrafl.nodes import AggregationNode, TrainDataNode
-from substrafl.remote import remote_data
 from substrafl.strategies import FedAvg, NewtonRaphson
 from torch import nn
 from torch.optim import SGD, Optimizer
