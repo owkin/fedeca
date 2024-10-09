@@ -393,10 +393,6 @@ def _bootstrap_local_function(
             # On first run we don't bootstrap
             if idx == 0:
                 data = data_from_opener
-                print("first round no bootsrap")
-                print(data.columns)
-                print(len(data.index))
-                print("=======")
             else:
                 # Useful for remote debugging if logs are enabled
                 data = bootstrap_function(data=data_from_opener, seed=seed)
