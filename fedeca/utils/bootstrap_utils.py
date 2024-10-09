@@ -127,9 +127,6 @@ def make_global_bootstrap_function(
             ]
 
     def global_bootstrap(data, seed):
-        print("Length:")
-        print(len(data.index))
-        print(data.columns)
         assert (
             client_identifier in data.columns
         ), f"Data in each center should have a center identifier {client_identifier}"
