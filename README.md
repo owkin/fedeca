@@ -1,6 +1,7 @@
 # FedECA
 
-:arrow_right:[The API doc is available here](https://owkin.github.io/fedeca/):arrow_left:  
+:arrow_right:[The API doc is available here](https://owkin.github.io/fedeca/):arrow_left:
+
 This repository contains code associated with the [FedECA arXiv paper](https://arxiv.org/abs/2311.16984).
 
 Please [cite our paper](#citation) if you use our code !
