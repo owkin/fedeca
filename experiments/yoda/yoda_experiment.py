@@ -5,8 +5,9 @@ import warnings
 
 import numpy as np
 import pandas as pd
-from fedeca import FedECA
 from lifelines.exceptions import StatisticalWarning
+
+from fedeca import FedECA
 
 logging.getLogger("substrafl").setLevel(logging.WARNING)
 warnings.filterwarnings(action="ignore", category=StatisticalWarning)
