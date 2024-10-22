@@ -67,3 +67,29 @@ jobs:
           name: test-coverage-report
           path: htmlcov/
           retention-days: 20
+      - name: Generate coverage status badge
+        if: github.event_name == 'pull_request'
+        run: |
+          set -x
+          total_cov=`grep -Eo '<span class="pc_cov">[0-9]+%</span>' /home/runner/htmlcov/index.html | grep -oe '\([0-9.]*\)'`
+          echo $total_cov
+          if [ "$total_cov" -le "50" ] ; then
+          COLOR=red
+          elif [ "$total_cov" -ge "90" ] ; then
+          COLOR=green
+          else
+          COLOR=orange
+          fi
+          echo $COLOR
+          echo "https://img.shields.io/badge/coverage-${total_cov}%25-${COLOR}"
+          curl "https://img.shields.io/badge/coverage-${total_cov}%25-${COLOR}" > badges/cov_badge.svg
+          echo "" >> badges/cov_badge.svg
+
+      - name: Commit coverage badge
+        if: github.event_name == 'pull_request'
+        uses: EndBug/add-and-commit@v9
+        with:
+          add: badges/cov_badge.svg
+          default_author: github_actor
+          pull: "--no-rebase"
+          message: "update coverage badge"
