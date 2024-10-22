@@ -1,5 +1,5 @@
 # FedECA
-[![cov](https://owkin.github.io/fedeca/badges/coverage.svg)](https://github.com/owkin/fedeca/actions)
+[![cov](https://owkin.github.io/fedeca/badges/cov_badge.svg)](https://github.com/owkin/fedeca/actions)
 
 
 :arrow_right:[The API doc is available here](https://owkin.github.io/fedeca/):arrow_left:
