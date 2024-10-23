@@ -1,4 +1,5 @@
 # FedECA
+<img src="/badges/cov_badge.svg" >
 
 :arrow_right:[The API doc is available here](https://owkin.github.io/fedeca/):arrow_left:
 
