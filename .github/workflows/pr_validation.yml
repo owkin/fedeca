@@ -47,10 +47,11 @@ jobs:
         python: ["3.9"]
         # python: ["3.9", "3.10", "3.11"]  # TODO: expand to other pythons
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+      - name: checkout current branch
+        uses: actions/checkout@v4
         with:
-          python-version: ${{ matrix.python }}
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.pull_request.head.ref }}
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -93,5 +94,3 @@ jobs:
           default_author: github_actor
           pull: "--no-rebase"
           message: "update coverage badge"
-          ref: ${{ github.event.pull_request.head.ref }}
-          token: ${{ secrets.GITHUB_TOKEN }}
