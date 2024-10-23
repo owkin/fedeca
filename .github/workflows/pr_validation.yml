@@ -84,7 +84,12 @@ jobs:
           echo "https://img.shields.io/badge/coverage-${total_cov}%25-${COLOR}"
           curl "https://img.shields.io/badge/coverage-${total_cov}%25-${COLOR}" > badges/cov_badge.svg
           echo "" >> badges/cov_badge.svg
-
+      - name: Checkout to current branch to be able to commit
+        if: github.event_name == 'pull_request'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
       - name: Commit coverage badge
         if: github.event_name == 'pull_request'
         uses: EndBug/add-and-commit@v9
