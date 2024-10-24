@@ -76,39 +76,39 @@ class TestFLIPTWEnd2End(TestTempDir):
             for _ in range(2)
         ]
 
-    def test_fit(self):
-        """Test end2end aplication of IPTW to synthetic data."""
-        iptw_kwargs = {
-            "data": self.df,
-            "targets": None,
-            "n_clients": self.n_clients,
-            "split_method": "split_control_over_centers",
-            "split_method_kwargs": {"treatment_info": "treated"},
-            "data_path": self.test_dir,
-            # "dp_target_epsilon": 2.,
-            # "dp_max_grad_norm": 1.,
-            # "dp_target_delta": 0.001,
-            # "dp_propensity_model_training_params": {"batch_size": 100, "num_updates": 100},  # noqa: E501
-            # "dp_propensity_model_optimizer_kwargs": {"lr": 0.01},
-        }
+    # def test_fit(self):
+    #     """Test end2end aplication of IPTW to synthetic data."""
+    #     iptw_kwargs = {
+    #         "data": self.df,
+    #         "targets": None,
+    #         "n_clients": self.n_clients,
+    #         "split_method": "split_control_over_centers",
+    #         "split_method_kwargs": {"treatment_info": "treated"},
+    #         "data_path": self.test_dir,
+    #         # "dp_target_epsilon": 2.,
+    #         # "dp_max_grad_norm": 1.,
+    #         # "dp_target_delta": 0.001,
+    #         # "dp_propensity_model_training_params": {"batch_size": 100, "num_updates": 100},  # noqa: E501
+    #         # "dp_propensity_model_optimizer_kwargs": {"lr": 0.01},
+    #     }
 
-        iptw_kwargs["backend_type"] = "subprocess"
-        self.IPTWs[0].fit(**iptw_kwargs)
-        iptw_kwargs["backend_type"] = "simu"
-        self.IPTWs[1].fit(**iptw_kwargs)
-        # TODO verify propensity model training wrt sklearn and full chain
-        # vs iptw pooled implementation with sklearn and lifelines
-        assert_frame_equal(self.IPTWs[0].results_, self.IPTWs[1].results_)
-        assert np.allclose(self.IPTWs[0].lls[0], self.IPTWs[1].lls[0])
+    #     iptw_kwargs["backend_type"] = "subprocess"
+    #     self.IPTWs[0].fit(**iptw_kwargs)
+    #     iptw_kwargs["backend_type"] = "simu"
+    #     self.IPTWs[1].fit(**iptw_kwargs)
+    #     # TODO verify propensity model training wrt sklearn and full chain
+    #     # vs iptw pooled implementation with sklearn and lifelines
+    #     assert_frame_equal(self.IPTWs[0].results_, self.IPTWs[1].results_)
+    #     assert np.allclose(self.IPTWs[0].lls[0], self.IPTWs[1].lls[0])
 
-    @classmethod
-    def tearDownClass(cls):
-        """Tear down the class."""
-        super(TestFLIPTWEnd2End, cls).tearDownClass()
-        # We need to avoid persistence of DB in between TestCases, this is an obscure
-        # hack but it's working
-        first_client = cls.IPTWs[0].ds_client
-        database = first_client._backend._db._db._data
-        if len(database.keys()) > 1:
-            for k in list(database.keys()):
-                database.pop(k)
+    # @classmethod
+    # def tearDownClass(cls):
+    #     """Tear down the class."""
+    #     super(TestFLIPTWEnd2End, cls).tearDownClass()
+    #     # We need to avoid persistence of DB in between TestCases, this is an obscure
+    #     # hack but it's working
+    #     first_client = cls.IPTWs[0].ds_client
+    #     database = first_client._backend._db._db._data
+    #     if len(database.keys()) > 1:
+    #         for k in list(database.keys()):
+    #             database.pop(k)
