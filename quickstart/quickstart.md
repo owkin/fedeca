@@ -1,5 +1,5 @@
 ## Quickstart
-
+This quickstart assumes users have already installed fedeca in a conda environment.
 FedECA tries to mimic scikit-learn API as much as possible with the constraints
 of distributed learning.
 The first step in data science is always the data.
@@ -7,6 +7,15 @@ We need to first use or generate some survival data in pandas.dataframe format.
 Note that fedeca should work on any data format, provided that the
 return type of the substra opener is indeed a pandas.dataframe but let's keep
 it simple in this quickstart.
+
+We recommend users to first install ipython (`pip install ipython`) or jupyter,
+and to copy-paste and run the content of the blocks sequentially either in the
+ipython shell or in a jupyter notebook.
+
+(Don't forget to make sure the `ipython` being called is the one from the fedeca
+conda environment by calling `which ipython`. In case it is not the correct one
+running `hash -r` usually does the trick.)
+
 
 Here we will use fedeca utils which will generate some synthetic survival data
 following CoxPH assumptions:
