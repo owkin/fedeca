@@ -27,6 +27,7 @@ conda activate fedeca
 Within the environment, install the package by running:
 ```
 git clone https://github.com/owkin/fedeca.git
+cd fedeca
 pip install -e ".[all_extra]"
 ```
 
