@@ -14,9 +14,11 @@ Within the environment, install the package by running:
 .. code-block::
 
    git clone https://github.com/owkin/fedeca.git
+   cd fedeca
    pip install -e ".[all_extra]"
 
-If you plan developing, you should also install the pre-commit hooks
+If you plan on contributing, you should also install the pre-commit hooks
 
-```bash
-pre-commit install
+.. code-block:: bash
+
+   pre-commit install
