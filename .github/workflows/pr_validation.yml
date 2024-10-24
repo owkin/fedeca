@@ -60,7 +60,7 @@ jobs:
           coverage run -m pytest -v fedeca
       - name: Generate code coverage report
         run: |
-          coverage html --omit="*/local-worker/*"
+          coverage html
       - name: Upload coverage artifacts
         uses: actions/upload-artifact@v4
         with:
