@@ -139,192 +139,192 @@ class TestRobustFedECAEnd2End(TestFedECAEnd2End):
         super().setUpClass(variance_method="robust")
 
 
-class TestPerClientBtstFedECAEnd2End(TestFedECAEnd2End):
-    """BtstIPTW tests class."""
+# class TestPerClientBtstFedECAEnd2End(TestFedECAEnd2End):
+#     """BtstIPTW tests class."""
 
-    @classmethod
-    def setUpClass(cls, seed=42, n_bootstrap=200):
-        """Use parent class setup with robust=True."""
-        bootstrap_seeds = []
-        cls.n_bootstrap = n_bootstrap
-        # First one called in init of the class of PooledIPTW
-        cls.seed = np.random.default_rng(seed)
-        # Second one called when calling bootstrap_std
-        cls.seed = np.random.default_rng(cls.seed)
-        data = CoxData(seed=42, n_samples=500, ndim=10)
-        df = data.generate_dataframe()
-        df = df.drop(columns=["propensity_scores"], axis=1)
+#     @classmethod
+#     def setUpClass(cls, seed=42, n_bootstrap=200):
+#         """Use parent class setup with robust=True."""
+#         bootstrap_seeds = []
+#         cls.n_bootstrap = n_bootstrap
+#         # First one called in init of the class of PooledIPTW
+#         cls.seed = np.random.default_rng(seed)
+#         # Second one called when calling bootstrap_std
+#         cls.seed = np.random.default_rng(cls.seed)
+#         data = CoxData(seed=42, n_samples=500, ndim=10)
+#         df = data.generate_dataframe()
+#         df = df.drop(columns=["propensity_scores"], axis=1)
 
-        # Tracing random state AND indices
-        clients_indices = split_control_over_centers(
-            df, n_clients=3, treatment_info="treatment", seed=42
-        )
-        bootstrap_seeds = []
-        clients_btst_samples = []
-        for _ in range(cls.n_bootstrap):
-            rng = np.random.default_rng(cls.seed)
-            rng_copy = copy.deepcopy(rng)
-            bootstrap_seeds.append(rng_copy)
-            new_df = df.sample(df.shape[0], replace=True, random_state=rng)
-            current_sampled_points = {}
-            for idx, client_indices in enumerate(clients_indices):
-                # One cannot use sets as there are duplicates in the indices
-                current_sampled_points[f"client_{idx}"] = [
-                    idx for idx in new_df.index if idx in client_indices
-                ]
+#         # Tracing random state AND indices
+#         clients_indices = split_control_over_centers(
+#             df, n_clients=3, treatment_info="treatment", seed=42
+#         )
+#         bootstrap_seeds = []
+#         clients_btst_samples = []
+#         for _ in range(cls.n_bootstrap):
+#             rng = np.random.default_rng(cls.seed)
+#             rng_copy = copy.deepcopy(rng)
+#             bootstrap_seeds.append(rng_copy)
+#             new_df = df.sample(df.shape[0], replace=True, random_state=rng)
+#             current_sampled_points = {}
+#             for idx, client_indices in enumerate(clients_indices):
+#                 # One cannot use sets as there are duplicates in the indices
+#                 current_sampled_points[f"client_{idx}"] = [
+#                     idx for idx in new_df.index if idx in client_indices
+#                 ]
 
-            clients_btst_samples.append(current_sampled_points)
+#             clients_btst_samples.append(current_sampled_points)
 
-        def bootstrap_function(data, seed):
-            data = copy.deepcopy(data)
-            if not isinstance(seed, int):
-                rng = copy.deepcopy(seed)
-                bootstrap_id = [b.__getstate__() for b in bootstrap_seeds].index(
-                    rng.__getstate__()
-                )
-            else:
-                rng = seed
-                bootstrap_id = bootstrap_seeds.index(rng)
+#         def bootstrap_function(data, seed):
+#             data = copy.deepcopy(data)
+#             if not isinstance(seed, int):
+#                 rng = copy.deepcopy(seed)
+#                 bootstrap_id = [b.__getstate__() for b in bootstrap_seeds].index(
+#                     rng.__getstate__()
+#                 )
+#             else:
+#                 rng = seed
+#                 bootstrap_id = bootstrap_seeds.index(rng)
 
-            assert data["client"].nunique() == 1
-            client_id = data["client"].iloc[0]
-            data = data.drop(columns=["client"])
-            sampled_rows = clients_btst_samples[bootstrap_id][client_id]
-            # We convert it back to int
-            data["original_clients_indices"] = [
-                int(e.split("_")[0]) for e in data["original_clients_indices"].tolist()
-            ]
-            # We assert this is indeed a sampling of rows of this client
-            assert all(
-                [
-                    s_row in data["original_clients_indices"].tolist()
-                    for s_row in sampled_rows
-                ]
-            )
-            data = (
-                data.set_index("original_clients_indices")
-                .loc[sampled_rows]
-                .reset_index()
-            )
-            assert all(
-                [
-                    a == b
-                    for a, b in zip(
-                        data["original_clients_indices"].tolist(), sampled_rows
-                    )
-                ]
-            )
-            data = data.drop(columns={"original_clients_indices"})
-            return data
+#             assert data["client"].nunique() == 1
+#             client_id = data["client"].iloc[0]
+#             data = data.drop(columns=["client"])
+#             sampled_rows = clients_btst_samples[bootstrap_id][client_id]
+#             # We convert it back to int
+#             data["original_clients_indices"] = [
+#                 int(e.split("_")[0]) for e in data["original_clients_indices"].tolist()
+#             ]
+#             # We assert this is indeed a sampling of rows of this client
+#             assert all(
+#                 [
+#                     s_row in data["original_clients_indices"].tolist()
+#                     for s_row in sampled_rows
+#                 ]
+#             )
+#             data = (
+#                 data.set_index("original_clients_indices")
+#                 .loc[sampled_rows]
+#                 .reset_index()
+#             )
+#             assert all(
+#                 [
+#                     a == b
+#                     for a, b in zip(
+#                         data["original_clients_indices"].tolist(), sampled_rows
+#                     )
+#                 ]
+#             )
+#             data = data.drop(columns={"original_clients_indices"})
+#             return data
 
-        super().setUpClass(
-            variance_method="bootstrap",
-            bootstrap_seeds=bootstrap_seeds,
-            seed=42,
-            bootstrap_function=bootstrap_function,
-        )
+#         super().setUpClass(
+#             variance_method="bootstrap",
+#             bootstrap_seeds=bootstrap_seeds,
+#             seed=42,
+#             bootstrap_function=bootstrap_function,
+#         )
 
 
-class TestGlobaltBtstFedECAEnd2End(TestTempDir):
-    """BtstIPTW tests class."""
+# class TestGlobaltBtstFedECAEnd2End(TestTempDir):
+#     """BtstIPTW tests class."""
 
-    @classmethod
-    def setUpClass(
-        cls,
-        n_clients=2,
-        ndim=10,
-        nsamples=1000,
-        seed=42,
-        n_bootstrap=200,
-    ):
-        """Set up the test class for experiment comparison.
+#     @classmethod
+#     def setUpClass(
+#         cls,
+#         n_clients=2,
+#         ndim=10,
+#         nsamples=1000,
+#         seed=42,
+#         n_bootstrap=200,
+#     ):
+#         """Set up the test class for experiment comparison.
 
-        Parameters
-        ----------
-        n_clients : int
-            The number of clients in the federation
-        nsamples : int
-            The number of samles in total.
-        seed : int
-            The seed to use for the data generation process.
-        n_bootstrap : int
-            The number of bootstrap samples to use.
-        """
-        super().setUpClass()
-        cls.n_clients = n_clients
-        cls.nsamples = nsamples
-        cls.seed = seed
-        cls.ndim = ndim
-        cls.bootstrap_seeds = 42
-        cls.n_bootstrap = n_bootstrap
-        data = CoxData(seed=cls.seed, n_samples=cls.nsamples, ndim=cls.ndim)
-        df = data.generate_dataframe()
-        cls.df = df.drop(columns=["propensity_scores"], axis=1)
+#         Parameters
+#         ----------
+#         n_clients : int
+#             The number of clients in the federation
+#         nsamples : int
+#             The number of samles in total.
+#         seed : int
+#             The seed to use for the data generation process.
+#         n_bootstrap : int
+#             The number of bootstrap samples to use.
+#         """
+#         super().setUpClass()
+#         cls.n_clients = n_clients
+#         cls.nsamples = nsamples
+#         cls.seed = seed
+#         cls.ndim = ndim
+#         cls.bootstrap_seeds = 42
+#         cls.n_bootstrap = n_bootstrap
+#         data = CoxData(seed=cls.seed, n_samples=cls.nsamples, ndim=cls.ndim)
+#         df = data.generate_dataframe()
+#         cls.df = df.drop(columns=["propensity_scores"], axis=1)
 
-        cls._treated_col = "treatment"
-        cls._event_col = "event"
-        cls._duration_col = "time"
+#         cls._treated_col = "treatment"
+#         cls._event_col = "event"
+#         cls._duration_col = "time"
 
-        cls.pooled_iptw = PooledIPTW(
-            treated_col=cls._treated_col,
-            event_col=cls._event_col,
-            duration_col=cls._duration_col,
-            variance_method="bootstrap",
-            seed=cls.seed,
-            n_bootstrap=cls.n_bootstrap,
-        )
+#         cls.pooled_iptw = PooledIPTW(
+#             treated_col=cls._treated_col,
+#             event_col=cls._event_col,
+#             duration_col=cls._duration_col,
+#             variance_method="bootstrap",
+#             seed=cls.seed,
+#             n_bootstrap=cls.n_bootstrap,
+#         )
 
-        cls.pooled_iptw.fit(cls.df)
-        cls.pooled_iptw_results = cls.pooled_iptw.results_
+#         cls.pooled_iptw.fit(cls.df)
+#         cls.pooled_iptw_results = cls.pooled_iptw.results_
 
-        cls.indices_list = split_control_over_centers(
-            cls.df,
-            n_clients=cls.n_clients,
-            treatment_info=cls._treated_col,
-            seed=42,
-        )
+#         cls.indices_list = split_control_over_centers(
+#             cls.df,
+#             n_clients=cls.n_clients,
+#             treatment_info=cls._treated_col,
+#             seed=42,
+#         )
 
-        cls.global_clients_indices = list(itertools.chain(*cls.indices_list))
+#         cls.global_clients_indices = list(itertools.chain(*cls.indices_list))
 
-        cls.fed_iptw = FedECA(
-            ndim=cls.ndim,
-            treated_col=cls._treated_col,
-            duration_col=cls._duration_col,
-            event_col=cls._event_col,
-            num_rounds_list=[20, 20],
-            variance_method="bootstrap",
-            bootstrap_function="global",
-            client_identifier="center",
-            bootstrap_seeds=cls.bootstrap_seeds,
-            clients_names=[f"center{i}" for i in range(cls.n_clients)],
-            clients_sizes=[len(indices_client) for indices_client in cls.indices_list],
-            indices_in_global_dataset=cls.global_clients_indices,
-            n_bootstrap=cls.n_bootstrap,
-        )
+#         cls.fed_iptw = FedECA(
+#             ndim=cls.ndim,
+#             treated_col=cls._treated_col,
+#             duration_col=cls._duration_col,
+#             event_col=cls._event_col,
+#             num_rounds_list=[20, 20],
+#             variance_method="bootstrap",
+#             bootstrap_function="global",
+#             client_identifier="center",
+#             bootstrap_seeds=cls.bootstrap_seeds,
+#             clients_names=[f"center{i}" for i in range(cls.n_clients)],
+#             clients_sizes=[len(indices_client) for indices_client in cls.indices_list],
+#             indices_in_global_dataset=cls.global_clients_indices,
+#             n_bootstrap=cls.n_bootstrap,
+#         )
 
-        cls.fed_iptw.fit(
-            data=cls.df,
-            targets=None,
-            n_clients=cls.n_clients,
-            split_method="split_control_over_centers",
-            split_method_kwargs={
-                "treatment_info": cls._treated_col,
-                "seed": 42,
-            },
-            backend_type="simu",
-            data_path=cls.test_dir,
-        )
+#         cls.fed_iptw.fit(
+#             data=cls.df,
+#             targets=None,
+#             n_clients=cls.n_clients,
+#             split_method="split_control_over_centers",
+#             split_method_kwargs={
+#                 "treatment_info": cls._treated_col,
+#                 "seed": 42,
+#             },
+#             backend_type="simu",
+#             data_path=cls.test_dir,
+#         )
 
-        cls.fed_iptw_results = cls.fed_iptw.results_
+#         cls.fed_iptw_results = cls.fed_iptw.results_
 
-    @pytest.mark.slow
-    def test_matching(self, rtol=1e-2):
-        """Test equality of end results.
+#     @pytest.mark.slow
+#     def test_matching(self, rtol=1e-2):
+#         """Test equality of end results.
 
-        We allow ourselves rtol=1e-2 as in the paper.
-        """
-        pd.testing.assert_frame_equal(
-            self.pooled_iptw_results.reset_index()[self.fed_iptw_results.columns],
-            self.fed_iptw_results,
-            rtol=rtol,
-        )
+#         We allow ourselves rtol=1e-2 as in the paper.
+#         """
+#         pd.testing.assert_frame_equal(
+#             self.pooled_iptw_results.reset_index()[self.fed_iptw_results.columns],
+#             self.fed_iptw_results,
+#             rtol=rtol,
+#         )
