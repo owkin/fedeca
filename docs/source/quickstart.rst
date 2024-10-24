@@ -164,6 +164,7 @@ complicated distributed setting:
    ds_client = clients[list(clients.keys())[0]]
    fed_iptw = FedECA(ndim=10, ds_client=ds_client, train_data_nodes=train_data_nodes, treated_col="treatment", duration_col="time", event_col="event", variance_method="robust")
    fed_iptw.run()
+   print(fed_iptw.results_)
    # Final partial log-likelihood:
    # [-11499.19619422]
    #        coef  se(coef)  coef lower 95%  coef upper 95%         z         p  exp(coef)  exp(coef) lower 95%  exp(coef) upper 95%
@@ -178,6 +179,7 @@ advise to use directly the scikit-learn inspired syntax:
 
    fed_iptw = FedECA(ndim=10, treated_col="treatment", event_col="event", duration_col="time")
    fed_iptw.fit(df, n_clients=4, split_method="split_control_over_centers", split_method_kwargs={"treatment_info": "treatment"}, data_path="./data", variance_method="robust", backend_type="simu")
+   print(fed_iptw.results_)
    #        coef  se(coef)  coef lower 95%  coef upper 95%         z         p  exp(coef)  exp(coef) lower 95%  exp(coef) upper 95%
    # 0  0.041718  0.070581       -0.096618        0.180054  0.591062  0.554479     1.0426             0.907902             1.197282
 
