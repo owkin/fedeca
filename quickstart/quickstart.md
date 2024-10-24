@@ -1,5 +1,6 @@
 ## Quickstart
-This quickstart assumes users have already installed fedeca in a conda environment.
+This quickstart assumes users have already installed fedeca in a conda environment.  
+
 FedECA tries to mimic scikit-learn API as much as possible with the constraints
 of distributed learning.
 The first step in data science is always the data.
