@@ -153,9 +153,9 @@ list_strategy_params = [
 ]
 
 
-@pytest.mark.parametrize(
-    "strategy_params, num_rounds", product(list_strategy_params, range(1, 2))
-)
+# @pytest.mark.parametrize(
+#     "strategy_params, num_rounds", product(list_strategy_params, range(1, 2))
+# )
 # def test_bootstrapping_per_client(strategy_params: dict, num_rounds: int):
 #     """Tests of data generation with constant cate."""
 #     # Let's generate 1000 data samples with 10 covariates
