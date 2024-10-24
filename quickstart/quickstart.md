@@ -112,7 +112,7 @@ clients, train_data_nodes, _, _, _ = split_dataframe_across_clients(
 )
 ```
 Note that you can replace split_method by any callable with the signature
-`pd.DataFrame -> list[int]` where the list of ints is the split of the indices
+`pd.DataFrame -> list[list[int]]` where the list of list of ints is the split of the indices
 of the df across the different institutions.
 To convince you that the split was effective you can inspect the folder "./data".
 You will find different subfolders `center0` to `center3` each with different
