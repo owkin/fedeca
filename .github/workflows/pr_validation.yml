@@ -71,7 +71,7 @@ jobs:
         if: github.event_name == 'pull_request'
         run: |
           set -x
-          total_cov=`grep -Eo '<span class="pc_cov">[0-9]+%</span>' htmlcov/index.html | grep -oe '\([0-9.]*\)'`
+          total_cov=`grep -Eo '<span class="pc_cov">[0-9]+%</span>' /home/runner/htmlcov/index.html | grep -oe '\([0-9.]*\)'`
           echo $total_cov
           if [ "$total_cov" -le "50" ] ; then
           COLOR=red
