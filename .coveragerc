@@ -9,3 +9,4 @@ omit =
     # omit everything in /usr very important !
     /usr/*
     */local-worker/*
+    */tests/*
