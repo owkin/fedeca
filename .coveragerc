@@ -3,10 +3,5 @@ omit =
     # omit everything in /usr very important !
     /usr/*
     */local-worker/*
-
-[html]
-omit =
-    # omit everything in /usr very important !
-    /usr/*
-    */local-worker/*
     */tests/*
+
