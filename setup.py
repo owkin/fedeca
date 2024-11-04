@@ -33,7 +33,7 @@ setup(
         # build issues related to git not being installed
         "substrafl==0.46.0",
         "argparse",
-        "numpy",
+        "numpy==1.26.4",
         "pandas",
         "pre-commit",
         "scipy",
