@@ -31,7 +31,7 @@ git clone https://github.com/owkin/fedeca.git
 cd fedeca
 pip install -e ".[all_extra]"
 ```
-The cloning should take less than 5 seconds and the pip install
+The cloning itself should take less than 5 seconds and the pip install
 should take around 1 min and 30 seconds.
 
 If you plan on developing, you should also install the pre-commit hooks
