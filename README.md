@@ -23,7 +23,7 @@ To install the package, create an env with python `3.9` with conda
 conda create -n fedeca python=3.9
 conda activate fedeca
 ```
-This should take under 20 seconds with a reasonably good connexion.
+Creating the conda environment should take under 20 seconds on a modern computer with a reasonably good internet connexion (see below for details).  
 Within the environment, install the package by running:
 
 ```
