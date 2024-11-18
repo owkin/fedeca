@@ -43,7 +43,7 @@ pre-commit install
 This will run all the pre-commit hooks at each commit, ensuring a clean repo.
 
 All estimated runtimes computations use as reference machine a Mac M3 Pro with 18G of RAM
-and an internet connexion at 120Mbps as measured by fast.com.
+and an internet connexion with a speed of 120Mbps (as measured by fast.com).
 
 ## Quickstart
 
