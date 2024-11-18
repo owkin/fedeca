@@ -31,22 +31,24 @@ setup(
     install_requires=[
         # We cannot use the git+https / git+ssh syntax here because of docker
         # build issues related to git not being installed
+        # Commented pinned versions are only there as references but should
+        # not matter as long as the versions are compatible with the ones
+        # uncommented. 
         "substrafl==0.46.0",
-        "argparse",
         "numpy==1.26.4",
-        "pandas",
-        "pre-commit",
-        "scipy",
-        "seaborn",
-        "opacus",
-        "lifelines",
-        "git-python",
-        "build",
+        "pandas",#==2.2.3
+        "pre-commit",#==4.0.1
+        "scipy",#==1.13.1
+        "seaborn",#==0.13.2
+        "opacus",#==1.4.0
+        "lifelines",#==0.29.0
+        "git-python",#==1.0.3
+        "build",#==1.2.2.post1
         "torch==1.13.1",
         "scikit-learn==1.2.1",
-        "pydantic",  # Need to be updated to > 2.0 to use latest Substra
+        "pydantic", #==2.23.4
         "indcomp==0.2.1",
-        "hydra-core",
+        "hydra-core",#==1.3.2
     ],
     extras_require={
         "all_extra": all_extra,

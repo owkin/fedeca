@@ -23,7 +23,7 @@ To install the package, create an env with python `3.9` with conda
 conda create -n fedeca python=3.9
 conda activate fedeca
 ```
-
+This should take under 20 seconds with a reasonably good connexion.
 Within the environment, install the package by running:
 
 ```
@@ -31,6 +31,8 @@ git clone https://github.com/owkin/fedeca.git
 cd fedeca
 pip install -e ".[all_extra]"
 ```
+The cloning should take less than 5 seconds and the pip install
+should take around 1 min and 30 seconds.
 
 If you plan on developing, you should also install the pre-commit hooks
 
@@ -40,9 +42,15 @@ pre-commit install
 
 This will run all the pre-commit hooks at each commit, ensuring a clean repo.
 
+All estimated runtimes computations use as reference machine a Mac M3 Pro with 18G of RAM
+and an internet connexion at 120Mbps as measured by fast.com.
+
 ## Quickstart
 
 Go [here](./quickstart/quickstart.md).
+
+Copy-pasting all cells of the tutorial into a regular python script gives a runtime of approximately 1 minute,
+with less than 2 seconds spent on each run of the FedECA algorithm in-RAM.
 
 ## <a name="citation"></a>Citing FedECA
 
