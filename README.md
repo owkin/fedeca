@@ -50,7 +50,7 @@ and an internet connexion at 120Mbps as measured by fast.com.
 Go [here](./quickstart/quickstart.md).
 
 Copy-pasting all cells of the tutorial into a regular python script gives a runtime of approximately 1 minute,
-with less than 2 seconds spent on each run of the FedECA algorithm in-RAM.
+with less than 2 seconds spent on each run of the FedECA algorithm in-RAM (using the same Mac M3 Pro as a reference).
 
 ## <a name="citation"></a>Citing FedECA
 
