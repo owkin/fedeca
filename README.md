@@ -30,7 +30,7 @@ To install the package, create an env with python `3.9` with conda
 conda create -n fedeca python=3.9
 conda activate fedeca
 ```
-Creating the conda environment should take under 20 seconds on a modern computer with a reasonably good internet connexion (see below for details).  
+Creating the conda environment should take under 20 seconds on a modern computer with a reasonably good internet connexion (see top of the section for details).  
 Within the environment, install the package by running:
 
 ```
@@ -40,11 +40,10 @@ pip install -e ".[all_extra]"
 ```
 The cloning itself should take less than 5 seconds and the pip install
 should take around 1 min and 30 seconds.
-Please note, however, that the repo contains artefacts of results of all
-experiments, which allow for the reproduction of figures contained in the
-article without having to rerun all the experiments. The size of the repo is
-therefore considerable (~88M), and the actual time spent on cloning may
-therefore vary depending on the internet bandwidth.
+Please note, however, that the repo contains artefacts of experiments' results, 
+which allow for the reproduction of figures contained in the article without having to rerun
+corresponding experiments. The size of the repo is therefore not negligeable (~88M), and
+the actual time spent on cloning may vary depending on the internet bandwidth.
 
 If you plan on developing, you should also install the pre-commit hooks
 
