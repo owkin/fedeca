@@ -18,10 +18,10 @@ Before using the code be sure to check our [license](./license.md) first.
 ## Installation instructions
 
 In the following, all estimated runtimes of installation and computations use as reference machine a Mac M3 Pro with 18G of RAM
-and an internet connexion with a speed of 120Mbps (as measured by fast.com).
-The installation has been tested so far mostly on MacOS (Sonoma 14.1) but the CI is running on both Linux (Ubuntu latest) as well as Windows (2019) (for the installation only).
+and an internet connexion with a speed of 120Mbps (as measured by fast.com).  
+The installation has been tested so far mostly on MacOS (Sonoma 14.1) but the CI is running on both Linux (Ubuntu latest) as well as Windows (2019) (for the installation only).  
 The preferred way to run fedeca is on UNIX OS (Linux, MacOs) as substra itself is not thoroughly tested on Windows at the time of writing. We recommend Windows users to proceed with care and
-report anything unexpected by opening an issue.
+report anything unexpected by opening an issue.  
 
 To install the package, create an env with python `3.9` with conda
 
