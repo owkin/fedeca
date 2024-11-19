@@ -22,6 +22,7 @@ and an internet connexion with a speed of 120Mbps (as measured by fast.com).
 The installation has been tested so far mostly on MacOS (Sonoma 14.1) but the CI is running on both Linux (Ubuntu latest) as well as Windows (2019) (for the installation only).  
 The preferred way to run fedeca is on UNIX OS (Linux, MacOs) as substra itself is not thoroughly tested on Windows at the time of writing. We recommend Windows users to proceed with care and
 report anything unexpected by opening an issue.  
+Regarding hardware, fedeca is lightweight and does not require any non-standard setup and should therefore run on any modern laptop.  
 
 To install the package, create an env with python `3.9` with conda
 
