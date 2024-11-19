@@ -17,6 +17,10 @@ Before using the code be sure to check our [license](./license.md) first.
 
 ## Installation instructions
 
+In the following, all estimated runtimes of installation and computations use as
+reference machine a Mac M3 Pro with 18G of RAM
+and an internet connexion with a speed of 120Mbps (as measured by fast.com).
+
 To install the package, create an env with python `3.9` with conda
 
 ```bash
@@ -33,6 +37,11 @@ pip install -e ".[all_extra]"
 ```
 The cloning itself should take less than 5 seconds and the pip install
 should take around 1 min and 30 seconds.
+Please note, however, that the repo contains artefacts of results of all
+experiments, which allow for the reproduction of figures contained in the
+article without having to rerun all the experiments. The size of the repo is
+therefore considerable (~88M), and the actual time spent on cloning may
+therefore vary depending on the internet bandwidth.
 
 If you plan on developing, you should also install the pre-commit hooks
 
@@ -41,9 +50,6 @@ pre-commit install
 ```
 
 This will run all the pre-commit hooks at each commit, ensuring a clean repo.
-
-All estimated runtimes computations use as reference machine a Mac M3 Pro with 18G of RAM
-and an internet connexion with a speed of 120Mbps (as measured by fast.com).
 
 ## Quickstart
 
