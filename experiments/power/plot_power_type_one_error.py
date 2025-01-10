@@ -11,13 +11,13 @@ from fedeca.viz.utils import adjust_legend_subtitles
 
 # %%
 # Raw results
-BASE_PATH = "/home/owkin/project/results_experiments/"
+BASE_PATH = "../results/power_analysis/"
 FILE_OUTPUT = "results_Power_and_type_one_error_analyses.pkl"
 df_res_cov_shift = load_dataframe_from_pickles(
-    BASE_PATH + "power_and_type_one_error_cov_shift/" + FILE_OUTPUT
+    BASE_PATH + "cov_shift/" + FILE_OUTPUT
 )
 df_res_n_samples = load_dataframe_from_pickles(
-    BASE_PATH + "power_and_type_one_error_n_samples/" + FILE_OUTPUT
+    BASE_PATH + "n_samples/" + FILE_OUTPUT
 )
 
 # %%
@@ -97,6 +97,7 @@ for i, ax in enumerate(g.axes.flat):
         ax.set(yscale="log")
     if i // n_col == 1:
         ax.set_ylabel("Statistical power")
+        ax.set_ylim(0, 1)
     if i % n_col == 0:
         ax.set_xlabel("Covariate shift")
     if i % n_col == 1:
