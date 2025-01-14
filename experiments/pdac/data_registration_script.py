@@ -1,4 +1,6 @@
 """Register data in the network."""
+# This scripts cannot be readily executed anywhere as it assumes the existence
+# of a deployed network
 import os
 import zlib
 from pathlib import Path
@@ -72,6 +74,7 @@ while not move_forward:
     ]  # noqa: E501
 
 data_path = FL_DATA_PATH
+# this assumes the version is the last part of the path
 VERSION = FL_DATA_PATH[-1]
 
 if SYNTHETIC:
@@ -99,7 +102,8 @@ if SYNTHETIC:
 
 PATH_TO_DATA = Path(data_path)
 
-
+# this assumes the token of the organization is stored in a file available
+# at /home/owkin/project/token
 URL = hospitals_mapping[hospital]["url"]
 with open("/home/owkin/project/token", "r") as f:
     TOKEN = f.read()
