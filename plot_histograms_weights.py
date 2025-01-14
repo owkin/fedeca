@@ -1,6 +1,11 @@
 import matplotlib.pyplot as plt
 import pandas as pd
-from common import FFCD_URL, IDIBIGI_URL, PANCAN_URL, FL_DATA_PATH
+FFCD_URL, IDIBIGI_URL, PANCAN_URL, FL_DATA_PATH = (
+    "FFCD_URL",
+    "IDIBIGI_URL",
+    "PANCAN_URL",
+    "FL_DATA_PATH_vXX",
+)
 from ffcd.ffcd_opener import FFCDOpener
 from idibigi.idibigi_opener import IDIBIGIOpener
 from pancan.pancan_opener import PanCanOpener
