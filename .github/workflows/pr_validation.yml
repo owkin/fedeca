@@ -53,10 +53,10 @@ jobs:
         with:
           repository: ${{ github.event.pull_request.head.repo.full_name }}
           ref: ${{ github.event.pull_request.head.ref }}
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Set up Python ${{ matrix.python }}
         uses: actions/setup-python@v4
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: ${{ matrix.python }}
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
