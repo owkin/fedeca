@@ -55,7 +55,7 @@ This will run all the pre-commit hooks at each commit, ensuring a clean repo.
 
 ## Quickstart
 
-Go [here](./quickstart/quickstart.md).
+In order to quickly get a sense on how FedECA works visit [here](./quickstart/quickstart.md).
 
 Copy-pasting all cells of the tutorial into a regular python script gives a runtime of approximately 1 minute,
 with less than 2 seconds spent on each run of the FedECA algorithm in-RAM (using the same Mac M3 Pro as a reference).
