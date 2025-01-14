@@ -27,6 +27,7 @@ from pancan.pancan_opener import PanCanOpener
 
 POTENTIAL_HOSPITALS = ["idibigi", "ffcd", "pancan"]
 SYNTHETIC = False
+# All variables below are only active in the case FAKE_TREATMENT is True
 FAKE_TREATMENT = True
 IS_FOLFIRINOX = False
 IS_TREATMENT_CENTER = True
