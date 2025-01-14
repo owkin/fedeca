@@ -22,7 +22,7 @@ jobs:
         os: [ windows-2019 ]
         python: [ "3.9" ]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           # Do not checkout in the current working directory to ensure the further imported module is the installed one
           path: anywhere
@@ -35,6 +35,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install --upgrade setuptools
+          python --version
           pip install -e "./anywhere/[all_extra]"
       - name: Test import successful
         run: |
@@ -45,13 +46,17 @@ jobs:
     strategy:
       matrix:
         os: [ ubuntu-latest ]
-        python: ["3.9"]
+        python: [ "3.9" ]
         # python: ["3.9", "3.10", "3.11"]  # TODO: expand to other pythons
     steps:
       - uses: actions/checkout@v4
         with:
           repository: ${{ github.event.pull_request.head.repo.full_name }}
           ref: ${{ github.event.pull_request.head.ref }}
+      - name: Set up Python ${{ matrix.python }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python }}
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
