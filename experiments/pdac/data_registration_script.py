@@ -1,6 +1,4 @@
 """Register data in the network."""
-# This scripts cannot be readily executed anywhere as it assumes the existence
-# of a deployed network
 import os
 import zlib
 from pathlib import Path
@@ -10,7 +8,6 @@ from pandas.util import hash_pandas_object
 from substra.sdk.schemas import DataSampleSpec, DatasetSpec, Permissions
 
 import fedeca
-
 # This depends on the network you are using
 # this assumes further that data has been preprocessed and is available
 # in the same path on each partner's nodes FL_DATA_PATH
@@ -20,14 +17,20 @@ FFCD_URL, IDIBIGI_URL, PANCAN_URL, FL_DATA_PATH = (
     "PANCAN_URL",
     "FL_DATA_PATH_vXX",
 )
+from fedeca.utils.substra_utils import Client
 from ffcd.ffcd_opener import FFCDOpener
 from idibigi.idibigi_opener import IDIBIGIOpener
 from pancan.pancan_opener import PanCanOpener
 
-from fedeca.utils.substra_utils import Client
 
 POTENTIAL_HOSPITALS = ["idibigi", "ffcd", "pancan"]
 SYNTHETIC = False
+FAKE_TREATMENT = True
+IS_FOLFIRINOX = False
+IS_TREATMENT_CENTER = True
+TREATMENT = "IDIBIGi"
+ 
+
 
 hospitals_mapping = {
     "idibigi": {
@@ -49,6 +52,7 @@ hospitals_mapping = {
         "synth_center_id": 2,
     },
 }
+assert TREATMENT is in [hospitals_mapping[k]["owner"] for k in list(hospitals_mapping.keys())]
 
 
 hospital = None
@@ -68,7 +72,6 @@ while not move_forward:
     ]  # noqa: E501
 
 data_path = FL_DATA_PATH
-# this assumes the version is the last part of the path
 VERSION = FL_DATA_PATH[-1]
 
 if SYNTHETIC:
@@ -96,8 +99,7 @@ if SYNTHETIC:
 
 PATH_TO_DATA = Path(data_path)
 
-# this assumes the token of the organization is stored in a file available
-# at /home/owkin/project/token
+
 URL = hospitals_mapping[hospital]["url"]
 with open("/home/owkin/project/token", "r") as f:
     TOKEN = f.read()
@@ -177,6 +179,32 @@ permissions_dataset = Permissions(
 
 df = pd.read_csv(PATH_TO_DATA / "data.csv")
 
+if FAKE_TREATMENT:
+    TREATMENT_COL = "Treatment actually received"
+    import numpy as np
+    np.random.seed(42)
+    if IS_FOLFIRINOX:
+        df = df[df[TREATMENT_COL] == "FOLFIRINOX"]
+    else:
+        df = df[df[TREATMENT_COL] == "Gemcitabine + Nab-Paclitaxel"]
+
+    assert len(df.index) > 0
+    group = "FOL" if IS_FOLFIRINOX else "GEM"
+    # Random treatment allocation within the chosen group
+    if not IS_TREATMENT_CENTER:
+        df["temp"] = (np.random.uniform(0, 1, len(df.index)) > 0.5)
+    else:
+        df["temp"] = (X["center"] == TREATMENT)
+    df.loc[df["temp"], TREATMENT_COL] = "FOLFIRINOX"
+    df.loc[~df["temp"], TREATMENT_COL] = "Gemcitabine + Nab-Paclitaxel"
+    df.drop(columns=["temp"], inplace=True)
+    path_fake_data = PATH_TO_DATA.parent / f"fake_allocation_within_{group}"
+    os.makedirs(path_fake_data, exist_ok=True)
+    PATH_TO_DATA = path_fake_data
+    df.to_csv(path_fake_data / "data.csv", index=False)
+    pd.testing.assert_frame_equal(pd.read_csv(PATH_TO_DATA / "data.csv").reset_index(drop=True), df.reset_index(drop=True))
+    
+
 # The float32 conversion is necessary to avoid hash differences because of weird
 # float64 rounding issues on different machines
 to_hash_numbers = hash_pandas_object(
@@ -195,8 +223,11 @@ colnames = ";".join([str(col).replace(" ", "")[:9] for col in sorted(df.columns)
 dataset_name = f"{hospital}_{hash_df}_{colnames}_N{len(df.index)}_v{VERSION}"
 if SYNTHETIC:
     dataset_name = "SYNTH_" + dataset_name
+if FAKE_TREATMENT:
+    dataset_name = f"T{TREATMENT[0]}P{str(IS_FOLFIRINOX)[0]}" + dataset_name
+
 assert (
-    len(dataset_name) < 100
+    len(dataset_name) <= 100
 ), f"Length of dataset name {len(dataset_name)} Find a shorter name than {dataset_name} but that still contains all infos most important is hash"  # noqa: E501
 
 

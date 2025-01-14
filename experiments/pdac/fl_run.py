@@ -3,6 +3,9 @@ import copy
 import json
 import os
 import pickle
+# assumes datasets' names contain the number of samples ..._NXXXX_... in their names
+# and the original colum names ..._colXX;YY;ZZ;..._NXXXX where XX, YY, ZZ are
+# the covariates
 import re
 import subprocess
 import sys
@@ -11,6 +14,7 @@ from pathlib import Path
 
 import git
 from substrafl.nodes import AggregationNode, TrainDataNode
+from itertools import combinations
 
 import fedeca
 from fedeca import FedECA
@@ -34,6 +38,7 @@ NO_PANCAN = False
 
 DS_BACKEND_URL = "DS_BACKEND_URL"
 FFCD_BACKEND_URL = "FFCD_BACKEND_URL"
+IDIBIGI_BACKEND_URL = "IDIBIGI_BACKEND_URL"
 
 with open("tokens.json") as f:
     d = json.load(f)
@@ -44,11 +49,15 @@ owkin_ds = Client(
     url=DS_BACKEND_URL,
     token=token,
     backend_type="remote",
-)
+)  # noqa: E501
+print(owkin_ds.list_dataset())
 
 # We need FFCD or IDIBIGi or PANCAN tokens to be able to download models see above
 with open("ffcd_tokens.json") as f:
     ffcd_d = json.load(f)
+
+with open("idibigi_tokens.json") as f:
+    idibigi_d = json.load(f)
 
 ffcd_token = ffcd_d["token"]
 ffcd_client = Client(
@@ -56,7 +65,15 @@ ffcd_client = Client(
     token=ffcd_token,
     backend_type="remote",
 )  # noqa: E501
+
+idibigi_token = idibigi_d["token"]
+idibigi_client = Client(
+    url=IDIBIGI_BACKEND_URL,
+    token=idibigi_token,
+    backend_type="remote",
+)  # noqa: E501
 # check connexion
+ffcd_client.list_dataset()
 
 # Those are random hashes, they need to be replaced by the actual dataset keys
 # obtained through the data registration script
@@ -100,10 +117,6 @@ pancan_node = TrainDataNode(
 
 NCLIENTS = 3 if not NO_PANCAN else 2
 
-# assumes datasets' names contain the number of samples ..._NXXXX_... in their names
-# and the original colum names ..._XX;YY;ZZ;..._NXXXX where XX, YY, ZZ are
-# the covariates
-
 clients_sizes = [
     int(re.findall(r"(?<=_N)[0-9]+(?=_)", owkin_ds.get_dataset(dataset_key).name)[0])
     for dataset_key in [IDIBIGI_dataset_key, FFCD_dataset_key, PANCAN_dataset_key][
@@ -134,15 +147,11 @@ kwargs = {
     "duration_col": "Overall survival",  # we can change it back to time if needed
     "bootstrap_function": "global",
     "bootstrap_seeds": 42,
-    "clients_sizes": clients_sizes[:NCLIENTS],
     "client_identifier": "center",
     "num_rounds_list": [20, 20],
     "training_strategy": "iptw",
     "n_bootstrap": 200,
     "ds_client": owkin_ds,
-    "train_data_nodes": [idibigi_node, ffcd_node, pancan_node][:NCLIENTS],
-    "partner_client": ffcd_client,
-    "clients_names": [IDIBIGI_org_id, FFCD_org_id, PANCAN_org_id][:NCLIENTS],
     "aggregation_node": aggregation_node,
 }
 
@@ -156,98 +165,123 @@ picklizable_kwargs["aggregation_node"] = picklizable_kwargs[
     "aggregation_node"
 ].organization_id
 
-res = {
+
+# We iterate on the full loop as well as all possible combinations of 2 clients
+clients = ["idibigi", "ffcd", "pancan"]
+clients_pairs = list(combinations(clients, 2))
+clients_combination = clients_pairs + [tuple(clients)]
+idibigi_info = {"node": idibigi_node, "org_id": IDIBIGI_org_id, "size": clients_sizes[0]}
+ffcd_info = {"node": ffcd_node, "org_id": FFCD_org_id, "size": clients_sizes[1]}
+pancan_info = {"node": pancan_node, "org_id": PANCAN_org_id, "size": clients_sizes[2]}
+clients_info = {"idibigi": idibigi_info, "ffcd": ffcd_info, "pancan": pancan_info}
+global_res = {current_clients: None for current_clients in clients_combination}
+template_res = {
     "kwargs": picklizable_kwargs,
     "commit_fedeca": commit_fedeca,
     "run_script": run_script,
-}
+    }
+for current_clients in clients_combination:
+    current_kwargs_clients = copy.deepcopy(kwargs)
 
-for idx, variance_method in enumerate(["bootstrap", "robust", "naïve"]):
+    current_kwargs_clients["train_data_nodes"] = [clients_info[c_client]["node"] for c_client in current_clients]
+    current_kwargs_clients["clients_names"] = [clients_info[c_client]["org_id"] for c_client in current_clients]
+    current_kwargs_clients["clients_sizes"] = [clients_info[c_client]["size"] for c_client in current_clients]
+    current_kwargs_clients["partner_client"] = ffcd_client if "ffcd" in current_clients else idibigi_client
+    print(current_kwargs_clients)
+    res = copy.deepcopy(template_res)
+    # for debugging purposes and also for further use when computing weighted KM
+    res["kwargs"]["train_data_nodes"] = current_kwargs_clients["train_data_nodes"]
+    res["kwargs"]["clients_names"] = current_kwargs_clients["clients_names"]
+    res["kwargs"]["clients_sizes"] = current_kwargs_clients["clients_sizes"]
+    res["kwargs"]["partner_client"] = current_kwargs_clients["partner_client"]
 
-    current_kwargs = copy.deepcopy(kwargs)
-    current_kwargs["variance_method"] = variance_method
+    for idx, variance_method in enumerate(["bootstrap", "robust", "naïve"]):
 
-    # Building base_opener dependency as a wheel because of bug of local_code
-    # position in the opener docker
-    base_opener_path = Path(os.path.abspath(sys.argv[0])).parent / "base_opener.py"
-    assert base_opener_path.exists(), f"Could not find {base_opener_path}"
-    temp_folder = "./temp"
-    package_folder = str(Path(temp_folder) / "base_opener")
-    wheel_folder = str(Path(temp_folder) / "wheels")
-    os.makedirs(package_folder, exist_ok=True)
-    os.makedirs(wheel_folder, exist_ok=True)
+        current_kwargs = copy.deepcopy(current_kwargs_clients)
+        current_kwargs["variance_method"] = variance_method
 
-    copy_process = subprocess.Popen(
-        f"cp {base_opener_path} ./temp/base_opener/base_opener.py",
-        shell=True,
-        stdout=subprocess.PIPE,
-    )
-    copy_process.wait()
-    assert copy_process.returncode == 0, "Failed to copy the base_opener"
-    setup_code = """
-from setuptools import setup, find_packages
+        # Building base_opener dependency as a wheel because of bug of local_code
+        # position in the opener docker
+        base_opener_path = Path(os.path.abspath(sys.argv[0])).parent / "base_opener.py"
+        assert base_opener_path.exists(), f"Could not find {base_opener_path}"
+        temp_folder = "./temp"
+        package_folder = str(Path(temp_folder) / "base_opener")
+        wheel_folder = str(Path(temp_folder) / "wheels")
+        os.makedirs(package_folder, exist_ok=True)
+        os.makedirs(wheel_folder, exist_ok=True)
 
+        copy_process = subprocess.Popen(
+            f"cp {base_opener_path} ./temp/base_opener/base_opener.py",
+            shell=True,
+            stdout=subprocess.PIPE,
+        )
+        copy_process.wait()
+        assert copy_process.returncode == 0, "Failed to copy the base_opener"
+        setup_code = """from setuptools import setup, find_packages
 
 setup(
     name="base_opener",
     version="1.0",
     packages=find_packages(),
 )
-    """
-    with open("./temp/setup.py", "w") as f:
-        f.write(setup_code)
+        """
+        with open("./temp/setup.py", "w") as f:
+            f.write(setup_code)
 
-    init_code = """
-from .base_opener import ZPDACOpener, FedECACenters
-    """
-    with open("./temp/base_opener/__init__.py", "w") as f:
-        f.write(init_code)
+        init_code = """from .base_opener import ZPDACOpener, FedECACenters"""
+        with open("./temp/base_opener/__init__.py", "w") as f:
+            f.write(init_code)
 
-    for stale_wheel in Path(wheel_folder).glob("base_opener*.whl"):
-        stale_wheel.unlink()
+        for stale_wheel in Path(wheel_folder).glob("base_opener*.whl"):
+            stale_wheel.unlink()
 
-    build_process = subprocess.Popen(
-        f"python -m build --wheel --outdir {wheel_folder} ./temp",
-        shell=True,
-        stdout=subprocess.PIPE,
-    )
-    build_process.wait()
-    assert build_process.returncode == 0, "Failed to build the wheel"
-    wheel_path = next(Path(wheel_folder).glob("base_opener*.whl"))
+        build_process = subprocess.Popen(
+            f"python -m build --wheel --outdir {wheel_folder} ./temp",
+            shell=True,
+            stdout=subprocess.PIPE,
+        )
+        build_process.wait()
+        assert build_process.returncode == 0, "Failed to build the wheel"
+        wheel_path = next(Path(wheel_folder).glob("base_opener*.whl"))
 
-    current_kwargs["dependencies"] = [Path(wheel_path)]
+        current_kwargs["dependencies"] = [Path(wheel_path)]
 
-    # That's it !
+        # That's it !
 
-    fedeca_cp = FedECA(**current_kwargs)
-    fedeca_cp.run()
+        fedeca_cp = FedECA(**current_kwargs)
+        fedeca_cp.run()
 
-    # Kaplan-Meier
-    print("==========================================================")
-    print(variance_method)
-    print("==========================================================")
-    print(fedeca_cp.results_)
-    res[variance_method] = {}
-    res[variance_method]["results"] = copy.deepcopy(fedeca_cp.results_)
-    res[variance_method]["ll"] = fedeca_cp.log_likelihood_
-    res[variance_method]["compute_plan_keys"] = fedeca_cp.compute_plan_keys
-    res[variance_method]["computed_stds_list"] = fedeca_cp.computed_stds_list
-    if hasattr(fedeca_cp, "propensity_models"):
-        res[variance_method]["propensity_models"] = [
-            {
+        # We store the results for each variance method
+        print("==========================================================")
+        print(variance_method)
+        print("==========================================================")
+        print(fedeca_cp.results_)
+        res[variance_method] = {}
+        res[variance_method]["results"] = copy.deepcopy(fedeca_cp.results_)
+        res[variance_method]["ll"] = fedeca_cp.log_likelihood_
+        res[variance_method]["compute_plan_keys"] = fedeca_cp.compute_plan_keys
+        res[variance_method]["computed_stds_list"] = fedeca_cp.computed_stds_list
+        if hasattr(fedeca_cp, "propensity_models"):
+            res[variance_method]["propensity_models"] = [
+                {
+                    "weight": model.fc1.weight.detach().cpu().data.numpy(),
+                    "bias": model.fc1.bias.detach().cpu().data.numpy(),
+                }
+                for model in fedeca_cp.propensity_models
+            ]  # noqa: E501
+        else:
+            model = fedeca_cp.propensity_model
+            res[variance_method]["propensity_model"] = {
                 "weight": model.fc1.weight.detach().cpu().data.numpy(),
                 "bias": model.fc1.bias.detach().cpu().data.numpy(),
-            }
-            for model in fedeca_cp.propensity_models
-        ]  # noqa: E501
-    else:
-        model = fedeca_cp.propensity_model
-        res[variance_method]["propensity_model"] = {
-            "weight": model.fc1.weight.detach().cpu().data.numpy(),
-            "bias": model.fc1.bias.detach().cpu().data.numpy(),
-        }  # noqa: E501
+            }  # noqa: E501
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    with open(f"{current_clients}_results_{timestamp}.pkl", "wb") as f:
+        pickle.dump(res, f)
+
+    global_res[current_clients] = res
 
 
 timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-with open(f"results_{timestamp}.pkl", "wb") as f:
-    pickle.dump(res, f)
+with open(f"global_results_{timestamp}.pkl", "wb") as f:
+    pickle.dump(global_res, f)
