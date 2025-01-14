@@ -22,7 +22,7 @@ jobs:
         os: [ windows-2019 ]
         python: [ "3.9" ]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           # Do not checkout in the current working directory to ensure the further imported module is the installed one
           path: anywhere
@@ -46,7 +46,7 @@ jobs:
     strategy:
       matrix:
         os: [ ubuntu-latest ]
-        python: ["3.9"]
+        python: [ "3.9" ]
         # python: ["3.9", "3.10", "3.11"]  # TODO: expand to other pythons
     steps:
       - uses: actions/checkout@v4
