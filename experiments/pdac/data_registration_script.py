@@ -203,7 +203,7 @@ if FAKE_TREATMENT:
     df.loc[df["temp"], TREATMENT_COL] = "FOLFIRINOX"
     df.loc[~df["temp"], TREATMENT_COL] = "Gemcitabine + Nab-Paclitaxel"
     df.drop(columns=["temp"], inplace=True)
-    path_fake_data = PATH_TO_DATA.parent / f"fake_allocation_within_{group}"
+    path_fake_data = PATH_TO_DATA.parent / f"fake_allocation_folfirinox{IS_FOLFIRINOX}_treatment{TREATMENT}"
     os.makedirs(path_fake_data, exist_ok=True)
     PATH_TO_DATA = path_fake_data
     df.to_csv(path_fake_data / "data.csv", index=False)
