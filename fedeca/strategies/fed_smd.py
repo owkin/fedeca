@@ -17,6 +17,9 @@ from fedeca.utils.survival_utils import (
     compute_X_y_and_propensity_weights_function,
 )
 
+from fedeca.utils.logging import log_remote_data
+
+
 
 class FedSMD(ComputePlanBuilder):
     """Compute SMD for weighted and unweighted data in FL.
@@ -136,6 +139,7 @@ class FedSMD(ComputePlanBuilder):
         )
 
     @remote_data
+    @log_remote_data
     def compute_local_moments_per_group(
         self,
         data_from_opener,

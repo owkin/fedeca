@@ -10,6 +10,7 @@ from substrafl.evaluation_strategy import EvaluationStrategy
 from substrafl.nodes import AggregationNodeProtocol, TrainDataNodeProtocol
 from substrafl.remote import remote, remote_data
 from torch import nn
+from fedeca.utils.logging import log_remote_data
 
 from fedeca.utils.survival_utils import (
     aggregate_events_statistics,
@@ -127,6 +128,7 @@ class FedKaplan(ComputePlanBuilder):
         )
 
     @remote_data
+    @log_remote_data
     def compute_events_statistics(
         self,
         data_from_opener: pd.DataFrame,
