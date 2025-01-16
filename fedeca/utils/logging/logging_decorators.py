@@ -12,10 +12,10 @@ import pathlib
 from collections.abc import Callable
 from functools import wraps
 from typing import Any
+from typing import Union
+import pandas as pd
 
-import anndata as ad
-
-from fedpydeseq2.core.utils.logging.constants import LOGGING_SAVE_FILE
+from fedeca.utils.logging.constants import LOGGING_SAVE_FILE
 
 
 def log_save_local_state(method: Callable):
@@ -168,7 +168,7 @@ def log_remote_data(method: Callable):
     @wraps(method)
     def remote_method_inner(
         self,
-        data_from_opener: ad.AnnData,
+        data_from_opener: pd.DataFrame,
         shared_state: Any = None,
         **method_parameters,
     ):
@@ -211,7 +211,7 @@ def log_remote(method: Callable):
     @wraps(method)
     def remote_method_inner(
         self,
-        shared_states: list | None,
+        shared_states: Union[list, None],
         **method_parameters,
     ):
         logger = get_method_logger(self, method)
@@ -247,7 +247,7 @@ def log_remote(method: Callable):
     return remote_method_inner
 
 
-def log_shared_state_adatas(self: Any, method: Callable, shared_state: dict | None):
+def log_shared_state_adatas(self: Any, method: Callable, shared_state: Union[dict, None]):
     """
     Log the information of the local step.
 
