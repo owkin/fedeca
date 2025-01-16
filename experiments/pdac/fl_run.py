@@ -21,6 +21,13 @@ from fedeca import FedECA
 from fedeca.utils.substra_utils import Client
 
 NO_PANCAN = False
+SYNTHETIC = False
+FAKE_TREATMENT = False
+IS_FOLFIRINOX = True
+TREATMENT = "idibigi"
+# Here we assume version == 5
+VERSION = 5
+
 
 # for the script to work you need to SSO to the frontend
 # DS_FRONTEND_URL
@@ -75,23 +82,54 @@ idibigi_client = Client(
 # check connexion
 ffcd_client.list_dataset()
 
-# Those are random hashes, they need to be replaced by the actual dataset keys
-# obtained through the data registration script
-# Org ids also depend on deployment characteristics
-
-IDIBIGI_dataset_key = "AAA"
-IDIBIGI_datasamples_keys = ["aaa"]
 IDIBIGI_org_id = "IDIBIGi"
-
-
-FFCD_dataset_key = "BBB"
-FFCD_datasamples_keys = ["bbb"]
 FFCD_org_id = "FFCDMSP"
-
-
-PANCAN_dataset_key = "CCC"
-PANCAN_datasamples_keys = ["ccc"]
 PANCAN_org_id = "PanCan"
+
+# Here we have a whole logic that obtains hashes from the system based on the dataset name
+
+idibigi_datasets = [ds for ds in datasets if "idibigi" in ds.name and ds.name.endswith(f"_v{VERSION}")]
+ffcd_datasets = [ds for ds in datasets if "ffcd" in ds.name and ds.name.endswith(f"_v{VERSION}")]
+pancan_datasets = [ds for ds in datasets if "pancan" in ds.name and ds.name.endswith(f"_v{VERSION}")]
+
+
+if SYNTHETIC:
+    idibigi_datasets = [ds for ds in idibigi_datasets if ds.name.startswith("SYNTH_")]
+    ffcd_datasets = [ds for ds in ffcd_datasets if ds.name.startswith("SYNTH_")]
+    pancan_datasets = [ds for ds in pancan_datasets if ds.name.startswith("SYNTH_")]
+
+else:
+    if FAKE_TREATMENT:
+        # filtering out non fake treatment datasets
+        idibigi_datasets = [ds for ds in idibigi_datasets if re.fullmatch(f"T[IFP]F[TF]idibigi_.*", ds.name)]
+        ffcd_datasets = [ds for ds in ffcd_datasets if re.fullmatch(f"T[IFP]F[TF]ffcd_.*", ds.name)]
+        pancan_datasets = [ds for ds in pancan_datasets if re.fullmatch(f"T[IFP]F[TF]pancan_.*", ds.name)]
+        # filtering out the correct treatment
+        idibigi_datasets = [ds for ds in idibigi_datasets if ds.name.startswith(f"T{TREATMENT[0].upper()}")]
+        ffcd_datasets = [ds for ds in ffcd_datasets if ds.name.startswith(f"T{TREATMENT[0].upper()}")]
+        pancan_datasets = [ds for ds in pancan_datasets if ds.name.startswith(f"T{TREATMENT[0].upper()}")]
+        # filtering out the correct group
+        idibigi_datasets = [ds for ds in idibigi_datasets if ds.name[2:4] == f"F{str(IS_FOLFIRINOX)[0]}"]
+        ffcd_datasets = [ds for ds in ffcd_datasets if ds.name[2:4] == f"F{str(IS_FOLFIRINOX)[0]}"]
+        pancan_datasets = [ds for ds in pancan_datasets if ds.name[2:4] == f"F{str(IS_FOLFIRINOX)[0]}"]
+
+    else:
+        # filtering out fake treatment datasets
+        idibigi_datasets = [ds for ds in idibigi_datasets if re.fullmatch(f"idibigi_.*", ds.name)]
+        ffcd_datasets = [ds for ds in ffcd_datasets if re.fullmatch(f"ffcd_.*", ds.name)]
+        pancan_datasets = [ds for ds in pancan_datasets if re.fullmatch(f"pancan_.*", ds.name)]
+
+
+
+assert len(idibigi_datasets) == 1
+assert len(ffcd_datasets) == 1
+assert len(pancan_datasets) == 1
+
+IDIBIGI_dataset_key = idibigi_datasets[0].key
+IDIBIGI_datasamples_keys = idibigi_datasets[0].data_sample_keys
+FFCD_dataset_key = ffcd_datasets[0].key
+FFCD_datasamples_keys = ffcd_datasets[0].data_sample_keys
+PANCAN_dataset_key = pancan_datasets[0].key
 
 
 aggregation_node = AggregationNode("OwkinMSP")
