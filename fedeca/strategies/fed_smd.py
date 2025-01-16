@@ -17,7 +17,7 @@ from fedeca.utils.survival_utils import (
     compute_X_y_and_propensity_weights_function,
 )
 
-from fedeca.utils.logging import log_remote_data
+from fedeca.utils.logging import log_remote_data, log_remote
 
 
 
@@ -243,6 +243,7 @@ class FedSMD(ComputePlanBuilder):
         return results
 
     @remote
+    @log_remote
     def compute_smd(
         self,
         shared_states,
