@@ -1,3 +1,4 @@
+"""Define parsing functions."""
 import re
 from typing import Any
 
@@ -6,6 +7,7 @@ from fedeca.utils.fedeca_graphs.utils.data_classes import IterationBlock
 from fedeca.utils.fedeca_graphs.utils.data_classes import LeafFunctionBlock
 from fedeca.utils.fedeca_graphs.utils.data_classes import RemoteFunctionRpz
 from typing import Union
+
 
 def parse_block(block_content: str) -> dict[str, Any]:
     """

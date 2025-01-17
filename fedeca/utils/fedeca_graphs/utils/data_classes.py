@@ -1,3 +1,4 @@
+"""Define useful abstractions for graph representation."""
 from typing import NamedTuple
 from typing import Union
 
