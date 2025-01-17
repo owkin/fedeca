@@ -1,4 +1,4 @@
-"""Define utils for tables creation"""
+"""Define utils for tables creation."""
 from __future__ import annotations
 import numpy as np
 import pandas as pd
