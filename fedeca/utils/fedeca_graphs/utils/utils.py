@@ -1,3 +1,4 @@
+""""Remove shape informations."""
 import re
 
 

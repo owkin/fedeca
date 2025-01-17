@@ -1,3 +1,4 @@
+"""Define utils related to shared_state"""
 import re
 
 from loguru import logger

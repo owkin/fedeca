@@ -1,3 +1,4 @@
+"""Define utils specific to iteration blocks"""
 import re
 
 from fedeca.utils.fedeca_graphs.utils.data_classes import IterationBlock

@@ -230,7 +230,7 @@ def log_remote(method: Callable):
 
         write_info_before_function(
             method,
-            shared_states[0] if isinstance(shared_states, list) else None,  # type: ignore
+            shared_states[0] if isinstance(shared_states, list) else None,  # type: ignore # noqa: E501
             LOGGING_SAVE_FILE,
             "remote",
         )
@@ -249,7 +249,7 @@ def log_remote(method: Callable):
     return remote_method_inner
 
 
-def log_shared_state_adatas(self: Any, method: Callable, shared_state: Union[dict, None]):
+def log_shared_state_adatas(self: Any, method: Callable, shared_state: Union[dict, None]):  # noqa: E501
     """
     Log the information of the local step.
 
