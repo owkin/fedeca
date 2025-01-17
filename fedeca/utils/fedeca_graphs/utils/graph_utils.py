@@ -121,10 +121,10 @@ def add_function_block(
     max_depth,
     depth: int,
     shared_state_depth_map: dict[int, tuple[int, Digraph]],
-    connect_with_previous_shared_state: bool=True,
-    flatten_first_depth: bool=True,
-    shared_state_naming: Literal["id", "content"]="id",
-    shared_state_mapping=None,
+    connect_with_previous_shared_state: bool = True,
+    flatten_first_depth: bool = True,
+    shared_state_naming: Literal["id", "content"] = "id",
+    shared_state_mapping = None,
 ) -> tuple[
     tuple[set[int], set[int], set[tuple[int, int]], dict[int, int], dict[int, int]],
     dict[int, int],
@@ -471,11 +471,11 @@ def create_workflow_graph(
     render_path,
     max_depth,
     function_block_name,
-    rank: int=0,
-    flatten_first_depth: bool=True,
-    shared_state_naming: Literal["id", "content"]="id",
-    render: bool=True,
-    shared_state_mapping=None,
+    rank: int = 0,
+    flatten_first_depth: bool = True,
+    shared_state_naming: Literal["id", "content"] = "id",
+    render: bool = True,
+    shared_state_mapping = None,
 ) -> tuple[set[int], set[int], set[tuple[int, int]]]:
     """
     Create a workflow graph from shared states and function blocks.
