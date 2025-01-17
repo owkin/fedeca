@@ -14,6 +14,7 @@ from functools import wraps
 from typing import Any
 from typing import Union
 import pandas as pd
+import numpy as np
 
 from fedeca.utils.logging.constants import LOGGING_SAVE_FILE
 
@@ -219,7 +220,7 @@ def log_remote(method: Callable):
             shared_state = shared_states[0]
             if shared_state is not None:
                 logger.info(
-                    f"First input shared state keys : {list(shared_state.keys())}"
+                    f"First input shared state keys : {shared_state}" #f"First input shared state keys : {list(shared_state.keys())}"
                 )
             else:
                 logger.info("First input shared state is None.")
@@ -238,7 +239,7 @@ def log_remote(method: Callable):
         write_info_after_function(shared_state, LOGGING_SAVE_FILE, "remote")
 
         if shared_state is not None:
-            logger.info(f"Output shared state keys : {list(shared_state.keys())}")
+            logger.info(f"Output shared state keys : {shared_state}") #logger.info(f"Output shared state keys : {list(shared_state.keys())}")
         else:
             logger.info("No output shared state.")
 
@@ -437,6 +438,15 @@ def get_shared_state_balises(shared_state: Any) -> str:
             if hasattr(value, "shape"):
                 text_to_add += f"<shape>{value.shape}</shape>\n"
             text_to_add += "</item>\n"
+        return text_to_add
+
+    elif isinstance(shared_state, np.ndarray):
+        # Do as if dictionnary with one key
+        text_to_add += "<item>\n"
+        text_to_add += f"<key>array</key>\n"
+        text_to_add += f"<type>{type(shared_state)}</type>\n"
+        text_to_add += f"<shape>{shared_state.shape}</shape>\n"
+        text_to_add += "</item>\n"
         return text_to_add
     return ""
 
