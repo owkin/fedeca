@@ -8,11 +8,11 @@ df = data.generate_dataframe()
 
 df = df.drop(columns=["propensity_scores"], axis=1)
 
-os.system("rm ~/Desktop/workflow.txt")
-with open("~/Desktop/workflow.txt", "w") as f:
-    f.write("<bloc>\n<name> FedECA</name>\n")
-fed_iptw = FedECA(ndim=10, treated_col="treatment", event_col="event", duration_col="time")
+os.system("rm /Users/jterrail/Desktop/workflow.txt")
+with open("/Users/jterrail/Desktop/workflow.txt", "w") as f:
+    f.write("<bloc>\n<name>FedECA</name>\n")
+fed_iptw = FedECA(ndim=10, treated_col="treatment", event_col="event", duration_col="time", num_rounds_list=[2, 3])
 fed_iptw.fit(df, n_clients=4, split_method="split_control_over_centers", split_method_kwargs={"treatment_info": "treatment"}, data_path="./data", variance_method="robust", backend_type="simu")
 print(fed_iptw.results_)
-with open("~/Desktop/workflow.txt", "a") as f:
+with open("/Users/jterrail/Desktop/workflow.txt", "a") as f:
     f.write("</bloc>\n")
