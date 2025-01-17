@@ -17,6 +17,8 @@ import pandas as pd
 import numpy as np
 
 from fedeca.utils.logging.constants import LOGGING_SAVE_FILE
+from substrafl.strategies.schemas import FedAvgAveragedState, FedAvgSharedState
+from fedeca.schemas import WebDiscoAveragedStates, WebDiscoSharedState
 
 
 def log_save_local_state(method: Callable):
@@ -173,6 +175,7 @@ def log_remote_data(method: Callable):
         shared_state: Any = None,
         **method_parameters,
     ):
+
         logger = get_method_logger(self, method)
         logger.info("---- Before running the method ----")
         log_shared_state_adatas(self, method, shared_state)
@@ -448,6 +451,39 @@ def get_shared_state_balises(shared_state: Any) -> str:
         text_to_add += f"<shape>{shared_state.shape}</shape>\n"
         text_to_add += "</item>\n"
         return text_to_add
+    
+    elif isinstance(shared_state, FedAvgSharedState):
+        breakpoint()
+        text_to_add += "<item>\n"
+        text_to_add += f"<key>n_samples</key>\n"
+        text_to_add += f"<type>int</type>\n"
+        text_to_add += f"<shape>1</shape>\n"
+        text_to_add += "</item>\n"
+        text_to_add += f"<key>parameters_update</key>\n"
+        text_to_add += f"<type>list[np.ndarray]</type>\n"
+        text_to_add += f"<shape>{shared_state.parameters_update[0].shape}</shape>\n"
+        text_to_add += "</item>\n"
+        return text_to_add
+
+    elif isinstance(shared_state, WebDiscoSharedState):
+        text_to_add += f"<key>risk_phi</key>\n"
+        text_to_add += f"<type>list[np.ndarray]</type>\n"
+        text_to_add += f"<shape>{shared_state.risk_phi[0].shape}</shape>\n"
+        text_to_add += "</item>\n"
+        text_to_add += f"<key>risk_phi_x</key>\n"
+        text_to_add += f"<type>list[np.ndarray]</type>\n"
+        text_to_add += f"<shape>{shared_state.risk_phi_x[0].shape}</shape>\n"
+        text_to_add += "</item>\n"
+        text_to_add += f"<key>risk_phi_x_x</key>\n"
+        text_to_add += f"<type>list[np.ndarray]</type>\n"
+        text_to_add += f"<shape>{shared_state.risk_phi_x_x[0].shape}</shape>\n"
+        text_to_add += "</item>\n"
+        return text_to_add
+    elif shared_state is None:
+        return ""
+    else:
+        breakpoint()
+
     return ""
 
 
