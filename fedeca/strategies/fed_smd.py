@@ -20,7 +20,6 @@ from fedeca.utils.survival_utils import (
 from fedeca.utils.logging import log_remote_data, log_remote
 
 
-
 class FedSMD(ComputePlanBuilder):
     """Compute SMD for weighted and unweighted data in FL.
 

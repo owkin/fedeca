@@ -1,3 +1,4 @@
+"""Clean the raw workflow file produced by the tracing"""
 import pathlib
 import re
 
@@ -6,10 +7,6 @@ from loguru import logger
 
 from fedeca.utils.fedeca_graphs.constants import PATHS_FILE
 from fedeca.utils.fedeca_graphs.utils.utils import remove_shape_tags
-
-
-import re
-from loguru import logger
 
 
 def filter_nested_remotes(input_text: str) -> str:
@@ -28,7 +25,7 @@ def filter_nested_remotes(input_text: str) -> str:
     """
     logger.info("Filtering nested remote_data blocks")
     nested_pattern = re.compile(
-        r"(<remote_data>(?:(?!<\/?remote_data>).)*<remote_data>(?:(?!<\/?remote_data>).)*<\/remote_data>(?:(?!<\/?remote_data>).)*<\/remote_data>)", re.DOTALL
+        r"(<remote_data>(?:(?!<\/?remote_data>).)*<remote_data>(?:(?!<\/?remote_data>).)*<\/remote_data>(?:(?!<\/?remote_data>).)*<\/remote_data>)", re.DOTALL # noqa: E501
     )
 
     iteration = 0
@@ -43,7 +40,7 @@ def filter_nested_remotes(input_text: str) -> str:
         end = match.end()
         logger.debug(f"Removing nested block: {full_match}")
         # Remove the inner <remote_data> block while keeping the outer block intact
-        inner_pattern = re.compile(r"<remote_data>(?:(?!<\/?remote_data>).)*<\/remote_data>", re.DOTALL)
+        inner_pattern = re.compile(r"<remote_data>(?:(?!<\/?remote_data>).)*<\/remote_data>", re.DOTALL) # noqa: E501
         cleaned_inner_content = inner_pattern.sub('', full_match, count=1)
         logger.debug(f"Cleaned inner content: {cleaned_inner_content}")
         input_text = input_text[:start] + cleaned_inner_content + input_text[end:]
@@ -51,7 +48,6 @@ def filter_nested_remotes(input_text: str) -> str:
         iteration += 1
 
     return input_text
-
 
 
 def merge_iterations(input_text: str) -> str:

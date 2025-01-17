@@ -16,3 +16,11 @@ fed_iptw.fit(df, n_clients=4, split_method="split_control_over_centers", split_m
 print(fed_iptw.results_)
 with open("/Users/jterrail/Desktop/workflow.txt", "a") as f:
     f.write("</bloc>\n")
+
+os.system("python clean_log_file.py")
+os.system("python create_tree.py")
+os.system("python create_graphs.py")
+
+os.system("rm /Users/jterrail/Desktop/workflow.txt")
+
+
