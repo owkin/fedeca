@@ -1,4 +1,4 @@
-"""Clean the raw workflow file produced by the tracing"""
+"""Clean the raw workflow file produced by the tracing."""
 import pathlib
 import re
 
@@ -25,7 +25,7 @@ def filter_nested_remotes(input_text: str) -> str:
     """
     logger.info("Filtering nested remote_data blocks")
     nested_pattern = re.compile(
-        r"(<remote_data>(?:(?!<\/?remote_data>).)*<remote_data>(?:(?!<\/?remote_data>).)*<\/remote_data>(?:(?!<\/?remote_data>).)*<\/remote_data>)", re.DOTALL # noqa: E501
+        r"(<remote_data>(?:(?!<\/?remote_data>).)*<remote_data>(?:(?!<\/?remote_data>).)*<\/remote_data>(?:(?!<\/?remote_data>).)*<\/remote_data>)", re.DOTALL  # noqa: E501
     )
 
     iteration = 0
@@ -40,7 +40,7 @@ def filter_nested_remotes(input_text: str) -> str:
         end = match.end()
         logger.debug(f"Removing nested block: {full_match}")
         # Remove the inner <remote_data> block while keeping the outer block intact
-        inner_pattern = re.compile(r"<remote_data>(?:(?!<\/?remote_data>).)*<\/remote_data>", re.DOTALL) # noqa: E501
+        inner_pattern = re.compile(r"<remote_data>(?:(?!<\/?remote_data>).)*<\/remote_data>", re.DOTALL)  # noqa: E501
         cleaned_inner_content = inner_pattern.sub('', full_match, count=1)
         logger.debug(f"Cleaned inner content: {cleaned_inner_content}")
         input_text = input_text[:start] + cleaned_inner_content + input_text[end:]

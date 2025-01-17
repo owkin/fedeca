@@ -17,8 +17,6 @@ import pandas as pd
 import numpy as np
 
 from fedeca.utils.logging.constants import LOGGING_SAVE_FILE
-from substrafl.strategies.schemas import FedAvgAveragedState, FedAvgSharedState
-from fedeca.schemas import WebDiscoAveragedStates, WebDiscoSharedState
 
 
 def log_save_local_state(method: Callable):
@@ -53,7 +51,7 @@ def log_save_local_state(method: Callable):
         output = method(self, path)
 
         logger.info(
-            f"Size of local state saved : "
+            "Size of local state saved : "
             f"{os.path.getsize(path) / 1024 / 1024}"
             " MB"
         )
@@ -223,7 +221,7 @@ def log_remote(method: Callable):
             shared_state = shared_states[0]
             if shared_state is not None:
                 logger.info(
-                    f"First input shared state keys : {shared_state}" #f"First input shared state keys : {list(shared_state.keys())}"
+                    f"First input shared state keys : {shared_state}"
                 )
             else:
                 logger.info("First input shared state is None.")
@@ -242,7 +240,7 @@ def log_remote(method: Callable):
         write_info_after_function(shared_state, LOGGING_SAVE_FILE, "remote")
 
         if shared_state is not None:
-            logger.info(f"Output shared state keys : {shared_state}") #logger.info(f"Output shared state keys : {list(shared_state.keys())}")
+            logger.info(f"Output shared state keys : {shared_state}")
         else:
             logger.info("No output shared state.")
 
@@ -446,43 +444,11 @@ def get_shared_state_balises(shared_state: Any) -> str:
     elif isinstance(shared_state, np.ndarray):
         # Do as if dictionnary with one key
         text_to_add += "<item>\n"
-        text_to_add += f"<key>array</key>\n"
+        text_to_add += "<key>array</key>\n"
         text_to_add += f"<type>{type(shared_state)}</type>\n"
         text_to_add += f"<shape>{shared_state.shape}</shape>\n"
         text_to_add += "</item>\n"
         return text_to_add
-    
-    elif isinstance(shared_state, FedAvgSharedState):
-        breakpoint()
-        text_to_add += "<item>\n"
-        text_to_add += f"<key>n_samples</key>\n"
-        text_to_add += f"<type>int</type>\n"
-        text_to_add += f"<shape>1</shape>\n"
-        text_to_add += "</item>\n"
-        text_to_add += f"<key>parameters_update</key>\n"
-        text_to_add += f"<type>list[np.ndarray]</type>\n"
-        text_to_add += f"<shape>{shared_state.parameters_update[0].shape}</shape>\n"
-        text_to_add += "</item>\n"
-        return text_to_add
-
-    elif isinstance(shared_state, WebDiscoSharedState):
-        text_to_add += f"<key>risk_phi</key>\n"
-        text_to_add += f"<type>list[np.ndarray]</type>\n"
-        text_to_add += f"<shape>{shared_state.risk_phi[0].shape}</shape>\n"
-        text_to_add += "</item>\n"
-        text_to_add += f"<key>risk_phi_x</key>\n"
-        text_to_add += f"<type>list[np.ndarray]</type>\n"
-        text_to_add += f"<shape>{shared_state.risk_phi_x[0].shape}</shape>\n"
-        text_to_add += "</item>\n"
-        text_to_add += f"<key>risk_phi_x_x</key>\n"
-        text_to_add += f"<type>list[np.ndarray]</type>\n"
-        text_to_add += f"<shape>{shared_state.risk_phi_x_x[0].shape}</shape>\n"
-        text_to_add += "</item>\n"
-        return text_to_add
-    elif shared_state is None:
-        return ""
-    else:
-        breakpoint()
 
     return ""
 

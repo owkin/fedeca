@@ -1,3 +1,4 @@
+"""Create intermediary representations of the workflow."""
 import pathlib
 import pickle
 
@@ -7,7 +8,7 @@ from fedeca.utils.fedeca_graphs.constants import PATHS_FILE
 from fedeca.utils.fedeca_graphs.utils.function_block_tree_utils import (
     extract_top_level_function_blocks,
 )
-from fedeca.utils.fedeca_graphs.utils.iteration_blocks_utils import parse_iteration_blocks
+from fedeca.utils.fedeca_graphs.utils.iteration_blocks_utils import parse_iteration_blocks  # noqa: E501
 from fedeca.utils.fedeca_graphs.utils.shared_states_remote_functions_utils import (
     create_shared_states_remote_functions,
 )
