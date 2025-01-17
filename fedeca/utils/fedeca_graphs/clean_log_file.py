@@ -8,6 +8,52 @@ from fedeca.utils.fedeca_graphs.constants import PATHS_FILE
 from fedeca.utils.fedeca_graphs.utils.utils import remove_shape_tags
 
 
+import re
+from loguru import logger
+
+
+def filter_nested_remotes(input_text: str) -> str:
+    """
+    Filter out nested <remote_data> blocks.
+
+    Parameters
+    ----------
+    input_text : str
+        The input text containing <remote_data> blocks.
+
+    Returns
+    -------
+    str
+        The input text with nested <remote_data> blocks removed.
+    """
+    logger.info("Filtering nested remote_data blocks")
+    nested_pattern = re.compile(
+        r"(<remote_data>(?:(?!<\/?remote_data>).)*<remote_data>(?:(?!<\/?remote_data>).)*<\/remote_data>(?:(?!<\/?remote_data>).)*<\/remote_data>)", re.DOTALL
+    )
+
+    iteration = 0
+    while True:
+        match = nested_pattern.search(input_text)
+        if not match:
+            break
+
+        logger.info(f"Iteration {iteration}: Found nested remote_data block")
+        full_match = match.group(0)
+        start = match.start()
+        end = match.end()
+        logger.debug(f"Removing nested block: {full_match}")
+        # Remove the inner <remote_data> block while keeping the outer block intact
+        inner_pattern = re.compile(r"<remote_data>(?:(?!<\/?remote_data>).)*<\/remote_data>", re.DOTALL)
+        cleaned_inner_content = inner_pattern.sub('', full_match, count=1)
+        logger.debug(f"Cleaned inner content: {cleaned_inner_content}")
+        input_text = input_text[:start] + cleaned_inner_content + input_text[end:]
+
+        iteration += 1
+
+    return input_text
+
+
+
 def merge_iterations(input_text: str) -> str:
     """
     Merge consecutive <iteration> blocks with the same content, combining their numbers.
@@ -170,7 +216,8 @@ def process_log_file(input_path: pathlib.Path, output_path: pathlib.Path) -> Non
     with open(input_path) as file:
         input_text = file.read()
 
-    output_text = filter_remote_data(input_text)
+    output_text = filter_nested_remotes(input_text)
+    output_text = filter_remote_data(output_text)
     output_text = merge_iterations(output_text)
     with open(output_path, "w") as file:
         file.write(output_text)
