@@ -55,6 +55,8 @@ aggregation_node = AggregationNode(**kwargs_agg_node)
 
 
 os.system("rm /Users/jterrail/Desktop/workflow.txt")
+os.system("rm -r /Users/jterrail/Desktop/propensity_graphs")
+os.system("rm -r /Users/jterrail/Desktop/propensity_tables")
 
 with open("/Users/jterrail/Desktop/workflow.txt", "w") as f:
     f.write("<bloc>\n<name>FedECA: propensity model training</name>\n")
@@ -109,8 +111,15 @@ os.system("python create_graphs.py")
 os.system("cp -r /Users/jterrail/Desktop/outputs/entire_workflow_rank_0/graphs /Users/jterrail/Desktop/propensity_graphs")  # noqa: E501
 os.system("cp -r /Users/jterrail/Desktop/outputs/entire_workflow_rank_0/tables /Users/jterrail/Desktop/propensity_tables")  # noqa: E501
 os.system("rm -r /Users/jterrail/Desktop/outputs")
+
+
+
+
 os.system("rm /Users/jterrail/Desktop/workflow.txt")
-breakpoint()
+os.system("rm -r /Users/jterrail/Desktop/dp_propensity_graphs")
+os.system("rm -r /Users/jterrail/Desktop/dp_propensity_tables")
+
+
 
 with open("/Users/jterrail/Desktop/workflow.txt", "w") as f:
     f.write("<bloc>\n<name>FedECA-DP: propensity model training</name>\n")
@@ -139,15 +148,32 @@ dp_algo = DPLogRegAlgo()
 dp_strategy = FedAvg(
     algo=dp_algo, metric_functions={},
 )
-# compute_plan = execute_experiment(
-#     client=ds_client,
-#     strategy=dp_strategy,
-#     train_data_nodes=train_data_nodes,
-#     evaluation_strategy=None,
-#     aggregation_node=aggregation_node,
-#     num_rounds=3,
-#     experiment_folder="./tmp/experiment_summaries_dp_fedavg",
-#     )
+compute_plan = execute_experiment(
+    client=ds_client,
+    strategy=dp_strategy,
+    train_data_nodes=train_data_nodes,
+    evaluation_strategy=None,
+    aggregation_node=aggregation_node,
+    num_rounds=3,
+    experiment_folder="./tmp/experiment_summaries_dp_fedavg",
+    )
+
+with open("/Users/jterrail/Desktop/workflow.txt", "a") as f:
+    f.write("</bloc>\n")
+
+os.system("python clean_log_file.py")
+os.system("python create_tree.py")
+os.system("python create_graphs.py")
+os.system("cp -r /Users/jterrail/Desktop/outputs/entire_workflow_rank_0/graphs /Users/jterrail/Desktop/dp_propensity_graphs")  # noqa: E501
+os.system("cp -r /Users/jterrail/Desktop/outputs/entire_workflow_rank_0/tables /Users/jterrail/Desktop/dp_propensity_tables")  # noqa: E501
+os.system("rm -r /Users/jterrail/Desktop/outputs")
+
+
+
+
+os.system("rm /Users/jterrail/Desktop/workflow.txt")
+os.system("rm -r /Users/jterrail/Desktop/dp_propensity_graphs")
+os.system("rm -r /Users/jterrail/Desktop/dp_propensity_tables")
 
 cox_model = CoxPHModelTorch(
     ndim=1,
