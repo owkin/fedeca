@@ -15,7 +15,7 @@ from fedeca.utils.survival_utils import (
 from fedeca import FedECA
 from fedeca.algorithms.torch_newton_raphson_algo_decorated import TorchNewtonRaphsonAlgoDecorated as TorchNewtonRaphsonAlgo
 
-from substrafl.strategies import FedAvg
+from fedeca.strategies.fed_avg_decorated import FedAvgDecorated as FedAvg
 from fedeca.strategies.newton_raphson_decorated import NewtonRaphsonDecorated as NewtonRaphson
 
 from torch import nn

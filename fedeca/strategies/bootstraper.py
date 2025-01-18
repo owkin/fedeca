@@ -528,7 +528,7 @@ if __name__ == "__main__":
     from substrafl.experiment import execute_experiment
     from substrafl.index_generator import NpIndexGenerator
     from substrafl.nodes import AggregationNode
-    from substrafl.strategies import FedAvg  # , NewtonRaphson
+    from fedeca.strategies.fed_avg_decorated import FedAvgDecorated as FedAvg
 
     from fedeca import LogisticRegressionTorch
     from fedeca.utils import make_accuracy_function, make_substrafl_torch_dataset_class

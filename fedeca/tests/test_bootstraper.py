@@ -17,7 +17,8 @@ from substrafl.experiment import execute_experiment
 from substrafl.index_generator import NpIndexGenerator
 from substrafl.model_loading import download_algo_state
 from substrafl.nodes import AggregationNode
-from substrafl.strategies import FedAvg
+from fedeca.strategies.fed_avg_decorated import FedAvgDecorated as FedAvg
+
 from fedeca.strategies.newton_raphson_decorated import NewtonRaphsonDecorated as NewtonRaphson
 
 from fedeca import FedECA, LogisticRegressionTorch

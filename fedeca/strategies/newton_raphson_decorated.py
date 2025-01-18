@@ -4,7 +4,6 @@ from typing import List
 from substrafl.strategies import NewtonRaphson
 from fedeca.utils.logging.logging_decorators import log_remote
 
-from substrafl.algorithms.algo import Algo
 from substrafl.remote import remote
 from substrafl.strategies.schemas import NewtonRaphsonAveragedStates
 from substrafl.strategies.schemas import NewtonRaphsonSharedState
