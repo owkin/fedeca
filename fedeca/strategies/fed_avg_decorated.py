@@ -38,4 +38,4 @@ class FedAvgDecorated(FedAvg):
         FedAvgAveragedState
             _description_
         """
-        super().avg_shared_states(shared_states=shared_states, _skip=True)
+        return super().avg_shared_states(shared_states=shared_states, _skip=True)
