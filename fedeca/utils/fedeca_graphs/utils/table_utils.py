@@ -24,6 +24,7 @@ CLASS_MAPPING = {
     "numpy.ma.core.MaskedArray": "MaskedArray",
     "str": "str",
     "numpy.int64" : "int",
+    "tuple": "tuple",
 }
 
 PARAM_NOTATION = {

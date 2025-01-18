@@ -172,8 +172,12 @@ os.system("rm -r /Users/jterrail/Desktop/outputs")
 
 
 os.system("rm /Users/jterrail/Desktop/workflow.txt")
-os.system("rm -r /Users/jterrail/Desktop/dp_propensity_graphs")
-os.system("rm -r /Users/jterrail/Desktop/dp_propensity_tables")
+os.system("rm -r /Users/jterrail/Desktop/webdisco_graphs")
+os.system("rm -r /Users/jterrail/Desktop/webdisco_tables")
+
+with open("/Users/jterrail/Desktop/workflow.txt", "w") as f:
+    f.write("<bloc>\n<name>FedECA: Cox model training</name>\n")
+
 
 cox_model = CoxPHModelTorch(
     ndim=1,
@@ -221,15 +225,32 @@ webdisco_strategy = WebDisco(
     standardize_data=True,
     metric_functions={},
 )
-# compute_plan = execute_experiment(
-#     client=ds_client,
-#     strategy=webdisco_strategy,
-#     train_data_nodes=train_data_nodes,
-#     evaluation_strategy=None,
-#     aggregation_node=aggregation_node,
-#     num_rounds=3,
-#     experiment_folder="./tmp/experiment_summaries_webdisco",
-#     )
+compute_plan = execute_experiment(
+    client=ds_client,
+    strategy=webdisco_strategy,
+    train_data_nodes=train_data_nodes,
+    evaluation_strategy=None,
+    aggregation_node=aggregation_node,
+    num_rounds=3,
+    experiment_folder="./tmp/experiment_summaries_webdisco",
+    )
+with open("/Users/jterrail/Desktop/workflow.txt", "a") as f:
+    f.write("</bloc>\n")
+
+os.system("python clean_log_file.py")
+os.system("python create_tree.py")
+os.system("python create_graphs.py")
+os.system("cp -r /Users/jterrail/Desktop/outputs/entire_workflow_rank_0/graphs /Users/jterrail/Desktop/webdisco_graphs")  # noqa: E501
+os.system("cp -r /Users/jterrail/Desktop/outputs/entire_workflow_rank_0/tables /Users/jterrail/Desktop/webdisco_tables")  # noqa: E501
+os.system("rm -r /Users/jterrail/Desktop/outputs")
+
+os.system("rm /Users/jterrail/Desktop/workflow.txt")
+os.system("rm -r /Users/jterrail/Desktop/fed_kaplan_graphs")
+os.system("rm -r /Users/jterrail/Desktop/fed_kaplan_tables")
+
+with open("/Users/jterrail/Desktop/workflow.txt", "w") as f:
+    f.write("<bloc>\n<name>FedKaplan</name>\n")
+
 
 kaplan_strategy = FedKaplan(
     treated_col="treatment",
@@ -239,15 +260,32 @@ kaplan_strategy = FedKaplan(
     client_identifier="center",
 )
 
-# compute_plan = execute_experiment(
-#     client=ds_client,
-#     strategy=kaplan_strategy,
-#     train_data_nodes=train_data_nodes,
-#     evaluation_strategy=None,
-#     aggregation_node=aggregation_node,
-#     num_rounds=1,
-#     experiment_folder="./tmp/experiment_summaries_fed_kaplan",
-#     )
+compute_plan = execute_experiment(
+    client=ds_client,
+    strategy=kaplan_strategy,
+    train_data_nodes=train_data_nodes,
+    evaluation_strategy=None,
+    aggregation_node=aggregation_node,
+    num_rounds=1,
+    experiment_folder="./tmp/experiment_summaries_fed_kaplan",
+    )
+with open("/Users/jterrail/Desktop/workflow.txt", "a") as f:
+    f.write("</bloc>\n")
+
+os.system("python clean_log_file.py")
+os.system("python create_tree.py")
+os.system("python create_graphs.py")
+os.system("cp -r /Users/jterrail/Desktop/outputs/entire_workflow_rank_0/graphs /Users/jterrail/Desktop/fed_kaplan_graphs")  # noqa: E501
+os.system("cp -r /Users/jterrail/Desktop/outputs/entire_workflow_rank_0/tables /Users/jterrail/Desktop/fed_kaplan_tables")  # noqa: E501
+os.system("rm -r /Users/jterrail/Desktop/outputs")
+
+
+os.system("rm /Users/jterrail/Desktop/workflow.txt")
+os.system("rm -r /Users/jterrail/Desktop/fed_smd_graphs")
+os.system("rm -r /Users/jterrail/Desktop/fed_smd_tables")
+
+with open("/Users/jterrail/Desktop/workflow.txt", "w") as f:
+    f.write("<bloc>\n<name>FedSMD</name>\n")
 
 smd_strategy = FedSMD(
     treated_col="treatment",
@@ -258,19 +296,33 @@ smd_strategy = FedSMD(
     use_unweighted_variance=True,
 )
 
-# compute_plan = execute_experiment(
-#     client=ds_client,
-#     strategy=smd_strategy,
-#     train_data_nodes=train_data_nodes,
-#     evaluation_strategy=None,
-#     aggregation_node=aggregation_node,
-#     num_rounds=1,
-#     experiment_folder="./tmp/experiment_summaries_fed_smd",
-#     )
+compute_plan = execute_experiment(
+    client=ds_client,
+    strategy=smd_strategy,
+    train_data_nodes=train_data_nodes,
+    evaluation_strategy=None,
+    aggregation_node=aggregation_node,
+    num_rounds=1,
+    experiment_folder="./tmp/experiment_summaries_fed_smd",
+    )
+with open("/Users/jterrail/Desktop/workflow.txt", "a") as f:
+    f.write("</bloc>\n")
+
+os.system("python clean_log_file.py")
+os.system("python create_tree.py")
+os.system("python create_graphs.py")
+os.system("cp -r /Users/jterrail/Desktop/outputs/entire_workflow_rank_0/graphs /Users/jterrail/Desktop/fed_smd_graphs")  # noqa: E501
+os.system("cp -r /Users/jterrail/Desktop/outputs/entire_workflow_rank_0/tables /Users/jterrail/Desktop/fed_smd_tables")  # noqa: E501
+os.system("rm -r /Users/jterrail/Desktop/outputs")
+
+os.system("rm /Users/jterrail/Desktop/workflow.txt")
+os.system("rm -r /Users/jterrail/Desktop/fedeca_robust_graphs")
+os.system("rm -r /Users/jterrail/Desktop/fedeca_robust_tables")
 
 # TODO A bit ugly remove call to FedECA
 fed_iptw = FedECA(ndim=10, treated_col="treatment", event_col="event", duration_col="time", num_rounds_list=[2, 3], variance_method="robust")  # noqa: E501
 fed_iptw.fit(df, n_clients=4, split_method="split_control_over_centers", split_method_kwargs={"treatment_info": "treatment"}, data_path="./data", backend_type="simu")  # noqa: E501
+
 
 beta = fed_iptw.final_params_list[0]
 variance_matrix = fed_iptw.variance_matrix
@@ -279,6 +331,10 @@ propensity_model = fed_iptw.propensity_model
 duration_col = fed_iptw.duration_col
 event_col = fed_iptw.event_col
 treated_col = fed_iptw.treated_col
+
+
+with open("/Users/jterrail/Desktop/workflow.txt", "w") as f:
+    f.write("<bloc>\n<name>FedECA: robust variance aggregation</name>\n")
 
 
 class MyRobustCoxVarianceAlgo(RobustCoxVarianceAlgo):
@@ -296,17 +352,21 @@ class MyRobustCoxVarianceAlgo(RobustCoxVarianceAlgo):
 my_robust_cox_algo = MyRobustCoxVarianceAlgo()
 robust_strategy = RobustCoxVariance(algo=my_robust_cox_algo, metric_functions={})
 
+compute_plan = execute_experiment(
+    client=ds_client,
+    strategy=robust_strategy,
+    train_data_nodes=train_data_nodes,
+    evaluation_strategy=None,
+    aggregation_node=aggregation_node,
+    num_rounds=1,
+    experiment_folder="./tmp/experiment_summaries_fed_smd",
+    )
+with open("/Users/jterrail/Desktop/workflow.txt", "a") as f:
+    f.write("</bloc>\n")
 
-# with open("/Users/jterrail/Desktop/workflow.txt", "a") as f:
-#     f.write("</bloc>\n")
-
-# os.system("python clean_log_file.py")
-# os.system("python create_tree.py")
-# os.system("python create_graphs.py")
-# os.system("cp -r /Users/jterrail/Desktop/outputs/entire_workflow_rank_0/graphs /Users/jterrail/Desktop/cox_graphs")  # noqa: E501
-# os.system("cp -r /Users/jterrail/Desktop/outputs/entire_workflow_rank_0/tables /Users/jterrail/Desktop/cox_tables")  # noqa: E501
-# os.system("rm -r /Users/jterrail/Desktop/outputs")
-# os.system("rm /Users/jterrail/Desktop/workflow.txt")
-
-
-
+os.system("python clean_log_file.py")
+os.system("python create_tree.py")
+os.system("python create_graphs.py")
+os.system("cp -r /Users/jterrail/Desktop/outputs/entire_workflow_rank_0/graphs /Users/jterrail/Desktop/fedeca_robust_graphs")  # noqa: E501
+os.system("cp -r /Users/jterrail/Desktop/outputs/entire_workflow_rank_0/tables /Users/jterrail/Desktop/fedeca_robust_tables")  # noqa: E501
+os.system("rm -r /Users/jterrail/Desktop/outputs")
