@@ -15,7 +15,6 @@ with open("/Users/jterrail/Desktop/workflow.txt", "w") as f:
 
 fed_iptw = FedECA(ndim=10, treated_col="treatment", event_col="event", duration_col="time", num_rounds_list=[2, 3], variance_method="naïve")  # noqa: E501
 fed_iptw.fit(df, n_clients=4, split_method="split_control_over_centers", split_method_kwargs={"treatment_info": "treatment"}, data_path="./data", backend_type="simu")  # noqa: E501
-print(fed_iptw.results_)
 
 with open("/Users/jterrail/Desktop/workflow.txt", "a") as f:
     f.write("</bloc>\n")
@@ -23,5 +22,7 @@ with open("/Users/jterrail/Desktop/workflow.txt", "a") as f:
 os.system("python clean_log_file.py")
 os.system("python create_tree.py")
 os.system("python create_graphs.py")
-
+os.system("cp -r /Users/jterrail/Desktop/outputs/entire_workflow_rank_0/graphs /Users/jterrail/Desktop/cox_graphs")  # noqa: E501
+os.system("cp -r /Users/jterrail/Desktop/outputs/entire_workflow_rank_0/tables /Users/jterrail/Desktop/cox_tables")  # noqa: E501
+os.system("rm -r /Users/jterrail/Desktop/outputs")
 os.system("rm /Users/jterrail/Desktop/workflow.txt")

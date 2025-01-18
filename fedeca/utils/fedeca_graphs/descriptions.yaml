@@ -5,8 +5,8 @@ global_centered_moment_1: "Global centered moment of order 1 for each covariate 
 global_centered_moment_2: "Global centered moment of order 2 for each covariate used by the Cox model. Therefore it is a list of scalars of size the number of covariates. In the case of IPTW the only covariate is the treatment."
 global_uncentered_moment_1: "Global uncentered moment of order 1 for each covariate used by the Cox model. Therefore it is a list of scalars of size the number of covariates. In the case of IPTW the only covariate is the treatment. Those values are not used in fact and are computed for testing purposes."
 global_uncentered_moment_2: "Global uncentered moment of order 2 for each covariate used by the Cox model. Therefore it is a list of scalars of size the number of covariates. In the case of IPTW the only covariate is the treatment. Those values are not used in fact and are computed for testing purposes."
-total_n_samples: "The total number of samples (scalar) across centers"
-global_survival_statistics: "A dict whose values are the ones that will not change throughout trainings and that are used in the computation of gradients and hessian for the Cox model, contains all distinct event times (list of scalars), the global sum of features of all samples on each distinct event times (list of vectors of dimension the number of covariates), the number of events per distinct times (list of scalars) and the weighted sum of samples on each distinct event times (list of scalars).
+total_n_samples: "The total number of samples (scalar) across centers."
+global_survival_statistics: "A dict whose values are the ones that will not change throughout trainings and that are used in the computation of gradients and hessian for the Cox model, contains all distinct event times (list of scalars), the global sum of features of all samples on each distinct event times (list of vectors of dimension the number of covariates), the number of events per distinct times (list of scalars) and the weighted sum of samples on each distinct event times (list of scalars)."
 sum_features_on_events: "the global sum of features of all samples on each distinct event times"
 distinct_events_times: "All distinct event times which is list of scalars."
 number_events_by_time: "The number of events per distinct times (scalar)."
@@ -20,7 +20,6 @@ second_part_ll: "Quantity necessary to compute the log-likelihood."
 gradient_shape: "The shape of the gradient (scalar)."
 global_risk_phi_list: "Sums on each risk sets of risk_phi globally that is a list of scalars."
 global_risk_phi_x_list: "Sums on each risk sets of risk_phi_x globally that is a list of vector of dimensions number of features."
-
 
 
 # Examples on how to differentiate quantities with the same name
