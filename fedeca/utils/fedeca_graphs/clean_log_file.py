@@ -1,4 +1,7 @@
 """Clean the raw workflow file produced by the tracing."""
+# All utils here were originally written by Ulysse Marteau @umarteauowkin for
+# fed-pydeseq2 (https://github.com/owkin/fed-pydeseq2) and are reproduced here with
+# his permissions.
 import pathlib
 import re
 

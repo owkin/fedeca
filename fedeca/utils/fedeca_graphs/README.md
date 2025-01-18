@@ -2,8 +2,9 @@
 
 # Creating graphs and tables readme.
 
-
-This repository includes tools and scripts for generating graphs and tables to visualize and analyze data. The primary focus is on creating workflow graphs and detailed tables that represent the information that is shared between server and centers.
+All utils, tutorials and instructions here were originally written by Ulysse Marteau @umarteauowkin for
+fed-pydeseq2 (https://github.com/owkin/fed-pydeseq2) and are reproduced here with
+his permissions.
 
 
 **Workflow Graphs**: Generate visual representations of workflows using Graphviz, illustrating the connections between shared states and function blocks.
