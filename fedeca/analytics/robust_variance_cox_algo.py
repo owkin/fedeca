@@ -12,7 +12,7 @@ from substrafl.remote import remote_data
 from fedeca.algorithms import TorchWebDiscoAlgo
 from fedeca.utils import make_substrafl_torch_dataset_class
 from fedeca.utils.survival_utils import CoxPHModelTorch, compute_q_k
-
+from typing import List
 
 class RobustCoxVarianceAlgo(TorchWebDiscoAlgo):
     """Implement local client method for robust cox variance estimation."""
@@ -252,3 +252,13 @@ class RobustCoxVarianceAlgo(TorchWebDiscoAlgo):
         checkpoint = super()._update_from_checkpoint(path=path)
         self._client_statistics = checkpoint.pop("client_statistics")
         return checkpoint
+    
+
+    @property
+    def strategies(self):
+        """List of compatible strategies
+
+        Returns:
+            typing.List: typing.List[StrategyName]
+        """
+        return super().strategies + ["Robust Cox Variance"]
