@@ -455,7 +455,7 @@ def get_shared_state_balises(shared_state: Any) -> str:
         text_to_add += f"<shape>{shared_state.shape}</shape>\n"
         text_to_add += "</item>\n"
         return text_to_add
-    breakpoint()
+
     if isinstance(shared_state, (FedAvgAveragedState, FedAvgSharedState, FedPCAAveragedState, FedPCASharedState, ScaffoldSharedState, ScaffoldAveragedStates, NewtonRaphsonAveragedStates, NewtonRaphsonSharedState)):
         for key, value in shared_state.__dict__.items():
             text_to_add += "<item>\n"
