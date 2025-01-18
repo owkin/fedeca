@@ -14,12 +14,14 @@ total_number_samples: "The total number of samples (scalar)."
 weights_counts_on_events: "The weighted sum of samples on each distinct event times (list of scalars)."
 moments: "The global centered moments of order 1 and 2 of each covariate of the Cox model (moment1, moment2 which are forwarded)"
 local_phi_stats: "A dict whose values are the sums on risk sets of different quantities used to compute gradient and or hessians. Its values are: 1. the local sum on each risk set of risk_phi which is a scalar (thus a list of scalars). 2. the local sum on each risk set of risk_phi_x which is of dimension the number of features (a list of vectors). and 3. the local sum on each risk set of risk_phi_x_x which is of the dimension of the number of features squared (a list of matrices)."
-hessian: "The global hessian of the Cox model of dimension the number of covariates squared."
+hessian: "The hessian of the model of dimension the number of covariates squared."
 gradient: "The global gradient of the Cox model of dimension the number of covariates."
+gradients: "The local gradient of the propensity model of dimension the number of covariates."
 second_part_ll: "Quantity necessary to compute the log-likelihood."
 gradient_shape: "The shape of the gradient (scalar)."
 global_risk_phi_list: "Sums on each risk sets of risk_phi globally that is a list of scalars."
 global_risk_phi_x_list: "Sums on each risk sets of risk_phi_x globally that is a list of vector of dimensions number of features."
+parameters_update: "The Newton-Raphson step computed with the global hessian."
 
 
 # Examples on how to differentiate quantities with the same name

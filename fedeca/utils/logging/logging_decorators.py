@@ -19,6 +19,7 @@ from typing import Any
 from typing import Union
 import pandas as pd
 import numpy as np
+from substrafl.strategies.schemas import FedAvgAveragedState, FedAvgSharedState, FedPCAAveragedState, FedPCASharedState, ScaffoldSharedState, ScaffoldAveragedStates, NewtonRaphsonAveragedStates, NewtonRaphsonSharedState
 
 from fedeca.utils.logging.constants import LOGGING_SAVE_FILE
 
@@ -453,6 +454,16 @@ def get_shared_state_balises(shared_state: Any) -> str:
         text_to_add += f"<type>{type(shared_state)}</type>\n"
         text_to_add += f"<shape>{shared_state.shape}</shape>\n"
         text_to_add += "</item>\n"
+        return text_to_add
+    breakpoint()
+    if isinstance(shared_state, (FedAvgAveragedState, FedAvgSharedState, FedPCAAveragedState, FedPCASharedState, ScaffoldSharedState, ScaffoldAveragedStates, NewtonRaphsonAveragedStates, NewtonRaphsonSharedState)):
+        for key, value in shared_state.__dict__.items():
+            text_to_add += "<item>\n"
+            text_to_add += f"<key>{key}</key>\n"
+            text_to_add += f"<type>{type(value)}</type>\n"
+            if hasattr(value, "shape"):
+                text_to_add += f"<shape>{value.shape}</shape>\n"
+            text_to_add += "</item>\n"
         return text_to_add
 
     return ""

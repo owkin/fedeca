@@ -9,7 +9,9 @@ import torch.nn as nn
 from sklearn.metrics import accuracy_score
 from substrafl.algorithms.pytorch import TorchNewtonRaphsonAlgo
 from substrafl.model_loading import download_algo_state
-from substrafl.strategies import FedAvg, NewtonRaphson
+from substrafl.strategies import FedAvg
+from fedeca.strategies.newton_raphson_decorated import NewtonRaphsonDecorated as NewtonRaphson
+
 from torch.optim import SGD
 
 from fedeca.algorithms.torch_dp_fed_avg_algo import TorchDPFedAvgAlgo

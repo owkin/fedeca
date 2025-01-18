@@ -358,9 +358,10 @@ def create_table_from_dico(
     # Create a string from shape
     df["Shape"] = df["Shape"].apply(lambda x: str(x) if x is not None else "")
 
-    df["Shape"] = df[["Shape", "Name", "Old ID"]].apply(
-        lambda x: replace_alias(x), axis=1
-    )
+    if len(df.index) > 0:
+        df["Shape"] = df[["Shape", "Name", "Old ID"]].apply(
+            lambda x: replace_alias(x), axis=1
+        )
 
     # Latexify
     df["Shape"] = df["Shape"].apply(lambda x: f"${x}$" if len(x) > 0 else x)
