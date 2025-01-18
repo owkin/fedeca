@@ -1,4 +1,4 @@
-"""Decorate TorchNewtonRahsonAlgorithms"""
+"""Decorate TorchNewtonRahsonAlgorithms."""
 from typing import Any
 
 from typing import Optional
@@ -12,7 +12,7 @@ from fedeca.utils.logging.logging_decorators import log_remote_data
 
 
 class TorchNewtonRaphsonAlgoDecorated(TorchNewtonRaphsonAlgo):
-    """_summary_
+    """Define algorithms for class with logging.
 
     Parameters
     ----------
@@ -24,6 +24,7 @@ class TorchNewtonRaphsonAlgoDecorated(TorchNewtonRaphsonAlgo):
     _type_
         _description_
     """
+
     @remote_data
     @log_remote_data
     def train(
@@ -33,7 +34,7 @@ class TorchNewtonRaphsonAlgoDecorated(TorchNewtonRaphsonAlgo):
         # the decorator will do it if the arg shared_state is not passed.
         shared_state: Optional[NewtonRaphsonAveragedStates] = None,
     ) -> NewtonRaphsonSharedState:
-        """_summary_
+        """Train locally.
 
         Parameters
         ----------
@@ -47,4 +48,4 @@ class TorchNewtonRaphsonAlgoDecorated(TorchNewtonRaphsonAlgo):
         NewtonRaphsonSharedState
             _description_
         """
-        return super().train(data_from_opener=data_from_opener, shared_state=shared_state, _skip=True)
+        return super().train(data_from_opener=data_from_opener, shared_state=shared_state, _skip=True)  # noqa: E501
