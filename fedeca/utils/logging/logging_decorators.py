@@ -269,7 +269,7 @@ def log_shared_state_adatas(self: Any, method: Callable, shared_state: Union[dic
     logger = get_method_logger(self, method)
 
     if shared_state is not None:
-        logger.info(f"Shared state keys : {list(shared_state.keys())}")
+        logger.info(f"Shared state : {shared_state}")
     else:
         logger.info("No shared state")
 
