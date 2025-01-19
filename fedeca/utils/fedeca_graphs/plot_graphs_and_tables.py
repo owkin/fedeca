@@ -78,6 +78,7 @@ l2_coeff_nr = 0.001
 
 class NRAlgo(TorchNewtonRaphsonAlgo):
     """Make linting pass."""
+
     def __init__(self):
         super().__init__(
             model=logreg_model,
@@ -133,6 +134,7 @@ dp_propensity_model_optimizer = SGD(
 
 class DPLogRegAlgo(TorchDPFedAvgAlgo):
     """Make linting pass."""
+
     def __init__(self):
         super().__init__(
             model=logreg_model,
@@ -199,6 +201,7 @@ survival_dataset_class = make_substrafl_torch_dataset_class(
 
 class WDAlgo(TorchWebDiscoAlgo):
     """Make linting pass."""
+
     def __init__(self, propensity_model, robust):
         super().__init__(
             model=cox_model,
@@ -346,6 +349,7 @@ with open("/Users/jterrail/Desktop/workflow.txt", "w") as f:
 
 class MyRobustCoxVarianceAlgo(RobustCoxVarianceAlgo):
     """Make linting pass."""
+
     def __init__(self, **kwargs):
         super().__init__(
             beta=beta,
