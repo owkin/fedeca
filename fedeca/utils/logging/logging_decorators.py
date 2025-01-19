@@ -19,7 +19,7 @@ from typing import Any
 from typing import Union
 import pandas as pd
 import numpy as np
-from substrafl.strategies.schemas import FedAvgAveragedState, FedAvgSharedState, FedPCAAveragedState, FedPCASharedState, ScaffoldSharedState, ScaffoldAveragedStates, NewtonRaphsonAveragedStates, NewtonRaphsonSharedState
+from substrafl.strategies.schemas import FedAvgAveragedState, FedAvgSharedState, FedPCAAveragedState, FedPCASharedState, ScaffoldSharedState, ScaffoldAveragedStates, NewtonRaphsonAveragedStates, NewtonRaphsonSharedState  # noqa: E501
 
 from fedeca.utils.logging.constants import LOGGING_SAVE_FILE
 
@@ -456,7 +456,7 @@ def get_shared_state_balises(shared_state: Any) -> str:
         text_to_add += "</item>\n"
         return text_to_add
 
-    if isinstance(shared_state, (FedAvgAveragedState, FedAvgSharedState, FedPCAAveragedState, FedPCASharedState, ScaffoldSharedState, ScaffoldAveragedStates, NewtonRaphsonAveragedStates, NewtonRaphsonSharedState)):
+    if isinstance(shared_state, (FedAvgAveragedState, FedAvgSharedState, FedPCAAveragedState, FedPCASharedState, ScaffoldSharedState, ScaffoldAveragedStates, NewtonRaphsonAveragedStates, NewtonRaphsonSharedState)):  # noqa: E501
         for key, value in shared_state.__dict__.items():
             text_to_add += "<item>\n"
             text_to_add += f"<key>{key}</key>\n"

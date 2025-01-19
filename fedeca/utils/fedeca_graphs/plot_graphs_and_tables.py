@@ -13,10 +13,10 @@ from fedeca.utils.survival_utils import (
     CoxPHModelTorch,
 )
 from fedeca import FedECA
-from fedeca.algorithms.torch_newton_raphson_algo_decorated import TorchNewtonRaphsonAlgoDecorated as TorchNewtonRaphsonAlgo
+from fedeca.algorithms.torch_newton_raphson_algo_decorated import TorchNewtonRaphsonAlgoDecorated as TorchNewtonRaphsonAlgo  # noqa: E501
 
 from fedeca.strategies.fed_avg_decorated import FedAvgDecorated as FedAvg
-from fedeca.strategies.newton_raphson_decorated import NewtonRaphsonDecorated as NewtonRaphson
+from fedeca.strategies.newton_raphson_decorated import NewtonRaphsonDecorated as NewtonRaphson  # noqa: E501
 
 from torch import nn
 from torch.optim import SGD
@@ -29,6 +29,7 @@ from fedeca.utils import (
     make_substrafl_torch_dataset_class,
 )
 import sys
+
 
 # Global FL setup for each strategy
 NDIM = 10
@@ -51,7 +52,6 @@ clients, train_data_nodes, _, _, _ = split_dataframe_across_clients(
 ds_client = clients[train_data_nodes[0].organization_id]
 kwargs_agg_node = {"organization_id": train_data_nodes[0].organization_id}
 aggregation_node = AggregationNode(**kwargs_agg_node)
-
 
 
 os.system("rm /Users/jterrail/Desktop/workflow.txt")
@@ -102,6 +102,7 @@ compute_plan = execute_experiment(
     num_rounds=3,
     experiment_folder="./tmp/experiment_summaries_newton_raphson",
     )
+
 with open("/Users/jterrail/Desktop/workflow.txt", "a") as f:
     f.write("</bloc>\n")
 
@@ -112,13 +113,9 @@ os.system("cp -r /Users/jterrail/Desktop/outputs/entire_workflow_rank_0/graphs /
 os.system("cp -r /Users/jterrail/Desktop/outputs/entire_workflow_rank_0/tables /Users/jterrail/Desktop/propensity_tables")  # noqa: E501
 os.system("rm -r /Users/jterrail/Desktop/outputs")
 
-
-
-
 os.system("rm /Users/jterrail/Desktop/workflow.txt")
 os.system("rm -r /Users/jterrail/Desktop/dp_propensity_graphs")
 os.system("rm -r /Users/jterrail/Desktop/dp_propensity_tables")
-
 
 
 with open("/Users/jterrail/Desktop/workflow.txt", "w") as f:
@@ -167,8 +164,6 @@ os.system("python create_graphs.py")
 os.system("cp -r /Users/jterrail/Desktop/outputs/entire_workflow_rank_0/graphs /Users/jterrail/Desktop/dp_propensity_graphs")  # noqa: E501
 os.system("cp -r /Users/jterrail/Desktop/outputs/entire_workflow_rank_0/tables /Users/jterrail/Desktop/dp_propensity_tables")  # noqa: E501
 os.system("rm -r /Users/jterrail/Desktop/outputs")
-
-
 
 
 os.system("rm /Users/jterrail/Desktop/workflow.txt")
@@ -269,6 +264,7 @@ compute_plan = execute_experiment(
     num_rounds=1,
     experiment_folder="./tmp/experiment_summaries_fed_kaplan",
     )
+
 with open("/Users/jterrail/Desktop/workflow.txt", "a") as f:
     f.write("</bloc>\n")
 
@@ -305,6 +301,7 @@ compute_plan = execute_experiment(
     num_rounds=1,
     experiment_folder="./tmp/experiment_summaries_fed_smd",
     )
+
 with open("/Users/jterrail/Desktop/workflow.txt", "a") as f:
     f.write("</bloc>\n")
 
@@ -319,7 +316,7 @@ os.system("rm /Users/jterrail/Desktop/workflow.txt")
 os.system("rm -r /Users/jterrail/Desktop/fedeca_robust_graphs")
 os.system("rm -r /Users/jterrail/Desktop/fedeca_robust_tables")
 
-# TODO A bit ugly remove call to FedECA
+# TODO A bit ugly remove call to FedECA and mock parameters
 fed_iptw = FedECA(ndim=10, treated_col="treatment", event_col="event", duration_col="time", num_rounds_list=[2, 3], variance_method="robust")  # noqa: E501
 fed_iptw.fit(df, n_clients=4, split_method="split_control_over_centers", split_method_kwargs={"treatment_info": "treatment"}, data_path="./data", backend_type="simu")  # noqa: E501
 
@@ -361,6 +358,7 @@ compute_plan = execute_experiment(
     num_rounds=1,
     experiment_folder="./tmp/experiment_summaries_fed_smd",
     )
+
 with open("/Users/jterrail/Desktop/workflow.txt", "a") as f:
     f.write("</bloc>\n")
 

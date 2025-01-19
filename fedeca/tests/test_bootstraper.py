@@ -11,7 +11,7 @@ import pandas as pd
 import pytest
 import torch
 from substrafl.algorithms.pytorch import TorchFedAvgAlgo
-from fedeca.algorithms.torch_newton_raphson_algo_decorated import TorchNewtonRaphsonAlgoDecorated as TorchNewtonRaphson
+from fedeca.algorithms.torch_newton_raphson_algo_decorated import TorchNewtonRaphsonAlgoDecorated as TorchNewtonRaphsonAlgo  # noqa: E501
 from substrafl.dependency import Dependency
 from substrafl.experiment import execute_experiment
 from substrafl.index_generator import NpIndexGenerator
@@ -19,7 +19,7 @@ from substrafl.model_loading import download_algo_state
 from substrafl.nodes import AggregationNode
 from fedeca.strategies.fed_avg_decorated import FedAvgDecorated as FedAvg
 
-from fedeca.strategies.newton_raphson_decorated import NewtonRaphsonDecorated as NewtonRaphson
+from fedeca.strategies.newton_raphson_decorated import NewtonRaphsonDecorated as NewtonRaphson  # noqa: E501
 
 from fedeca import FedECA, LogisticRegressionTorch
 from fedeca.algorithms import TorchWebDiscoAlgo

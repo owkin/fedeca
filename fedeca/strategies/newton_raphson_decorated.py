@@ -8,11 +8,9 @@ from substrafl.remote import remote
 from substrafl.strategies.schemas import NewtonRaphsonAveragedStates
 from substrafl.strategies.schemas import NewtonRaphsonSharedState
 
-from substrafl.strategies import NewtonRaphson
-
 
 class NewtonRaphsonDecorated(NewtonRaphson):
-    """_summary_
+    """Decorate NewtonRaphson strategy.
 
     Parameters
     ----------
@@ -30,7 +28,7 @@ class NewtonRaphsonDecorated(NewtonRaphson):
         self,
         shared_states: List[NewtonRaphsonSharedState],
     ) -> NewtonRaphsonAveragedStates:
-        """_summary_
+        """Decorate original method.
 
         Parameters
         ----------

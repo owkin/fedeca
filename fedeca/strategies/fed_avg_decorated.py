@@ -1,3 +1,4 @@
+"""Decorate FedAvg strategy."""
 from substrafl.strategies import FedAvg
 from fedeca.utils.logging.logging_decorators import log_remote
 from substrafl.strategies.schemas import FedAvgAveragedState
@@ -5,8 +6,9 @@ from substrafl.strategies.schemas import FedAvgSharedState
 from typing import List
 from substrafl.remote import remote
 
+
 class FedAvgDecorated(FedAvg):
-    """_summary_
+    """Define the decorated class.
 
     Parameters
     ----------
@@ -26,7 +28,7 @@ class FedAvgDecorated(FedAvg):
     @remote
     @log_remote
     def avg_shared_states(self, shared_states: List[FedAvgSharedState]) -> FedAvgAveragedState:
-        """_summary_
+        """Decorate original method.
 
         Parameters
         ----------
