@@ -436,15 +436,17 @@ def get_shared_state_balises(shared_state: Any) -> str:
     text_to_add = ""
     # For each key in the shared state, add a input balise with the three sub
     # balises : key, type and shape if relevant
-    # TODO what about recursive dicts ?
     if isinstance(shared_state, dict):
         for key, value in shared_state.items():
-            text_to_add += "<item>\n"
-            text_to_add += f"<key>{key}</key>\n"
-            text_to_add += f"<type>{type(value)}</type>\n"
-            if hasattr(value, "shape"):
-                text_to_add += f"<shape>{value.shape}</shape>\n"
-            text_to_add += "</item>\n"
+            if isinstance(value, dict):
+                text_to_add += get_shared_state_balises(value)
+            else:
+                text_to_add += "<item>\n"
+                text_to_add += f"<key>{key}</key>\n"
+                text_to_add += f"<type>{type(value)}</type>\n"
+                if hasattr(value, "shape"):
+                    text_to_add += f"<shape>{value.shape}</shape>\n"
+                text_to_add += "</item>\n"
         return text_to_add
 
     if isinstance(shared_state, np.ndarray):

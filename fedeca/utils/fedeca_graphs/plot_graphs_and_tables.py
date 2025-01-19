@@ -43,7 +43,7 @@ os.makedirs("./temp", exist_ok=True)
 os.makedirs("./tmp", exist_ok=True)
 clients, train_data_nodes, _, _, _ = split_dataframe_across_clients(
     df,
-    n_clients=4,
+    n_clients=2,
     split_method="split_control_over_centers",
     split_method_kwargs={"treatment_info": "treatment"},
     data_path="./temp/data",
@@ -77,6 +77,7 @@ l2_coeff_nr = 0.001
 
 
 class NRAlgo(TorchNewtonRaphsonAlgo):
+    """Make linting pass."""
     def __init__(self):
         super().__init__(
             model=logreg_model,
@@ -131,6 +132,7 @@ dp_propensity_model_optimizer = SGD(
 
 
 class DPLogRegAlgo(TorchDPFedAvgAlgo):
+    """Make linting pass."""
     def __init__(self):
         super().__init__(
             model=logreg_model,
@@ -196,6 +198,7 @@ survival_dataset_class = make_substrafl_torch_dataset_class(
 
 
 class WDAlgo(TorchWebDiscoAlgo):
+    """Make linting pass."""
     def __init__(self, propensity_model, robust):
         super().__init__(
             model=cox_model,
@@ -342,6 +345,7 @@ with open("/Users/jterrail/Desktop/workflow.txt", "w") as f:
 
 
 class MyRobustCoxVarianceAlgo(RobustCoxVarianceAlgo):
+    """Make linting pass."""
     def __init__(self, **kwargs):
         super().__init__(
             beta=beta,
