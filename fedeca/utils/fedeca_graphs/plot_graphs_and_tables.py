@@ -75,6 +75,7 @@ logreg_model = propensity_model
 seed = 42
 l2_coeff_nr = 0.001
 
+
 class NRAlgo(TorchNewtonRaphsonAlgo):
     def __init__(self):
         super().__init__(
@@ -86,6 +87,7 @@ class NRAlgo(TorchNewtonRaphsonAlgo):
             l2_coeff=l2_coeff_nr,
         )
 
+
 nr_algo = NRAlgo()
 
 nr_strategy = NewtonRaphson(
@@ -93,6 +95,7 @@ nr_strategy = NewtonRaphson(
     algo=nr_algo,
     metric_functions={},
 )
+
 compute_plan = execute_experiment(
     client=ds_client,
     strategy=nr_strategy,
@@ -100,8 +103,8 @@ compute_plan = execute_experiment(
     evaluation_strategy=None,
     aggregation_node=aggregation_node,
     num_rounds=3,
-    experiment_folder="./tmp/experiment_summaries_newton_raphson",
-    )
+    experiment_folder="./tmp/experiment_summaries_newton_raphson")
+
 
 with open("/Users/jterrail/Desktop/workflow.txt", "a") as f:
     f.write("</bloc>\n")
@@ -125,6 +128,8 @@ dp_propensity_model_optimizer = SGD(
     params=logreg_model.parameters(),
     lr=0.001,
 )
+
+
 class DPLogRegAlgo(TorchDPFedAvgAlgo):
     def __init__(self):
         super().__init__(
@@ -141,10 +146,12 @@ class DPLogRegAlgo(TorchDPFedAvgAlgo):
             dp_max_grad_norm=1.,
         )
 
+
 dp_algo = DPLogRegAlgo()
 dp_strategy = FedAvg(
     algo=dp_algo, metric_functions={},
 )
+
 compute_plan = execute_experiment(
     client=ds_client,
     strategy=dp_strategy,
@@ -152,8 +159,7 @@ compute_plan = execute_experiment(
     evaluation_strategy=None,
     aggregation_node=aggregation_node,
     num_rounds=3,
-    experiment_folder="./tmp/experiment_summaries_dp_fedavg",
-    )
+    experiment_folder="./tmp/experiment_summaries_dp_fedavg")
 
 with open("/Users/jterrail/Desktop/workflow.txt", "a") as f:
     f.write("</bloc>\n")
@@ -178,6 +184,7 @@ cox_model = CoxPHModelTorch(
     ndim=1,
     torch_dtype=torch.float64,
 )
+
 survival_dataset_class = make_substrafl_torch_dataset_class(
     ["time", "event"],
     "event",
@@ -187,7 +194,7 @@ survival_dataset_class = make_substrafl_torch_dataset_class(
     client_identifier=None,
 )
 
-# no self attributes in this class !!!!!!
+
 class WDAlgo(TorchWebDiscoAlgo):
     def __init__(self, propensity_model, robust):
         super().__init__(
@@ -215,11 +222,13 @@ class WDAlgo(TorchWebDiscoAlgo):
 
 
 webdisco_algo = WDAlgo(propensity_model=propensity_model, robust=False)
+
 webdisco_strategy = WebDisco(
     algo=webdisco_algo,
     standardize_data=True,
     metric_functions={},
 )
+
 compute_plan = execute_experiment(
     client=ds_client,
     strategy=webdisco_strategy,
@@ -227,8 +236,8 @@ compute_plan = execute_experiment(
     evaluation_strategy=None,
     aggregation_node=aggregation_node,
     num_rounds=3,
-    experiment_folder="./tmp/experiment_summaries_webdisco",
-    )
+    experiment_folder="./tmp/experiment_summaries_webdisco")
+
 with open("/Users/jterrail/Desktop/workflow.txt", "a") as f:
     f.write("</bloc>\n")
 
@@ -262,8 +271,7 @@ compute_plan = execute_experiment(
     evaluation_strategy=None,
     aggregation_node=aggregation_node,
     num_rounds=1,
-    experiment_folder="./tmp/experiment_summaries_fed_kaplan",
-    )
+    experiment_folder="./tmp/experiment_summaries_fed_kaplan")
 
 with open("/Users/jterrail/Desktop/workflow.txt", "a") as f:
     f.write("</bloc>\n")
@@ -299,8 +307,7 @@ compute_plan = execute_experiment(
     evaluation_strategy=None,
     aggregation_node=aggregation_node,
     num_rounds=1,
-    experiment_folder="./tmp/experiment_summaries_fed_smd",
-    )
+    experiment_folder="./tmp/experiment_summaries_fed_smd")
 
 with open("/Users/jterrail/Desktop/workflow.txt", "a") as f:
     f.write("</bloc>\n")
@@ -346,6 +353,7 @@ class MyRobustCoxVarianceAlgo(RobustCoxVarianceAlgo):
             treated_col=treated_col,
         )
 
+
 my_robust_cox_algo = MyRobustCoxVarianceAlgo()
 robust_strategy = RobustCoxVariance(algo=my_robust_cox_algo, metric_functions={})
 
@@ -356,8 +364,7 @@ compute_plan = execute_experiment(
     evaluation_strategy=None,
     aggregation_node=aggregation_node,
     num_rounds=1,
-    experiment_folder="./tmp/experiment_summaries_fed_smd",
-    )
+    experiment_folder="./tmp/experiment_summaries_fed_smd")
 
 with open("/Users/jterrail/Desktop/workflow.txt", "a") as f:
     f.write("</bloc>\n")

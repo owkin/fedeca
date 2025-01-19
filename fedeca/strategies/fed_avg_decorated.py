@@ -25,9 +25,10 @@ class FedAvgDecorated(FedAvg):
     EmptySharedStatesError
         _description_
     """
+
     @remote
     @log_remote
-    def avg_shared_states(self, shared_states: List[FedAvgSharedState]) -> FedAvgAveragedState:
+    def avg_shared_states(self, shared_states: List[FedAvgSharedState]) -> FedAvgAveragedState:  # noqa: E501
         """Decorate original method.
 
         Parameters

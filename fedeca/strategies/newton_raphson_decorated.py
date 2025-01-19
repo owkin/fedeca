@@ -22,6 +22,7 @@ class NewtonRaphsonDecorated(NewtonRaphson):
     _type_
         _description_
     """
+
     @remote
     @log_remote
     def compute_averaged_states(

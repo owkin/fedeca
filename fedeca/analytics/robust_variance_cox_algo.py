@@ -263,4 +263,3 @@ class RobustCoxVarianceAlgo(TorchWebDiscoAlgo):
             List of all compatible strategies.
         """
         return super().strategies + ["Robust Cox Variance"]
-
