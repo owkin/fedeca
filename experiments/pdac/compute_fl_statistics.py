@@ -84,6 +84,11 @@ if __name__ == "__main__":
         
         POPULATION = "FOLFIRINOX" if current_train_datasets_names[0][3] == "T" else "GEM + NAB"
         colors = ["orange", "orange"]
+        centers = set([name[4:].split("_")[0] for name in current_train_datasets_names])
+        centers.remove(TREATMENT)
+        CONTROL = list(centers)[0]
+        TREATMENT = names_mapping[TREATMENT]
+        CONTROL = names_mapping[CONTROL]
 
 
     aggregation_node = AggregationNode(res["kwargs"]["aggregation_node"])
@@ -246,7 +251,7 @@ setup(
     g.axvline(0.1, color="black", linestyle="--", alpha=0.2)
     g.axvline(-0.1, color="black", linestyle="--", alpha=0.2)
 
-    plt.savefig(f"{basename}_smd_real_data.pdf", bbox_inches="tight", dpi=300)
+    plt.savefig(f"{basename}_T{TREATMENT}_ctrl{CONTROL}_pop{POPULATION}_smd_real_data.pdf", bbox_inches="tight", dpi=300)
     plt.clf()
 
     strategy = FedKaplan(
@@ -311,4 +316,4 @@ setup(
     plt.ylabel("Probability of survival")
     plt.xlabel("Survival time (months)")
     plt.legend()
-    plt.savefig(f"{basename}_fed_km.pdf", bbox_inches="tight", dpi=300)
+    plt.savefig(f"{basename}_T{TREATMENT}_ctrl{CONTROL}_pop{POPULATION}_fed_km.pdf", bbox_inches="tight", dpi=300)
