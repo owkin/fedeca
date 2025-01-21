@@ -53,7 +53,7 @@ def compute_ci(s, var_s, csum_var, alpha=0.05, ci="exp_greenwood"):
 
 
 def fed_km_plot(
-    grid, s, var_s, csum_var, alpha=0.05, ci="exp_greenwood", label="KM_estimate"
+    grid, s, var_s, csum_var, alpha=0.05, ci="exp_greenwood", label="KM_estimate", color=None,  # noqa: E501
 ):
     """Plot the survival curve with confidence intervals.
 
@@ -75,9 +75,15 @@ def fed_km_plot(
         The method to draw CIs, by default "exp_greenwood"
     label : str, optional
         The label of the curve, by default "KM_estimate"
+    color: Union[None, str]
+        The color of the curve
     """
     lower, upper = compute_ci(s, var_s, csum_var, alpha=alpha, ci=ci)
-    ax = plt.plot(grid, s, label=label)
-    plt.fill_between(grid, lower, upper, alpha=0.25, linewidth=1.0, step="post")
+    if color is None:
+        ax = plt.plot(grid, s, label=label)
+        plt.fill_between(grid, lower, upper, alpha=0.25, linewidth=1.0, step="post")
+    else:
+        ax = plt.plot(grid, s, label=label, color=color)
+        plt.fill_between(grid, lower, upper, alpha=0.25, linewidth=1.0, step="post", color=color)  # noqa: E501
     plt.xlabel("timeline")
     return ax

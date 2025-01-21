@@ -39,6 +39,11 @@ Execute each script after making sure `FL_DATA_PATH` contains a `data.csv`.
 :warning: Careful there should be only one file in the folder to avoid undefined
 behavior as the whole content of the folder will be registered :warning:
 
+Note: instructions below are somewhat stale as the scripts have been improved
+now, providing all the right datasets have been registered, there is a logic
+based on naming conventions to select the right ones using only user-defined
+arguments.
+
 # Execute FedECA on real data
 
 Change dataset key and datasample keys in `fl_run.py` to the actual
