@@ -25,13 +25,16 @@ from idibigi.idibigi_opener import IDIBIGIOpener
 from pancan.pancan_opener import PanCanOpener
 
 
+
 POTENTIAL_HOSPITALS = ["idibigi", "ffcd", "pancan"]
+# Set to True to use real data
 SYNTHETIC = False
-# All variables below are only active in the case FAKE_TREATMENT is True
+# All variables below are only used for FAKE_TREATMENT
 FAKE_TREATMENT = True
-IS_FOLFIRINOX = False
+# if IS_FOLFIRINOX True will include only patients treated with folfirinox and if False only patients treated with gemnab
+IS_FOLFIRINOX = True
 IS_TREATMENT_CENTER = True
-TREATMENT = "IDIBIGi"
+TREATMENT = "PanCan"
  
 
 
@@ -55,7 +58,7 @@ hospitals_mapping = {
         "synth_center_id": 2,
     },
 }
-assert TREATMENT is in [hospitals_mapping[k]["owner"] for k in list(hospitals_mapping.keys())]
+assert TREATMENT in [hospitals_mapping[k]["owner"] for k in list(hospitals_mapping.keys())]
 
 
 hospital = None
@@ -68,14 +71,13 @@ while hospital not in POTENTIAL_HOSPITALS:
 move_forward = False
 while not move_forward:
     move_forward = input(
-        "Would you like to proceed doing data registration on {hospital} (Y(es)|N(o))"
+        f"Would you like to proceed doing data registration on {hospital} (Y(es)|N(o))"
     ).lower() in [
         "y",
         "yes",
     ]  # noqa: E501
 
 data_path = FL_DATA_PATH
-# this assumes the version is the last part of the path
 VERSION = FL_DATA_PATH[-1]
 
 if SYNTHETIC:
@@ -103,9 +105,9 @@ if SYNTHETIC:
 
 PATH_TO_DATA = Path(data_path)
 
-# this assumes the token of the organization is stored in a file available
-# at /home/owkin/project/token
+
 URL = hospitals_mapping[hospital]["url"]
+# This is the center token assumed to be found in a raw text file named token
 with open("/home/owkin/project/token", "r") as f:
     TOKEN = f.read()
 
@@ -229,7 +231,7 @@ dataset_name = f"{hospital}_{hash_df}_{colnames}_N{len(df.index)}_v{VERSION}"
 if SYNTHETIC:
     dataset_name = "SYNTH_" + dataset_name
 if FAKE_TREATMENT:
-    dataset_name = f"T{TREATMENT[0]}P{str(IS_FOLFIRINOX)[0]}" + dataset_name
+    dataset_name = f"T{TREATMENT[0]}F{str(IS_FOLFIRINOX)[0]}" + dataset_name
 
 assert (
     len(dataset_name) <= 100
