@@ -1,0 +1,4 @@
+raw_workflow_file:  "/Users/jterrail/Desktop/workflow.txt"
+cleaned_workflow_file: "/Users/jterrail/Desktop/cleaned_workflow.tx"
+processed_workflow_dir: "/Users/jterrail/Desktop/processed_workflow"
+output_dir: "/Users/jterrail/Desktop/outputs"
