@@ -6,7 +6,7 @@ This configuration file can be either set by the log_config_path attribute of th
 or by the default_config.ini file in the same directory as this module.
 """
 # All utils here were originally written by Ulysse Marteau @umarteauowkin for
-# fed-pydeseq2 (https://github.com/owkin/fed-pydeseq2) and are reproduced here with
+# fed-pydeseq2 (https://github.com/owkin/fedpydeseq2) and are reproduced here with
 # his permissions.
 
 import logging
