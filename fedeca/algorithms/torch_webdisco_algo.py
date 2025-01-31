@@ -3,6 +3,8 @@ import copy
 from copy import deepcopy
 from pathlib import Path
 from typing import Any, List, Optional, Union
+from fedeca.utils.logging import log_remote_data
+
 
 # hello
 import numpy as np
@@ -184,6 +186,7 @@ class TorchWebDiscoAlgo(TorchAlgo):
         return ["WebDisco"]
 
     @remote_data
+    @log_remote_data
     def compute_local_phi_stats(
         self,
         data_from_opener: Any,
@@ -266,6 +269,7 @@ class TorchWebDiscoAlgo(TorchAlgo):
         }
 
     @remote_data
+    @log_remote_data
     def local_uncentered_moments(self, data_from_opener, shared_state=None):
         """Compute the local uncentered moments.
 
@@ -313,6 +317,7 @@ class TorchWebDiscoAlgo(TorchAlgo):
         return results
 
     @remote_data
+    @log_remote_data
     def _compute_local_constant_survival_statistics(
         self, data_from_opener, shared_state
     ):
@@ -376,6 +381,7 @@ class TorchWebDiscoAlgo(TorchAlgo):
         }
 
     @remote_data
+    @log_remote_data
     def train(
         self,
         data_from_opener: Any,
