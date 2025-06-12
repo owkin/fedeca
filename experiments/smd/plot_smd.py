@@ -26,7 +26,7 @@ dict_markers = {
 
 
 fname = (
-    "/home/owkin/fedeca/results_experiments/smd_cov_shift/results_smd_cov_shift.pkl"
+    "/home/administrateur/Desktop/fedeca/results_experiments/smd_cov_shift/results_smd_cov_shift.pkl"
 )
 df_res = load_dataframe_from_pickles(fname)
 
