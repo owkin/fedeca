@@ -15,6 +15,8 @@ defaults:
   - /model@models.IPTW: pooled_iptw
   - /model@models.MAIC: matching_adjusted
   - /model@models.FedECA: fl_iptw
+  - /model@models.Unweighted: naive_comparison
+
   - _self_
 
 models:

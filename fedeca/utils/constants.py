@@ -17,5 +17,6 @@ EXPERIMENTS_PATHS = {
     "dp_results": EXPE_PATH + "/pooled_equivalent_dp/",
     "real_world": EXPE_PATH + "/real-world/",
     "robust_pooled_equivalence": EXPE_PATH + "/robust_pooled_equivalence/",
-    "robust_pooled_equivalence_ties": EXPE_PATH + "/pooled_equivalent_ties/"
+    "robust_pooled_equivalence_ties": EXPE_PATH + "/pooled_equivalent_ties/",
+    "smd_results": EXPE_PATH + "/smd/",
 }

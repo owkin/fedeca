@@ -7,6 +7,7 @@ from fedeca.utils.experiment_utils import load_dataframe_from_pickles
 from fedeca.viz.plot import owkin_palette
 import matplotlib.pyplot as plt
 import matplotlib
+from fedeca.utils.constants import EXPERIMENTS_PATHS
 
 # Load raw results
 sns.set(rc={'figure.figsize': (11.69, 8.27)})
@@ -26,7 +27,7 @@ dict_markers = {
 
 
 fname = (
-    "/home/owkin/fedeca/results_experiments/smd_cov_shift/results_smd_cov_shift.pkl"
+    EXPERIMENTS_PATHS["smd_results"] + "results_smd_cov_shift.pkl"
 )
 df_res = load_dataframe_from_pickles(fname)
 
