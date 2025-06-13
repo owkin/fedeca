@@ -27,7 +27,7 @@ dict_markers = {
 
 
 fname = (
-    EXPERIMENTS_PATHS + "results_smd_cov_shift.pkl"
+    EXPERIMENTS_PATHS["smd_results"] + "results_smd_cov_shift.pkl"
 )
 df_res = load_dataframe_from_pickles(fname)
 
