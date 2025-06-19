@@ -109,7 +109,7 @@ X["ps_score"] = propensity_scores.flatten()
 
 fig, axs = plt.subplots(figsize=(10, 5))
 N = 25 + 1
-bins=np.linspace(1.0, 10., N)
+bins=np.linspace(1.0, 7.0, N)
 sns.histplot(data=X, x="weights", hue="treatment", bins=bins)
 for b0, b1, color in zip(bins[:-1], bins[1:], cycle(['crimson', 'lightblue'])):
     axs.axvspan(b0, b1, color=color, alpha=0.1, zorder=0)

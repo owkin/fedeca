@@ -30,7 +30,7 @@ results = load_dataframe_from_pickles(
     EXPERIMENTS_PATHS["dp_results"] + "results_Pooled_equivalent_DP.pkl"
 )
 
-results_fl = results.loc[results["method"] == "FedECA", :]
+results_fl = results.loc[results["method"] == "FederatedIPTW", :]
 results_pooled = results.loc[results["method"] == "IPTW", :]
 
 errors = pd.DataFrame(

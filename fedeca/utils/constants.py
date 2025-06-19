@@ -19,4 +19,5 @@ EXPERIMENTS_PATHS = {
     "robust_pooled_equivalence": EXPE_PATH + "/robust_pooled_equivalence/",
     "robust_pooled_equivalence_ties": EXPE_PATH + "/pooled_equivalent_ties/",
     "smd_results": EXPE_PATH + "/smd/",
+    "pdac": EXPE_PATH + "/pdac/",
 }
