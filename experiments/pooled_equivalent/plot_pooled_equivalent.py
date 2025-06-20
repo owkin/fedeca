@@ -13,8 +13,7 @@ def relative_error(x, y, absolute_error=False):
     """Compute the relative error."""
     if absolute_error:
         return np.abs(y - x) / np.abs(x)
-    else:
-        return np.linalg.norm(y - x) / np.linalg.norm(x)
+    return np.linalg.norm(y - x) / np.linalg.norm(x)
 
 
 names = ["Hazard Ratio", "Partial Log likelihood", "p-values", "Propensity scores"]
@@ -23,7 +22,7 @@ results = load_dataframe_from_pickles(
     EXPERIMENTS_PATHS["pooled_equivalent"] + "results_Pooled_equivalent.pkl"
 )
 
-results_fl = results.loc[results["method"] == "FedECA", :]
+results_fl = results.loc[results["method"] == "FederatedIPTW", :]
 results_pooled = results.loc[results["method"] == "IPTW", :]
 
 errors = pd.DataFrame(
@@ -55,15 +54,16 @@ errors["scores"] = np.array(
 
 fig, axarr = plt.subplots(1, 1, figsize=(10, 5))
 sns.boxplot(
-    data=errors, palette=sns.color_palette(owkin_palette.values(), 9), width=0.5
+    data=errors, palette=sns.color_palette(list(owkin_palette.values()), 9), width=0.5
 )
 ax = sns.swarmplot(data=errors, color=".25", size=4)
 
-axarr.hlines(y=1e-2, xmin=-0.5, xmax=3.5, linewidth=2, color="r", linestyle="--")
+axarr.hlines(y=2e-3, xmin=-0.5, xmax=3.5, linewidth=2, color="r", linestyle="--")
 axarr.set_yscale("log")
 axarr.set_xticks(np.arange(errors.shape[1]), names)
 axarr.set_title("Pooled IPTW versus FedECA")
 axarr.set_ylabel("Relative error")
 axarr.set_ylim((1e-9, 1))
+plt.grid()
 plt.tight_layout()
 plt.savefig("pooled_equivalent.pdf")

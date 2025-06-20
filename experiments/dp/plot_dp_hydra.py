@@ -15,8 +15,7 @@ def relative_error(x, y, absolute_error=False):
     """Compute the relative error."""
     if absolute_error:
         return np.abs(y - x) / np.abs(x)
-    else:
-        return np.linalg.norm(y - x) / np.linalg.norm(x)
+    return np.linalg.norm(y - x) / np.linalg.norm(x)
 
 
 names = {
@@ -58,8 +57,8 @@ errors["scores"] = np.array(
         for i in range(results_fl.shape[0])
     ]
 )
-errors["epsilon"] = results_fl["dp_target_epsilon"].values
-errors["delta"] = results_fl["dp_target_delta"].values
+errors["epsilon"] = results_fl["dp_target_epsilon"].to_numpy()
+errors["delta"] = results_fl["dp_target_delta"].to_numpy()
 
 
 # fig, axarr = plt.subplots(1, 1, figsize=(10, 5))
@@ -111,7 +110,7 @@ for rel_error_name, col_name in names.items():
             ax=ax,
         )
     ax.set_xscale("log")
-    if col_name == "p-values" or col_name == "likelihood":
+    if col_name in {"p-values", "likelihood"}:
         ax.set_yscale("log")
     xtick_values = np.logspace(-1.0, 1.6989700043360185, 5, base=10)
     xlabels = [str(round(v, 2)) for v in xtick_values]

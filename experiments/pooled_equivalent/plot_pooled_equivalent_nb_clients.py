@@ -1,4 +1,5 @@
 """Plot file for the pooled equivalent experiment."""
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -13,8 +14,7 @@ def relative_error(x, y, absolute_error=False):
     """Compute the relative error."""
     if absolute_error:
         return np.abs(y - x) / np.abs(x)
-    else:
-        return np.linalg.norm(y - x) / np.linalg.norm(x)
+    return np.linalg.norm(y - x) / np.linalg.norm(x)
 
 
 names = ["Hazard Ratio", "Partial Log likelihood", "p-values", "Propensity scores"]
@@ -30,7 +30,7 @@ for name in names:
     errors[name] = pd.DataFrame()
 for n_client in n_clients:
     results_tmp = results.loc[results["n_clients"] == n_client, :]
-    results_fl = results_tmp.loc[results_tmp["method"] == "FedECA", :]
+    results_fl = results_tmp.loc[results_tmp["method"] == "FederatedIPTW", :]
     results_pooled = results_tmp.loc[results_tmp["method"] == "IPTW", :]
 
     errors["Hazard Ratio"][n_client] = pd.DataFrame(
@@ -76,19 +76,20 @@ for i, name in enumerate(names):
         j = 1
     sns.boxplot(
         data=errors[name],
-        palette=sns.color_palette(owkin_palette.values(), 9),
+        palette=sns.color_palette(list(owkin_palette.values()), 9),
         width=0.5,
         ax=axarr[i % 2, j],
     )
     sns.swarmplot(data=errors[name], color=".25", size=2, ax=axarr[i % 2, j])
 
     axarr[i % 2, j].hlines(
-        y=1e-2, xmin=-0.5, xmax=3.5, linewidth=2, color="r", linestyle="--"
+        y=2e-3, xmin=-0.5, xmax=3.5, linewidth=2, color="r", linestyle="--"
     )
     axarr[i % 2, j].set_yscale("log")
     axarr[i % 2, j].set_xticks(np.arange(errors[name].shape[1]), n_clients)
     axarr[i % 2, j].set_title(f"{name}")
     axarr[i % 2, j].set_ylabel("Relative error")
     axarr[i % 2, j].set_ylim(dict_ylim[name])
+    axarr[i % 2, j].grid()
 plt.tight_layout()
-plt.savefig("pooled_equivalent_nb_clients.png")
+plt.savefig("pooled_equivalent_nb_clients.pdf")
