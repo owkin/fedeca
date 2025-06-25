@@ -33,7 +33,7 @@ conda activate fedeca
 Creating the conda environment should take under 20 seconds on a modern computer with a reasonably good internet connexion (see top of the section for details).  
 Within the environment, install the package by running:
 
-```
+```bash
 git clone https://github.com/owkin/fedeca.git
 cd fedeca
 pip install -e ".[all_extra]"
@@ -59,6 +59,60 @@ In order to quickly get a sense on how FedECA works visit [here](./quickstart/qu
 
 Copy-pasting all cells of the tutorial into a regular python script gives a runtime of approximately 1 minute,
 with less than 2 seconds spent on each run of the FedECA algorithm in-RAM (using the same Mac M3 Pro as a reference).
+
+## Figure reproduction
+
+To reproduce figures in the [FedECA arXiv paper](https://arxiv.org/abs/2311.16984),
+use the following commands:
+<details>
+  <summary>Equivalence between pooled IPTW and FedECA</summary>
+
+  - Figure 2
+    ```shell
+    python -m experiments.pooled_equivalent.plot_pooled_equivalent
+    ```
+  - Supplementary Figure 2
+    ```shell
+    python -m experiments.pooled_equivalent.plot_pooled_equivalent_nb_clients
+    ```
+  - Supplementary Figure 3 (differential privacy)
+    ```shell
+    python -m experiments.dp.plot_dp_hydra
+    ```
+  - Supplementary Figure 4 (tied times)
+    ```shell
+    python -m experiments.ties.plot_ties_hydra
+    ```
+</details>
+<details>
+  <summary>Standardized mean difference and power analysis</summary>
+
+  - Figure 3(a), Figure 3(b)
+    ```shell
+    python -m experiments.smd.plot_smd
+    ```
+  - Figure 3(c)
+    ```shell
+    python -m experiments.power.plot_power_type_one_error
+    ```
+</details>
+<details>
+  <summary>Real-world FedECA</summary>
+
+  - Figure 4, Supplementary Figure 6
+    (remove the `--ensemble` flag to create subfigures separatedly)
+    ```shell
+    python -m experiments.pdac.plot_smd_and_km --ensemble
+    ```
+  - Supplementary Figure 7 (exchangeability)
+    ```shell
+    python -m experiments.pdac.plot_exchangeability_kms
+    ```
+  - Supplementary Figure 8 (weights histogram)
+    ```shell
+    python -m experiments.pdac.plot_histogram
+    ```
+</details>
 
 ## <a name="citation"></a>Citing FedECA
 
