@@ -114,6 +114,7 @@ g._legend_data = dict(zip(labels, handles))
 g.add_legend()
 sns.move_legend(g, "center right", bbox_to_anchor=(0.94, 0.5))
 adjust_legend_subtitles(g.legend)
+g.figure.suptitle("(c)", fontfamily="serif", x=0.05)
 g.figure.set_dpi(300)
 
 # %%

@@ -1,23 +1,20 @@
 """Plot file for the DP experiment."""
+
 import matplotlib.pyplot as plt
+import matplotlib.ticker as mtick
 import numpy as np
 import pandas as pd
 import seaborn as sns
 
 from fedeca.utils.constants import EXPERIMENTS_PATHS
 from fedeca.utils.experiment_utils import load_dataframe_from_pickles
-import matplotlib.pyplot as plt
-import matplotlib.ticker as mtick
-import numpy as np
-
 
 
 def relative_error(x, y, absolute_error=False):
     """Compute the relative error."""
     if absolute_error:
         return np.abs(y - x) / np.abs(x)
-    else:
-        return np.linalg.norm(y - x) / np.linalg.norm(x)
+    return np.linalg.norm(y - x) / np.linalg.norm(x)
 
 
 names = {
@@ -29,10 +26,11 @@ names = {
 cmp = sns.color_palette("colorblind")
 
 results = load_dataframe_from_pickles(
-    EXPERIMENTS_PATHS["robust_pooled_equivalence_ties"] + "results_Pooled_equivalent_ties.pkl"
+    EXPERIMENTS_PATHS["robust_pooled_equivalence_ties"]
+    + "results_Pooled_equivalent_ties.pkl"
 )
 
-results.loc[results["percent_ties"].isnull(), "percent_ties"] = 0.
+results.loc[results["percent_ties"].isna(), "percent_ties"] = 0.0
 results_fl = results.loc[results["method"] == "FederatedIPTW", :]
 results_pooled = results.loc[results["method"] == "IPTW", :]
 
@@ -91,15 +89,14 @@ for rel_error_name, col_name in names.items():
         data=cdf,
         x="percent_ties",
         y=col_name,
-        linestyle=linestyles[::-1][0][1],
+        linestyle="-",
         ax=ax,
     )
     ax.set_xticks(np.arange(0, 1.1, 0.1))  # Integer number of ticks (0 to 1 by 0.1)
 
     # Format ticks as percentages with one decimal
     ax.xaxis.set_major_formatter(mtick.PercentFormatter(xmax=1.0, decimals=1))
-    if col_name == "p-values" or col_name == "likelihood":
-        ax.set_yscale("log")
+    ax.set_yscale("log")
 
     ax.axhline(
         1e-2,
@@ -108,13 +105,9 @@ for rel_error_name, col_name in names.items():
         linestyle="--",
     )
 
-    plt.legend()
-
     plt.xlabel("Global % of ties")
     plt.ylabel("Relative Errors")
     plt.tight_layout()
 
-    plt.savefig(
-        f"ties_{rel_error_name}.pdf", dpi=100, bbox_inches="tight"
-    )
+    plt.savefig(f"ties_{rel_error_name}.pdf", dpi=100, bbox_inches="tight")
     plt.clf()

@@ -1,12 +1,18 @@
 """File for experiment figure plots."""
+
+from __future__ import annotations
+
 import itertools
-from typing import Optional
+from collections.abc import Mapping, Sequence
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import seaborn as sns
 from matplotlib import colors as mcolors
 from matplotlib.axes import Axes
+
+SIGNIFICANCE_THRESHOLD = 0.05
 
 # create custom color palette
 owkin_palette = {
@@ -28,7 +34,7 @@ def setup_owkin_colors_palette():
         {"name": owkin_palette.keys(), "color": owkin_palette.values()}
     )
 
-    c = dict(zip(*owkin_palette_pd.values.T))
+    c = dict(zip(*owkin_palette_pd.to_numpy().T))
     mcolors.get_named_colors_mapping().update(c)
 
 
@@ -36,7 +42,7 @@ def plot_power(
     df_res: pd.DataFrame,
     fit_curve: bool = False,
     deg: int = 2,
-    plot_kwargs: Optional[dict] = None,
+    plot_kwargs: dict | None = None,
 ) -> Axes:
     """Plot power or type I error figure for given experiment.
 
@@ -69,7 +75,10 @@ def plot_power(
     df_power = (
         df_res.groupby(["method", param_vary])
         .agg(
-            power=pd.NamedAgg(column="p", aggfunc=lambda x: (x < 0.05).sum() / x.size),
+            power=pd.NamedAgg(
+                column="p",
+                aggfunc=lambda x: (x < SIGNIFICANCE_THRESHOLD).sum() / x.size,
+            ),
         )
         .reset_index()
     )
@@ -98,6 +107,88 @@ def plot_power(
         axis.legend()
 
     return axis
+
+
+def plot_survival_function(
+    data: pd.DataFrame,
+    groupby: str | Sequence[str] | None = None,
+    col_time: str = "time",
+    col_sf: str = "sf",
+    col_sf_lower: str | None = "sf_lower",
+    col_sf_upper: str | None = "sf_upper",
+    ax_set_kwargs: Mapping | None = None,
+    **kwargs,
+):
+    """Create survival function plot based on time survival probability data.
+
+    Parameters
+    ----------
+    data : dataframe
+        Dataframe containing time points, survival probabilities, and optionally
+        the upper and lower bounds of survival probabilities.
+    groupby : str or Sequence of str, default=None
+        Column name(s) used to group the data. Each group of data will be used
+        to create a survival curve in the result.
+    col_time : str, default="time"
+        Name of the column of timepoints.
+    col_sf : str, default="sf"
+        Name of the column of survival probabilities.
+    col_sf_lower : str, optional, default="sf_lower"
+        Name of the column of the lower bounds of the survival probabilities
+        used to draw the confidence interval band. If not found in the data
+        or explicitly set to `None`, the band will not be drawn.
+    col_sf_upper : str, optional, default="sf_upper"
+        Name of the column of the lower bounds of the survival probabilities
+        used to draw the confidence interval band. If not found in the data
+        or explicitly set to `None`, the band will not be drawn.
+    ax_set_kwargs : Mapping, optional
+        Optional key value mapping to be given to the `set` function of the axis
+        of the plot.
+    **kwargs
+        Extra arguments for seaborn's `lineplot`.
+    """
+    ax = kwargs.pop("ax", plt.gca())
+    if ax_set_kwargs is None:
+        ax_set_kwargs = {}
+
+    # Due to numerical precision issue, bounds may be incorrect when the
+    # survival probability is too small.
+    if col_sf_lower in data and col_sf_upper in data:
+        out_of_bounds = data[col_sf_upper].lt(data[col_sf]) | data[col_sf_lower].gt(
+            data[col_sf]
+        )
+        data.loc[out_of_bounds, col_sf_upper] = data.loc[out_of_bounds, col_sf]
+        data.loc[out_of_bounds, col_sf_lower] = data.loc[out_of_bounds, col_sf]
+
+    if groupby is None:
+        grouped = ((kwargs.get("label", "KM_estimate"), data),)
+    else:
+        grouped = data.groupby(groupby)
+    kwargs.pop("label", None)
+
+    for name, df in grouped:
+        sns.lineplot(
+            df,
+            x=col_time,
+            y=col_sf,
+            drawstyle="steps-pre",
+            ax=ax,
+            label=name,
+            **kwargs,
+        )
+        if col_sf_lower in data and col_sf_upper in data:
+            ax.fill_between(
+                x=col_time,
+                y1=col_sf_lower,
+                y2=col_sf_upper,
+                alpha=0.25,
+                step="pre",
+                data=df,
+                color=ax.lines[-1].get_color(),
+            )
+    ax.set(**ax_set_kwargs)
+
+    return ax
 
 
 if __name__ == "__main__":
