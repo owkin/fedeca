@@ -24,7 +24,7 @@ dict_colors = {
 dict_markers = {"FedECA": "s", "MAIC": "P", "Unweighted": "d"}
 
 
-fname = EXPERIMENTS_PATHS["smd_results"] + "results_smd_cov_shift.pkl"
+fname = EXPERIMENTS_PATHS["smd_results"] / "results_smd_cov_shift.pkl"
 df_res = load_dataframe_from_pickles(fname)
 
 df_res["cov_shift"] = 0.5 * (df_res["overlap"] + 1)

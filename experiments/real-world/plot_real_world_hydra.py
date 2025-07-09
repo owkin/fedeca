@@ -13,7 +13,7 @@ from fedeca.utils.experiment_utils import load_dataframe_from_pickles
 
 cmp = sns.color_palette("colorblind")
 results = load_dataframe_from_pickles(
-    join(EXPERIMENTS_PATHS["real_world"], "results_Real-world_experiments.pkl")
+    EXPERIMENTS_PATHS["real_world"] / "results_Real-world_experiments.pkl"
 )
 
 fl_results = results.loc[results["backend_type"] != "N/A"]
