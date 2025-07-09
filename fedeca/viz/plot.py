@@ -395,7 +395,7 @@ class FacetGridWithFigure(FacetGrid):
                 ax.yaxis.label.set_visible(False)
 
     # NOTE: subfigures don't have a tight layout option
-    def tight_layout(self):
+    def tight_layout(self):  # noqa: D102
         pass
 
 
