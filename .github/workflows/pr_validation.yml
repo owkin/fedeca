@@ -19,7 +19,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ windows-2019 ]
+        os: [ windows-2025 ]
         python: [ "3.9" ]
     steps:
       - uses: actions/checkout@v4
