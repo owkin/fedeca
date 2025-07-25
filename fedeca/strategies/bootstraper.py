@@ -20,6 +20,8 @@ from substrafl.strategies.strategy import Strategy
 
 from fedeca.utils.survival_utils import BootstrapMixin
 
+from fedeca.utils.logging import log_remote_data
+
 
 def make_bootstrap_strategy(
     strategy: Strategy,
@@ -416,7 +418,7 @@ def _bootstrap_local_function(
     # as substrafl use this name to call the method via getattr afterward.
     local_computation.__name__ = local_name
 
-    return remote_data(local_computation)
+    return remote_data(log_remote_data(local_computation))
 
 
 def _aggregate_all_bootstraps(aggregation_function_name, task_type: str = "algo"):
@@ -526,7 +528,7 @@ if __name__ == "__main__":
     from substrafl.experiment import execute_experiment
     from substrafl.index_generator import NpIndexGenerator
     from substrafl.nodes import AggregationNode
-    from substrafl.strategies import FedAvg  # , NewtonRaphson
+    from fedeca.strategies.fed_avg_decorated import FedAvgDecorated as FedAvg
 
     from fedeca import LogisticRegressionTorch
     from fedeca.utils import make_accuracy_function, make_substrafl_torch_dataset_class

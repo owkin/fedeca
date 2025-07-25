@@ -252,3 +252,14 @@ class RobustCoxVarianceAlgo(TorchWebDiscoAlgo):
         checkpoint = super()._update_from_checkpoint(path=path)
         self._client_statistics = checkpoint.pop("client_statistics")
         return checkpoint
+
+    @property
+    def strategies(self):
+        """List all compatible strategies.
+
+        Returns
+        -------
+        typing.List
+            List of all compatible strategies.
+        """
+        return super().strategies + ["Robust Cox Variance"]
