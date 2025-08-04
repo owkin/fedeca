@@ -3,13 +3,14 @@ from __future__ import annotations
 
 import itertools
 import pickle
+from pathlib import Path
 from typing import Any
 
 import numpy as np
 import pandas as pd
 
 
-def load_dataframe_from_pickles(filename: str) -> pd.DataFrame:
+def load_dataframe_from_pickles(filename: str | Path) -> pd.DataFrame:
     """Specialized function to load dataframe from a pickle file.
 
     Parameters
@@ -25,7 +26,7 @@ def load_dataframe_from_pickles(filename: str) -> pd.DataFrame:
         A single dataframe concatenating all results.
     """
 
-    def load_pickles(filename: str):
+    def load_pickles(filename: str | Path):
         with open(filename, "rb") as file:
             while True:
                 try:

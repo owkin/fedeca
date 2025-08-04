@@ -11,7 +11,7 @@ from fedeca.utils.constants import EXPERIMENTS_PATHS
 
 if __name__ == "__main__":
     # Load histogram cuts and weight counts
-    with open(EXPERIMENTS_PATHS["pdac"] + "rw_pdac_histogram.pkl", "rb") as f:
+    with open(EXPERIMENTS_PATHS["pdac"] / "rw_pdac_histogram.pkl", "rb") as f:
         df_res = pickle.load(f)
         df_res = df_res.dropna(how="any", subset="Count")
 

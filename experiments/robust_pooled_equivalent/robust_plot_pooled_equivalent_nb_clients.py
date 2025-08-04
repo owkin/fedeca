@@ -21,7 +21,7 @@ names = ["Hazard Ratio", "Partial Log likelihood", "p-values", "Propensity score
 cmp = sns.color_palette("colorblind")
 results = load_dataframe_from_pickles(
     EXPERIMENTS_PATHS["robust_pooled_equivalence"]
-    + "results_Robust_Pooled_Equivalent_nb_clients.pkl"
+    / "results_Robust_Pooled_Equivalent_nb_clients.pkl"
 )
 
 n_clients = [2, 3, 5, 10]

@@ -9,7 +9,7 @@ from fedeca.utils.constants import EXPERIMENTS_PATHS
 from fedeca.viz.plot import plot_survival_function
 
 if __name__ == "__main__":
-    with open(EXPERIMENTS_PATHS["pdac"] + "rw_pdac_exchangeability_km.pkl", "rb") as f:
+    with open(EXPERIMENTS_PATHS["pdac"] / "rw_pdac_exchangeability_km.pkl", "rb") as f:
         df_res = pickle.load(f)
 
     g = (

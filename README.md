@@ -87,13 +87,10 @@ use the following commands:
 <details>
   <summary>Standardized mean difference and power analysis</summary>
 
-  - Figure 3(a), Figure 3(b)
+  - Figure 3
+    (remove the `--ensemble` flag to create subfigures separatedly)
     ```shell
-    python -m experiments.smd.plot_smd
-    ```
-  - Figure 3(c)
-    ```shell
-    python -m experiments.power.plot_power_type_one_error
+    python -m experiments.smd_power.plot_smd_power --ensemble
     ```
 </details>
 <details>

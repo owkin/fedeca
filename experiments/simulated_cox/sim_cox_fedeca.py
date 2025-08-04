@@ -181,7 +181,7 @@ if __name__ == "__main__":
     )
     with open(
         EXPERIMENTS_PATHS["pooled_equivalent"]
-        + "results_sim_cox_pooled_equivalent_hardcore.pkl",
+        / "results_sim_cox_pooled_equivalent_hardcore.pkl",
         "wb",
     ) as f1:
         pickle.dump(results, f1)

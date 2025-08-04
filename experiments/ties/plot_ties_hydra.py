@@ -27,7 +27,7 @@ cmp = sns.color_palette("colorblind")
 
 results = load_dataframe_from_pickles(
     EXPERIMENTS_PATHS["robust_pooled_equivalence_ties"]
-    + "results_Pooled_equivalent_ties.pkl"
+    / "results_Pooled_equivalent_ties.pkl"
 )
 
 results.loc[results["percent_ties"].isna(), "percent_ties"] = 0.0

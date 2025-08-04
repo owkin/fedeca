@@ -14,10 +14,10 @@ if __name__ == "__main__":
     parser.add_argument("--ensemble", action="store_true")
     args = parser.parse_args()
 
-    with open(EXPERIMENTS_PATHS["pdac"] + "rw_pdac_smd.pkl", "rb") as f:
+    with open(EXPERIMENTS_PATHS["pdac"] / "rw_pdac_smd.pkl", "rb") as f:
         df_smd = pickle.load(f)
 
-    with open(EXPERIMENTS_PATHS["pdac"] + "rw_pdac_ate_km.pkl", "rb") as f:
+    with open(EXPERIMENTS_PATHS["pdac"] / "rw_pdac_ate_km.pkl", "rb") as f:
         df_km = pickle.load(f)
         df_all = df_km[df_km["center"].eq("idibigi_ffcd_pancan")]
         df_ffcd_idibigi = df_km[df_km["center"].eq("idibigi_ffcd")]

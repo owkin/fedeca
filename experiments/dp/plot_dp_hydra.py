@@ -26,7 +26,7 @@ names = {
 }
 cmp = sns.color_palette("colorblind")
 results = load_dataframe_from_pickles(
-    EXPERIMENTS_PATHS["dp_results"] + "results_Pooled_equivalent_DP.pkl"
+    EXPERIMENTS_PATHS["dp_results"] / "results_Pooled_equivalent_DP.pkl"
 )
 
 results_fl = results.loc[results["method"] == "FederatedIPTW", :]

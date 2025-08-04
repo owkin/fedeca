@@ -20,7 +20,7 @@ def relative_error(x, y, absolute_error=False):
 names = ["Hazard Ratio", "Partial Log likelihood", "p-values", "Propensity scores"]
 cmp = sns.color_palette("colorblind")
 results = load_dataframe_from_pickles(
-    EXPERIMENTS_PATHS["pooled_equivalent"] + "results_Pooled_equivalent_nb_clients.pkl"
+    EXPERIMENTS_PATHS["pooled_equivalent"] / "results_Pooled_equivalent_nb_clients.pkl"
 )
 
 n_clients = [2, 3, 5, 10]
