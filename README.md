@@ -114,21 +114,18 @@ use the following commands:
 ## <a name="citation"></a>Citing FedECA
 
 ```bibtex
-@ARTICLE{terrail2023fedeca,
-       author = {{Ogier du Terrail}, Jean and {Klopfenstein}, Quentin and {Li}, Honghao and {Mayer}, Imke and {Loiseau}, Nicolas and {Hallal}, Mohammad and {Debouver}, Michael and {Camalon}, Thibault and {Fouqueray}, Thibault and {Arellano Castro}, Jorge and {Yanes}, Zahia and {Dahan}, Laetitia and {Ta{\"\i}eb}, Julien and {Laurent-Puig}, Pierre and {Bachet}, Jean-Baptiste and {Zhao}, Shulin and {Nicolle}, Remy and {Cros}, J{\'e}rome and {Gonzalez}, Daniel and {Carreras-Torres}, Robert and {Garcia Velasco}, Adelaida and {Abdilleh}, Kawther and {Doss}, Sudheer and {Balazard}, F{\'e}lix and {Andreux}, Mathieu},
-        title = "{FedECA: Federated External Control Arms for Causal Inference with Time-To-Event Data in Distributed Settings}",
-      journal = {arXiv e-prints},
-     keywords = {Statistics - Methodology, Computer Science - Distributed, Parallel, and Cluster Computing, Computer Science - Machine Learning},
-         year = 2023,
-        month = nov,
-          eid = {arXiv:2311.16984},
-        pages = {arXiv:2311.16984},
-          doi = {10.48550/arXiv.2311.16984},
-archivePrefix = {arXiv},
-       eprint = {2311.16984},
- primaryClass = {stat.ME},
-       adsurl = {https://ui.adsabs.harvard.edu/abs/2023arXiv231116984O},
-      adsnote = {Provided by the SAO/NASA Astrophysics Data System}
+@article{OgierduTerrail2025,
+  author = {Jean Ogier du Terrail and Quentin Klopfenstein and Honghao Li and Imke Mayer and Nicolas Loiseau and Mohammad Hallal and Michael Debouver and Thibault Camalon and Thibault Fouqueray and Jorge Arellano Castro and Zahia Yanes and Laëtitia Dahan and Julien Taïeb and Pierre Laurent-Puig and Jean-Baptiste Bachet and Shulin Zhao and Remy Nicolle and Jérôme Cros and Daniel Gonzalez and Robert Carreras-Torres and Adelaida Garcia Velasco and Kawther Abdilleh and Sudheer Doss and Félix Balazard and Mathieu Andreux},
+  title = {FedECA: federated external control arms for causal inference with time-to-event data in distributed settings},
+  journal = {Nature Communications},
+  year = {2025},
+  volume = {16},
+  number = {1},
+  pages = {7496},
+  doi = {10.1038/s41467-025-62525-z},
+  url = {https://doi.org/10.1038/s41467-025-62525-z},
+  abstract = {External control arms can inform early clinical development of experimental drugs and provide efficacy evidence for regulatory approval. However, accessing sufficient real-world or historical clinical trials data is challenging. Indeed, regulations protecting patients’ rights by strictly controlling data processing make pooling data from multiple sources in a central server often difficult. To address these limitations, we develop a method that leverages federated learning to enable inverse probability of treatment weighting for time-to-event outcomes on separate cohorts without needing to pool data. To showcase its potential, we apply it in different settings of increasing complexity, culminating with a real-world use-case in which our method is used to compare the treatment effect of two approved chemotherapy regimens using data from three separate cohorts of patients with metastatic pancreatic cancer. By sharing our code, we hope it will foster the creation of federated research networks and thus accelerate drug development.},
+  issn = {2041-1723}
 }
 
 ```
