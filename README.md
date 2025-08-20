@@ -17,7 +17,7 @@ Before using the code be sure to check our [license](./license.md) first.
 
 ## The official Flower implementation
 
-FedECA is also implemented under the [Flower framework](https://flower.ai/), available [here](https://github.com/owkin/flower-fedeca), as the offical implementation. Please consider using it for your FedECA analysis.
+FedECA is also implemented in the [Flower framework](https://flower.ai/), available [here](https://github.com/owkin/flower-fedeca), as the offical implementation. Please consider using it for your FedECA analysis.
 
 
 ## Installation instructions
