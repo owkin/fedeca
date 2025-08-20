@@ -3,9 +3,9 @@
 [![pr-validation](https://github.com/owkin/fedeca/actions/workflows/pr_validation.yml/badge.svg?branch=main)](https://github.com/owkin/fedeca/actions/workflows/pr_validation.yml)
 <img src="/badges/cov_badge.svg" >
 
-:arrow_right:[The API doc is available here](https://owkin.github.io/fedeca/):arrow_left:
+:arrow_right: [The API doc is available here](https://owkin.github.io/fedeca/) :arrow_left:
 
-This repository contains code associated with the [FedECA arXiv paper](https://arxiv.org/abs/2311.16984).
+This repository contains code associated with the [FedECA paper](https://doi.org/10.1038/s41467-025-62525-z).
 
 Please [cite our paper](#citation) if you use our code !
 
@@ -13,6 +13,11 @@ Please [cite our paper](#citation) if you use our code !
 ## License
 
 Before using the code be sure to check our [license](./license.md) first.
+
+
+## The official Flower implementation
+
+FedECA is also implemented under the [Flower framework](https://flower.ai/), available [here](https://github.com/owkin/flower-fedeca), as the offical implementation. Please consider using it for your FedECA analysis.
 
 
 ## Installation instructions
@@ -62,7 +67,7 @@ with less than 2 seconds spent on each run of the FedECA algorithm in-RAM (using
 
 ## Figures reproduction
 
-To reproduce figures in the [FedECA arXiv paper](https://arxiv.org/abs/2311.16984),
+To reproduce figures in the [FedECA paper](https://doi.org/10.1038/s41467-025-62525-z),
 use the following commands:
 <details>
   <summary>Equivalence between pooled IPTW and FedECA</summary>
