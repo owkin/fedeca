@@ -15,7 +15,7 @@ Please [cite our paper](#citation) if you use our code !
 Before using the code be sure to check our [license](./license.md) first.
 
 
-## The official Flower implementation
+## Future real-world deployments
 
 FedECA is now also implemented in the [Flower framework](https://flower.ai/), with code available [here](https://github.com/owkin/flower-fedeca), going onwards we will deprecate the Substra implementation in favor of the Flower implementation. Thus please consider using the Flower implementation for new real-world FedECA analyses and the Substra implementation as a legacy reference to reproduce the article's results.
 
