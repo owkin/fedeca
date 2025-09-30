@@ -1,0 +1,569 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>fedeca.strategies &mdash; FedECA 135f89e55308c499013645884a817dd686810572 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/fonts.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/owkin.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/sidebar.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="fedeca.utils" href="utils.html" />
+    <link rel="prev" title="fedeca.scripts" href="scripts.html" /> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> FedECA
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                135f89e55308c499013645884a817dd686810572
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption" role="heading"><span class="caption-text">Installation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Getting Started Instructions</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html#pooled-iptw-analysis">Pooled IPTW analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html#distributed-analysis">Distributed Analysis</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="competitors.html">fedeca.competitors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="algorithms.html">fedeca.algorithms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="metrics.html">fedeca.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="scripts.html">fedeca.scripts</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">fedeca.strategies</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#fedeca.strategies.WebDisco"><code class="docutils literal notranslate"><span class="pre">WebDisco</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#fedeca.strategies.WebDisco.aggregate_moments"><code class="docutils literal notranslate"><span class="pre">WebDisco.aggregate_moments()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fedeca.strategies.WebDisco.build_compute_plan"><code class="docutils literal notranslate"><span class="pre">WebDisco.build_compute_plan()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fedeca.strategies.WebDisco.perform_evaluation"><code class="docutils literal notranslate"><span class="pre">WebDisco.perform_evaluation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fedeca.strategies.WebDisco.perform_round"><code class="docutils literal notranslate"><span class="pre">WebDisco.perform_round()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fedeca.strategies.WebDisco.name"><code class="docutils literal notranslate"><span class="pre">WebDisco.name</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#fedeca.strategies.bootstraper.make_bootstrap_metric_function"><code class="docutils literal notranslate"><span class="pre">make_bootstrap_metric_function()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#fedeca.strategies.bootstraper.make_bootstrap_strategy"><code class="docutils literal notranslate"><span class="pre">make_bootstrap_strategy()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#fedeca.strategies.webdisco_utils.compute_summary_function"><code class="docutils literal notranslate"><span class="pre">compute_summary_function()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#fedeca.strategies.webdisco_utils.get_final_cox_model_function"><code class="docutils literal notranslate"><span class="pre">get_final_cox_model_function()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#fedeca.strategies.webdisco_utils.get_last_algo_from_round_count"><code class="docutils literal notranslate"><span class="pre">get_last_algo_from_round_count()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="utils.html">fedeca.utils</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">FedECA</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+      <li>fedeca.strategies</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <section id="fedeca-strategies">
+<h1>fedeca.strategies<a class="headerlink" href="#fedeca-strategies" title="Permalink to this heading">¶</a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="fedeca.strategies.WebDisco">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">WebDisco</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">algo</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metric_functions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">standardize_data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-16</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fedeca.strategies.WebDisco" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Strategy</span></code></p>
+<p>WebDisco strategy class.</p>
+<p>It can only be used with traditional Cox models on pandas.DataFrames.
+This strategy is one of its kind because it can only be used with
+Linear CoxPH models defined in fedeca.utils.survival_utils. Therefore all models are
+initialized with zeroed weights (as in lifelines), tested and we cover all possible
+use cases with the dtype and ndim arguments. This strategy splits the computations
+of gradient and Hessian between workers to compute a centralized batch Newton-
+Raphson update on Breslow’s partial log-likelihod (to handle tied events it uses
+Breslow’s approximation unlike lifelines which uses Efron’s by default but Efron is
+not separable). This strategy uses lifeline’s adaptive step-size to converge faster
+starting from initial_ste_size and use lifelines safe way of inverting the hessian.
+As lifelines standardizes the data by default we allow the user to do it optionally.</p>
+<section id="reference">
+<h2>Reference<a class="headerlink" href="#reference" title="Permalink to this heading">¶</a></h2>
+<ul class="simple">
+<li><p><a class="reference external" href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5009917/">https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5009917/</a></p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">param statistics_computed<span class="colon">:</span></dt>
+<dd class="field-odd"><p>If the statistics that we can find in each gradient, hessian are already
+computed and given as attribute to the server or not.</p>
+</dd>
+<dt class="field-even">type statistics_computed<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">bool,</span></code></p>
+</dd>
+<dt class="field-odd">param initial_step_size<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The initial step size of the Newton-Raphson algorithm at the server side.
+The following steps will use lifelines heuristics to adapt the step-size.
+Defaults to 0.9.</p>
+</dd>
+<dt class="field-even">type initial_step_size<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">otional</span></code></p>
+</dd>
+<dt class="field-odd">type tol<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a></p>
+</dd>
+<dt class="field-even">param tol<span class="colon">:</span></dt>
+<dd class="field-even"><p>Capping every division to avoid dividing by 0. Defaults to 1e-16.</p>
+</dd>
+<dt class="field-odd">type tol<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>, <em>optional</em></p>
+</dd>
+<dt class="field-even">type standardize_data<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a></p>
+</dd>
+<dt class="field-odd">param standardize_data<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Whether or not to standardize the data before comuting updates.
+Defaults to False.</p>
+</dd>
+<dt class="field-even">type standardize_data<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">bool,</span></code></p>
+</dd>
+<dt class="field-odd">param penalizer<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Add a regularizer in case of ill-conditioned hessians, which happen quite
+often with large covariates.
+Defaults to 0.</p>
+</dd>
+<dt class="field-even">type penalizer<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>, <em>optional</em></p>
+</dd>
+<dt class="field-odd">param l1_ratio<span class="colon">:</span></dt>
+<dd class="field-odd"><p>When using a penalizer the ratio between L1 and L2 regularization as in
+sklearn.
+Defaults to 0.</p>
+</dd>
+<dt class="field-even">type l1_ratio<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>, <em>optional</em></p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="fedeca.strategies.WebDisco.aggregate_moments">
+<span class="sig-name descname"><span class="pre">aggregate_moments</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">shared_states</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fedeca.strategies.WebDisco.aggregate_moments" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the global centered moments given the local results.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>shared_states</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>) – List of results (local_m1, local_m2, n_samples) from training nodes.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Global results to be shared with train nodes via shared_state.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fedeca.strategies.WebDisco.build_compute_plan">
+<span class="sig-name descname"><span class="pre">build_compute_plan</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_data_nodes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">aggregation_node</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">evaluation_strategy</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_rounds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clean_models</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fedeca.strategies.WebDisco.build_compute_plan" title="Permalink to this definition">¶</a></dt>
+<dd><p>Build the computation graph of the strategy.</p>
+<p>It removes initialization round,
+which is useless in this case as all models start at 0.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>train_data_nodes</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">typing.List[TrainDataNode],</span></code>) – list of the train organizations</p></li>
+<li><p><strong>aggregation_node</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">typing.Optional[AggregationNode],</span></code>) – aggregation node, necessary for centralized strategy, unused otherwise</p></li>
+<li><p><strong>evaluation_strategy</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Optional[EvaluationStrategy],</span></code>) – When and how to compute performance.</p></li>
+<li><p><strong>num_rounds</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int,</span></code>) – The number of rounds to perform.</p></li>
+<li><p><strong>clean_models</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span> <span class="pre">(default=True),</span></code>) – Clean the intermediary models on the Substra platform.
+Set it to False if you want to download or re-use
+intermediary models. This causes the disk space to
+fill quickly so should be set to True unless needed.
+Defaults to True.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fedeca.strategies.WebDisco.perform_evaluation">
+<span class="sig-name descname"><span class="pre">perform_evaluation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">test_data_nodes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_data_nodes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">round_idx</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fedeca.strategies.WebDisco.perform_evaluation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluate model on the given test_data_nodes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>test_data_nodes</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List[TestDataNode]),</span></code>) – test data nodes to intersect with train data nodes to evaluate the
+model on.</p></li>
+<li><p><strong>train_data_nodes</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List[TrainDataNode],</span></code>) – train data nodes the model has been trained on.</p></li>
+<li><p><strong>round_idx</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int,</span></code>) – round index.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#NotImplementedError" title="(in Python v3.13)"><strong>NotImplementedError</strong></a> – </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fedeca.strategies.WebDisco.perform_round">
+<span class="sig-name descname"><span class="pre">perform_round</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_data_nodes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">aggregation_node</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">round_idx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clean_models</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">additional_orgs_permissions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fedeca.strategies.WebDisco.perform_round" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform one round of webdisco.</p>
+<dl class="simple">
+<dt>One round of the WebDisco strategy consists in:</dt><dd><ul class="simple">
+<li><p>optionally compute global means and stds for all features if
+standardize_data is True</p></li>
+<li><p>compute global survival statistics that will be reused at each round</p></li>
+<li><p>build building blocks of the gradient and hessian based on global risk
+sets</p></li>
+<li><p>perform a Newton-Raphson update on each train data nodes</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>train_data_nodes</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">typing.List[TrainDataNode],</span></code>) – List of the nodes on which to train</p></li>
+<li><p><strong>aggregation_node</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">AggregationNode</span></code>) – node without data, used to perform operations on the
+shared states of the models</p></li>
+<li><p><strong>round_idx</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int,</span></code>) – Round number, it starts at 0.</p></li>
+<li><p><strong>clean_models</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool,</span></code>) – Clean the intermediary models of this round on the
+Substra platform. Set it to False if you want to
+download or re-use intermediary models. This causes the
+disk space to fill quickly so should be set to True unless needed.</p></li>
+<li><p><strong>additional_orgs_permissions</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">typing.Optional[set],</span></code>) – Additional permissions to give to the model outputs after training,
+in order to test the model on an other organization.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="fedeca.strategies.WebDisco.name">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">StrategyName</span></em><a class="headerlink" href="#fedeca.strategies.WebDisco.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>The name of the strategy.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>StrategyName</strong></p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Name</span></code> of <code class="xref py py-class docutils literal notranslate"><span class="pre">the</span> <span class="pre">strategy</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>algo</strong> (<em>Algo</em>) – </p></li>
+<li><p><strong>metric_functions</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Dict" title="(in Python v3.13)"><em>Dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.13)"><em>Callable</em></a><em>] </em><em>| </em><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.13)"><em>List</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.13)"><em>Callable</em></a><em>] </em><em>| </em><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.13)"><em>Callable</em></a><em> | </em><em>None</em>) – </p></li>
+<li><p><strong>standardize_data</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a>) – </p></li>
+<li><p><strong>tol</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a>) – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<span class="target" id="module-fedeca.strategies.bootstraper"></span><p>Bootstrap substra strategy in an efficient fashion.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="fedeca.strategies.bootstraper.make_bootstrap_metric_function">
+<span class="sig-name descname"><span class="pre">make_bootstrap_metric_function</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">metric_functions</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fedeca.strategies.bootstraper.make_bootstrap_metric_function" title="Permalink to this definition">¶</a></dt>
+<dd><p>Take the metric_functions dict, and bootstrap each metric.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>metric_functions</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>) – The metric functions to hook.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="fedeca.strategies.bootstraper.make_bootstrap_strategy">
+<span class="sig-name descname"><span class="pre">make_bootstrap_strategy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">strategy</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_bootstrap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bootstrap_seeds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bootstrap_function</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">client_specific_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fedeca.strategies.bootstraper.make_bootstrap_strategy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bootstrap a substrafl strategy wo impacting the number of compute tasks.</p>
+<p>In order to reduce the bottleneck of substra when bootstraping a strategy
+we need to go over the strategy compute plan and modifies each local atomic
+task to execute n_bootstrap times on bootstraped data. Each modified task
+returns a list of n_bootstraps original outputs obtained on each bootstrap.
+Each aggregation task is then modified to aggregate the n_bootstrap outputs
+independently.
+This code heavily uses some code patterns invented by Arthur Pignet.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>strategy</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Strategy</span></code>) – The strategy to bootstrap.</p></li>
+<li><p><strong>n_bootstrap</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Union[int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">None]</span></code>) – Number of bootstrap to be performed. If None will use
+len(bootstrap_seeds) instead. If bootstrap_seeds is given
+seeds those seeds will be used for the generation
+otherwise seeds are generated randomly.</p></li>
+<li><p><strong>bootstrap_seeds</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Union[list[int]</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">None]</span></code>) – The list of seeds used for bootstrapping random states.
+If None will generate n_bootstrap randomly, in the presence
+of both allways use bootstrap_seeds.</p></li>
+<li><p><strong>bootstrap_function</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Union[Callable</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">None]</span></code>) – A function with signature f(data, seed) that returns a bootstrapped
+version of the data.
+If None, use the BootstrapMixin function.
+Note that this can be used to provide splits/cross-validation capabilities
+as well where seed would be the fold number in a flattened list of folds.</p></li>
+<li><p><strong>client_specific_kwargs</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Union[None</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">list[dict]]</span></code>) – A list of dictionaries containing the kwargs to be passed to the algos
+if they are different for each bootstrap. It is useful to chain bootstrapped
+compute plans for instance.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The resulting efficiently bootstrapped strategy</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Strategy</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<span class="target" id="module-fedeca.strategies.webdisco_utils"></span><p>Webdisco utils.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="fedeca.strategies.webdisco_utils.compute_summary_function">
+<span class="sig-name descname"><span class="pre">compute_summary_function</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">final_params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">variance_matrix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.05</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fedeca.strategies.webdisco_utils.compute_summary_function" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute summary function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>final_params</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">np.ndarray</span></code>) – The estimated vallues of Cox model coefficients.</p></li>
+<li><p><strong>variance_matrix</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">np.ndarray</span></code>) – Computed variance matrix whether using robust estimation or not.</p></li>
+<li><p><strong>alpha</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>, <em>optional</em>) – The quantile level to test, by default 0.05</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Summary of IPTW analysis as in lifelines.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">pd.DataFrame</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="fedeca.strategies.webdisco_utils.get_final_cox_model_function">
+<span class="sig-name descname"><span class="pre">get_final_cox_model_function</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">client</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compute_plan_key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_rounds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">standardize_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">duration_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">event_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">simu_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">robust</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fedeca.strategies.webdisco_utils.get_final_cox_model_function" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieve first converged Cox model and corresponding hessian.</p>
+<p>In case of bootstrapping retrieves the first converged Cox models for each
+seed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>Client</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Client</span></code>) – The susbtrafl Client that registered the CP.</p></li>
+<li><p><strong>compute_plan_key</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Union[str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Algo]</span></code>) – The key of the CP.</p></li>
+<li><p><strong>num_rounds</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – The number of rounds of the CP.</p></li>
+<li><p><strong>standardize_data</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>, <em>optional</em>) – Whether or not the data was standadized, by default 0.05</p></li>
+<li><p><strong>duration_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – The name of the duration column.</p></li>
+<li><p><strong>event_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – The name of the event column.</p></li>
+<li><p><strong>simu_mode</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>) – Whether or not we are using simu mode. Note this could be inferred from
+the Client.</p></li>
+<li><p><strong>robust</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>, <em>optional</em>) – Retreive global statistics for robust variance estimation.</p></li>
+<li><p><strong>client</strong> (<em>Client</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Returns hessian, log-likelihood, Cox model’s weights, global moments</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="fedeca.strategies.webdisco_utils.get_last_algo_from_round_count">
+<span class="sig-name descname"><span class="pre">get_last_algo_from_round_count</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_rounds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">standardize_data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">simu_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fedeca.strategies.webdisco_utils.get_last_algo_from_round_count" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get true number of rounds.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>num_rounds</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">list[int]</span></code>) – _description_</p></li>
+<li><p><strong>standardize_data</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>, <em>optional</em>) – _description_, by default True</p></li>
+<li><p><strong>simu_mode</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>) – Whether or not we are in simu mode.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>_description_</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">_type_</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="utils.html" class="btn btn-neutral float-right" title="fedeca.utils" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="scripts.html" class="btn btn-neutral" title="fedeca.scripts" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2025, OWKIN
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/sphinx_highlight.js"></script>
+    
+
+  
+
+  <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

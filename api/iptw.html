@@ -1,0 +1,413 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>fedeca.fedeca_core &mdash; FedECA 135f89e55308c499013645884a817dd686810572 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/fonts.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/owkin.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/sidebar.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> FedECA
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                135f89e55308c499013645884a817dd686810572
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption" role="heading"><span class="caption-text">Installation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Getting Started Instructions</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html#pooled-iptw-analysis">Pooled IPTW analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html#distributed-analysis">Distributed Analysis</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="competitors.html">fedeca.competitors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="algorithms.html">fedeca.algorithms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="metrics.html">fedeca.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="scripts.html">fedeca.scripts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="strategies.html">fedeca.strategies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utils.html">fedeca.utils</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">FedECA</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+      <li>fedeca.fedeca_core</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <section id="fedeca-fedeca-core">
+<h1>fedeca.fedeca_core<a class="headerlink" href="#fedeca-fedeca-core" title="Permalink to this heading">¶</a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="fedeca.FedECA">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">FedECA</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">ndim,</span> <span class="pre">ds_client=None,</span> <span class="pre">train_data_nodes=None,</span> <span class="pre">treated_col='treated',</span> <span class="pre">event_col='E',</span> <span class="pre">duration_col='T',</span> <span class="pre">ps_col='propensity_scores',</span> <span class="pre">propensity_fit_cols=None,</span> <span class="pre">cox_fit_cols=None,</span> <span class="pre">num_rounds_list=[10,</span> <span class="pre">10],</span> <span class="pre">damping_factor_nr=0.8,</span> <span class="pre">l2_coeff_nr=0.0,</span> <span class="pre">standardize_data=True,</span> <span class="pre">penalizer=0.0,</span> <span class="pre">l1_ratio=1.0,</span> <span class="pre">initial_step_size=0.95,</span> <span class="pre">learning_rate_strategy='lifelines',</span> <span class="pre">dtype='float64',</span> <span class="pre">training_strategy='iptw',</span> <span class="pre">variance_method='naïve',</span> <span class="pre">n_bootstrap=200,</span> <span class="pre">bootstrap_seeds=None,</span> <span class="pre">bootstrap_function='global',</span> <span class="pre">clients_sizes=None,</span> <span class="pre">indices_in_global_dataset=None,</span> <span class="pre">client_identifier='client',</span> <span class="pre">clients_names=None,</span> <span class="pre">dp_target_epsilon=None,</span> <span class="pre">dp_target_delta=None,</span> <span class="pre">dp_max_grad_norm=None,</span> <span class="pre">dp_propensity_model_optimizer_class=&lt;class</span> <span class="pre">'torch.optim.sgd.SGD'&gt;,</span> <span class="pre">dp_propensity_model_optimizer_kwargs=None,</span> <span class="pre">dp_propensity_model_training_params=None,</span> <span class="pre">seed=42,</span> <span class="pre">aggregation_node=None,</span> <span class="pre">experiment_folder='./iptw_experiment',</span> <span class="pre">clean_models=False,</span> <span class="pre">dependencies=None,</span> <span class="pre">timeout=3600,</span> <span class="pre">sleep_time=30,</span> <span class="pre">fedeca_path=None,</span> <span class="pre">evaluation_frequency=None,</span> <span class="pre">partner_client=None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fedeca.FedECA" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="utils.html#fedeca.utils.substrafl_utils.Experiment" title="fedeca.utils.substrafl_utils.Experiment"><code class="xref py py-class docutils literal notranslate"><span class="pre">Experiment</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseSurvivalEstimator</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">BootstrapMixin</span></code></p>
+<p>FedECA class that performs Federated IPTW or AIPTW.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ndim</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – </p></li>
+<li><p><strong>train_data_nodes</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a><em>[</em><em>substrafl.nodes.train_data_node.TrainDataNode</em><em>] </em><em>| </em><em>None</em>) – </p></li>
+<li><p><strong>treated_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – </p></li>
+<li><p><strong>event_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – </p></li>
+<li><p><strong>duration_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – </p></li>
+<li><p><strong>propensity_fit_cols</strong> (<em>None</em><em> | </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a>) – </p></li>
+<li><p><strong>cox_fit_cols</strong> (<em>None</em><em> | </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a>) – </p></li>
+<li><p><strong>num_rounds_list</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em>]</em>) – </p></li>
+<li><p><strong>damping_factor_nr</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a>) – </p></li>
+<li><p><strong>l2_coeff_nr</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a>) – </p></li>
+<li><p><strong>standardize_data</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a>) – </p></li>
+<li><p><strong>penalizer</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a>) – </p></li>
+<li><p><strong>l1_ratio</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a>) – </p></li>
+<li><p><strong>initial_step_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a>) – </p></li>
+<li><p><strong>learning_rate_strategy</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – </p></li>
+<li><p><strong>dtype</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a>) – </p></li>
+<li><p><strong>training_strategy</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – </p></li>
+<li><p><strong>variance_method</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – </p></li>
+<li><p><strong>n_bootstrap</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em> | </em><em>None</em>) – </p></li>
+<li><p><strong>bootstrap_seeds</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em>] </em><em>| </em><em>None</em>) – </p></li>
+<li><p><strong>bootstrap_function</strong> (<a class="reference external" href="https://docs.python.org/3/library/collections.abc.html#collections.abc.Callable" title="(in Python v3.13)"><em>Callable</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – </p></li>
+<li><p><strong>clients_sizes</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a><em> | </em><em>None</em>) – </p></li>
+<li><p><strong>indices_in_global_dataset</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a><em> | </em><em>None</em>) – </p></li>
+<li><p><strong>client_identifier</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – </p></li>
+<li><p><strong>clients_names</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a><em> | </em><em>None</em>) – </p></li>
+<li><p><strong>dp_target_epsilon</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em> | </em><em>None</em>) – </p></li>
+<li><p><strong>dp_target_delta</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em> | </em><em>None</em>) – </p></li>
+<li><p><strong>dp_max_grad_norm</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em> | </em><em>None</em>) – </p></li>
+<li><p><strong>dp_propensity_model_optimizer_class</strong> (<em>Optimizer</em>) – </p></li>
+<li><p><strong>dp_propensity_model_optimizer_kwargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><em>dict</em></a><em> | </em><em>None</em>) – </p></li>
+<li><p><strong>dp_propensity_model_training_params</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><em>dict</em></a><em> | </em><em>None</em>) – </p></li>
+<li><p><strong>seed</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – </p></li>
+<li><p><strong>aggregation_node</strong> (<em>AggregationNode</em><em> | </em><em>None</em>) – </p></li>
+<li><p><strong>experiment_folder</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – </p></li>
+<li><p><strong>clean_models</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a>) – </p></li>
+<li><p><strong>dependencies</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a><em> | </em><em>None</em>) – </p></li>
+<li><p><strong>timeout</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – </p></li>
+<li><p><strong>sleep_time</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – </p></li>
+<li><p><strong>fedeca_path</strong> (<em>None</em><em> | </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – </p></li>
+<li><p><strong>partner_client</strong> (<em>None</em><em> | </em><em>Client</em>) – </p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="fedeca.FedECA.check_cp_status">
+<span class="sig-name descname"><span class="pre">check_cp_status</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fedeca.FedECA.check_cp_status" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check the status of the process.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fedeca.FedECA.compute_propensity_scores">
+<span class="sig-name descname"><span class="pre">compute_propensity_scores</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fedeca.FedECA.compute_propensity_scores" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute propensity scores and corresponding weights.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>data</strong> (<a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.3.3)"><em>DataFrame</em></a>) – </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fedeca.FedECA.compute_summary">
+<span class="sig-name descname"><span class="pre">compute_summary</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.05</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fedeca.FedECA.compute_summary" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute summary for a given threshold.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>alpha</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">(default=0.05)</span></code>) – Confidence level for computing CIs</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fedeca.FedECA.fit">
+<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">targets</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_clients</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">split_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">split_method_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">variance_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_bootstrap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bootstrap_seeds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bootstrap_function</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dp_target_epsilon</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dp_target_delta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dp_max_grad_norm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dp_propensity_model_training_params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dp_propensity_model_optimizer_class</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dp_propensity_model_optimizer_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'subprocess'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">urls</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">server_org_id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tokens</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fedeca.FedECA.fit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fit strategies on global data split across clients.</p>
+<p>For test if provided we use test_data_nodes from int or the
+train_data_nodes in the latter train=test.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">pd.DataFrame</span></code>) – The global data to be split has to be a dataframe as we only support
+one opener type.</p></li>
+<li><p><strong>targets</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Optional[pd.DataFrame]</span></code>, <em>optional</em>) – A dataframe with propensity score or nothing.</p></li>
+<li><p><strong>nb_clients</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Union[int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">None]</span></code>, <em>optional</em>) – The number of clients used to split data across, by default None</p></li>
+<li><p><strong>split_method</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Union[Callable</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">None]</span></code>, <em>optional</em>) – How to split data across the nb_clients, by default None</p></li>
+<li><p><strong>split_method_kwargs</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Union[Callable</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">None]</span></code>, <em>optional</em>) – Argument of the function used to split data, by default None</p></li>
+<li><p><strong>data_path</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Union[str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">None]</span></code>) – Where to store the data on disk when backend is not remote.</p></li>
+<li><p><strong>variance_method</strong> (:class:<code class="docutils literal notranslate"><span class="pre">```{&quot;naive&quot;,</span> <span class="pre">&quot;robust&quot;,</span> <span class="pre">&quot;bootstrap&quot;}</span></code>:class:<a href="#id1"><span class="problematic" id="id2">``</span></a><a href="#id3"><span class="problematic" id="id4">`</span></a>) – <p>Method for estimating the variance, and therefore the p-value of the
+estimated treatment effect.
+* “naive”: Inverse of the Fisher information.
+* “robust”: The robust sandwich estimator [1] computed in FL thanks</p>
+<blockquote>
+<div><p>to FedECA. Useful when samples are reweighted.</p>
+</div></blockquote>
+<ul>
+<li><p>”bootstrap”: Bootstrap the given data by sampling each patient
+with replacement, each time estimate the treatment effect, then
+use all repeated estimations to compute the variance. The implementation
+is efficient in substra and shouldn’t induce too much overhead.</p></li>
+</ul>
+<p>Defauts to naïve.
+[1] David A Binder. Fitting cox’s proportional hazards models from survey data. Biometrika, 79(1):139–147, 1992.  # noqa: E501</p>
+</p></li>
+<li><p><strong>n_bootstraps</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Union[int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">None]</span></code>) – Number of bootstrap to be performed. If None will use
+len(bootstrap_seeds) instead. If bootstrap_seeds is given
+seeds those seeds will be used for the generation
+otherwise seeds are generated randomly.</p></li>
+<li><p><strong>bootstrap_seeds</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Union[list[int]</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">None]</span></code>) – The list of seeds used for bootstrapping random states.
+If None will generate n_bootstraps randomly, in the presence
+of both allways use bootstrap_seeds.</p></li>
+<li><p><strong>bootstrap_function</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Union[Callable</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">None]</span></code>) – The bootstrap function to use for instance if it is necessary to mimic
+a global sampling.</p></li>
+<li><p><strong>dp_target_epsilon</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>) – The target epsilon for (epsilon, delta)-differential
+private guarantee. Defaults to None.</p></li>
+<li><p><strong>dp_target_delta</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>) – The target delta for (epsilon, delta)-differential
+private guarantee. Defaults to None.</p></li>
+<li><p><strong>dp_max_grad_norm</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>) – The maximum L2 norm of per-sample gradients;
+used to enforce differential privacy. Defaults to None.</p></li>
+<li><p><strong>dp_propensity_model_optimizer_class</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">torch.optim.Optimizer</span></code>) – The optimizer to use for the training of the propensity model.
+Defauts to Adam.</p></li>
+<li><p><strong>dp_propensity_model_optimizer_class_kwargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>) – The params to give to optimizer class.</p></li>
+<li><p><strong>dp_propensity_model_training_params</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>) – A dict with keys batch_size and num_updates for the DP-SGD training.
+Defaults to None.</p></li>
+<li><p><strong>backend_type</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – The backend to use for substra. Can be either:
+[“subprocess”, “docker”, “remote”]. Defaults to “subprocess”.</p></li>
+<li><p><strong>urls</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Union[list[str]</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">None]</span></code>) – Urls corresponding to clients API if using remote backend_type.
+Defaults to None.</p></li>
+<li><p><strong>server_org_id</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Union[str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">None]</span></code>) – Url corresponding to server API if using remote backend_type.
+Defaults to None.</p></li>
+<li><p><strong>tokens</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Union[list[str]</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">None]</span></code>) – Tokens necessary to authenticate each client API if backend_type
+is remote. Defauts to None.</p></li>
+<li><p><strong>n_clients</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em> | </em><em>None</em>) – </p></li>
+<li><p><strong>n_bootstrap</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em> | </em><em>None</em>) – </p></li>
+<li><p><strong>dp_propensity_model_optimizer_kwargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><em>dict</em></a><em> | </em><em>None</em>) – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fedeca.FedECA.get_final_cox_model">
+<span class="sig-name descname"><span class="pre">get_final_cox_model</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#fedeca.FedECA.get_final_cox_model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieve final cox model.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fedeca.FedECA.print_summary">
+<span class="sig-name descname"><span class="pre">print_summary</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#fedeca.FedECA.print_summary" title="Permalink to this definition">¶</a></dt>
+<dd><p>Print a summary of the FedECA estimation.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fedeca.FedECA.reset_experiment">
+<span class="sig-name descname"><span class="pre">reset_experiment</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#fedeca.FedECA.reset_experiment" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove the propensity model just in case.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fedeca.FedECA.run">
+<span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">targets</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fedeca.FedECA.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run the federated iptw algorithms.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>targets</strong> (<a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.3.3)"><em>DataFrame</em></a><em> | </em><em>None</em>) – </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fedeca.FedECA.set_propensity_model_strategy">
+<span class="sig-name descname"><span class="pre">set_propensity_model_strategy</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#fedeca.FedECA.set_propensity_model_strategy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set FedECA to use DP.</p>
+<p>At the end it sets the parameter self.propensity_model_strateg</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="fedeca.FedECA.clients_names">
+<span class="sig-name descname"><span class="pre">clients_names</span></span><a class="headerlink" href="#fedeca.FedECA.clients_names" title="Permalink to this definition">¶</a></dt>
+<dd><p>of clients for global bootstrap by passing num_clients</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2025, OWKIN
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/sphinx_highlight.js"></script>
+    
+
+  
+
+  <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

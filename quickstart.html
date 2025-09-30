@@ -1,0 +1,399 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Quickstart &mdash; FedECA 135f89e55308c499013645884a817dd686810572 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/fonts.css" type="text/css" />
+  <link rel="stylesheet" href="_static/owkin.css" type="text/css" />
+  <link rel="stylesheet" href="_static/sidebar.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="fedeca.competitors" href="api/competitors.html" />
+    <link rel="prev" title="Installation" href="installation.html" /> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> FedECA
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                135f89e55308c499013645884a817dd686810572
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption" role="heading"><span class="caption-text">Installation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Getting Started Instructions</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#pooled-iptw-analysis">Pooled IPTW analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#distributed-analysis">Distributed Analysis</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="api/competitors.html">fedeca.competitors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/algorithms.html">fedeca.algorithms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/metrics.html">fedeca.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/scripts.html">fedeca.scripts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/strategies.html">fedeca.strategies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/utils.html">fedeca.utils</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">FedECA</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>Quickstart</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <section id="quickstart">
+<h1>Quickstart<a class="headerlink" href="#quickstart" title="Permalink to this heading">¶</a></h1>
+<p>This quickstart assumes users have already installed fedeca in a conda environment.</p>
+<p>We recommend users to first install ipython (<code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">ipython</span></code>) or jupyter,
+and to copy-paste and run the content of the blocks sequentially either in the
+ipython shell or in a jupyter notebook.</p>
+<p>(Don’t forget to make sure the <code class="docutils literal notranslate"><span class="pre">ipython</span></code> interpreter being called is the one from the fedeca
+conda environment by calling <code class="docutils literal notranslate"><span class="pre">which</span> <span class="pre">ipython</span></code>. In the case it is not the correct one
+running <code class="docutils literal notranslate"><span class="pre">hash</span> <span class="pre">-r</span></code> usually does the trick. Similarly when using <code class="docutils literal notranslate"><span class="pre">jupyter</span></code> make sure
+the kernel used is the python interpreter from the conda environment (see i.e. this <a class="reference external" href="https://stackoverflow.com/questions/39604271/conda-environments-not-showing-up-in-jupyter-notebook">stackoverflow question</a> ))</p>
+<p>FedECA tries to mimic scikit-learn API as much as possible with the constraints
+of distributed learning.
+The first step in data science is always the data.
+We need to first use or generate some survival data in pandas.dataframe format.
+Note that fedeca should work on any data format, provided that the
+return type of the substra opener is indeed a pandas.dataframe but let’s keep
+it simple in this quickstart.</p>
+<p>Here we will use fedeca utils which will generate some synthetic survival data
+following CoxPH assumptions:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">fedeca.utils.survival_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">CoxData</span>
+<span class="c1"># Let&#39;s generate 1000 data samples with 10 covariates</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">CoxData</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span> <span class="n">n_samples</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">ndim</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">generate_dataframe</span><span class="p">()</span>
+
+<span class="c1"># We remove the true propensity score</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;propensity_scores&quot;</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Let’s inspect the data that we have here.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">info</span><span class="p">())</span>
+<span class="c1"># &lt;class &#39;pandas.core.frame.DataFrame&#39;&gt;</span>
+<span class="c1"># RangeIndex: 1000 entries, 0 to 999</span>
+<span class="c1"># Data columns (total 13 columns):</span>
+<span class="c1">#  #   Column     Non-Null Count  Dtype</span>
+<span class="c1"># ---  ------     --------------  -----</span>
+<span class="c1">#  0   X_0        1000 non-null   float64</span>
+<span class="c1">#  1   X_1        1000 non-null   float64</span>
+<span class="c1">#  2   X_2        1000 non-null   float64</span>
+<span class="c1">#  3   X_3        1000 non-null   float64</span>
+<span class="c1">#  4   X_4        1000 non-null   float64</span>
+<span class="c1">#  5   X_5        1000 non-null   float64</span>
+<span class="c1">#  6   X_6        1000 non-null   float64</span>
+<span class="c1">#  7   X_7        1000 non-null   float64</span>
+<span class="c1">#  8   X_8        1000 non-null   float64</span>
+<span class="c1">#  9   X_9        1000 non-null   float64</span>
+<span class="c1">#  10  time       1000 non-null   float64</span>
+<span class="c1">#  11  event      1000 non-null   uint8</span>
+<span class="c1">#  12  treatment  1000 non-null   uint8</span>
+<span class="c1"># dtypes: float64(11), uint8(2)</span>
+<span class="c1"># memory usage: 88.0 KB</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">head</span><span class="p">())</span>
+<span class="c1">#         X_0       X_1       X_2       X_3       X_4       X_5       X_6       X_7       X_8       X_9      time  event  treatment</span>
+<span class="c1"># 0 -0.918373 -0.814340 -0.148994  0.482720 -1.130384 -1.254769 -0.462002  1.451622  1.199705  0.133197  2.573516      1          1</span>
+<span class="c1"># 1  0.360051 -0.863619  0.198673  0.330630 -0.189184 -0.802424 -1.694990 -0.989009 -0.421245 -0.112665  0.519108      1          1</span>
+<span class="c1"># 2  0.442502  0.024682  0.069500 -0.398015 -0.521236 -0.824907  0.373018  1.016843  0.765661  0.858817  0.652803      1          1</span>
+<span class="c1"># 3 -0.783965 -1.116391 -1.482413 -2.039827 -1.639304 -0.500380 -0.298467 -1.801688 -0.743004 -0.724039  0.074925      1          1</span>
+<span class="c1"># 4 -0.199620 -0.652347 -0.018776  0.004630 -0.122242 -0.413490 -0.450718 -0.761894 -1.323135 -0.234899  0.006951      1          1</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;treatment&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">())</span>
+<span class="c1"># array([1, 0], dtype=uint8)</span>
+<span class="n">df</span><span class="p">[</span><span class="s2">&quot;treatment&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+<span class="c1"># 500</span>
+</pre></div>
+</div>
+<p>So we have survival data with covariates and a binary treatment variable.
+Let’s inspect it using proper survival plots using the great survival analysis
+package <a class="reference external" href="https://github.com/CamDavidsonPilon/lifelines">lifelines</a> that was a
+source of inspiration for fedeca:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">lifelines</span><span class="w"> </span><span class="kn">import</span> <span class="n">KaplanMeierFitter</span> <span class="k">as</span> <span class="n">KMF</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="n">treatments</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+<span class="n">kms</span> <span class="o">=</span> <span class="p">[</span><span class="n">KMF</span><span class="p">()</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">durations</span><span class="o">=</span><span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;treatment&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">t</span><span class="p">][</span><span class="s2">&quot;time&quot;</span><span class="p">],</span> <span class="n">event_observed</span><span class="o">=</span><span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;treatment&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">t</span><span class="p">][</span><span class="s2">&quot;event&quot;</span><span class="p">])</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">treatments</span><span class="p">]</span>
+
+<span class="n">axs</span> <span class="o">=</span> <span class="p">[</span><span class="n">km</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;treated&quot;</span> <span class="k">if</span> <span class="n">t</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="s2">&quot;untreated&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">km</span><span class="p">,</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">kms</span><span class="p">,</span> <span class="n">treatments</span><span class="p">)]</span>
+<span class="n">axs</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Survival Probability&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1500</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;treated_vs_untreated.pdf&quot;</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s2">&quot;tight&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Open <code class="docutils literal notranslate"><span class="pre">treated_vs_untreated.pdf</span></code> in your favorite pdf viewer and see for yourself.</p>
+</section>
+<section id="pooled-iptw-analysis">
+<h1>Pooled IPTW analysis<a class="headerlink" href="#pooled-iptw-analysis" title="Permalink to this heading">¶</a></h1>
+<p>The treatment seems to improve survival but it’s hard to say for sure as it might
+simply be due to chance or sampling bias.
+Let’s perform an IPTW analysis to be sure:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">fedeca.competitors</span><span class="w"> </span><span class="kn">import</span> <span class="n">PooledIPTW</span>
+<span class="n">pooled_iptw</span> <span class="o">=</span> <span class="n">PooledIPTW</span><span class="p">(</span><span class="n">treated_col</span><span class="o">=</span><span class="s2">&quot;treatment&quot;</span><span class="p">,</span> <span class="n">event_col</span><span class="o">=</span><span class="s2">&quot;event&quot;</span><span class="p">,</span> <span class="n">duration_col</span><span class="o">=</span><span class="s2">&quot;time&quot;</span><span class="p">)</span>
+<span class="c1"># Targets is the propensity weights</span>
+<span class="n">pooled_iptw</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">df</span><span class="p">,</span> <span class="n">targets</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">pooled_iptw</span><span class="o">.</span><span class="n">results_</span><span class="p">)</span>
+<span class="c1">#                coef  exp(coef)  se(coef)  coef lower 95%  coef upper 95%  exp(coef) lower 95%  exp(coef) upper 95%  cmp to         z         p  -log2(p)</span>
+<span class="c1"># covariate</span>
+<span class="c1"># treatment  0.041727    1.04261  0.070581       -0.096609        0.180064             0.907911             1.197294     0.0  0.591196  0.554389   0.85103</span>
+</pre></div>
+</div>
+<p>When looking at the <code class="docutils literal notranslate"><span class="pre">p-value=0.554389</span> <span class="pre">&gt;</span> <span class="pre">0.05</span></code>, thus judging by what we observe we
+cannot say for sure that there is a treatment effect. We say the ATE is non significant.</p>
+</section>
+<section id="distributed-analysis">
+<h1>Distributed Analysis<a class="headerlink" href="#distributed-analysis" title="Permalink to this heading">¶</a></h1>
+<p>However in practice data is private and held by different institutions. Therefore
+in practice each client holds a subset of the rows of our dataframe.
+We will simulate this using a realistic scenario where a “pharma” node is developing
+a new drug and thus holds all treated and the rest of the data is split across
+3 other institutions where patients were treated with the old drug.
+We will use the split utils of FedECA.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">fedeca.utils.data_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">split_dataframe_across_clients</span>
+
+<span class="n">clients</span><span class="p">,</span> <span class="n">train_data_nodes</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">split_dataframe_across_clients</span><span class="p">(</span>
+    <span class="n">df</span><span class="p">,</span>
+    <span class="n">n_clients</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+    <span class="n">split_method</span><span class="o">=</span> <span class="s2">&quot;split_control_over_centers&quot;</span><span class="p">,</span>
+    <span class="n">split_method_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;treatment_info&quot;</span><span class="p">:</span> <span class="s2">&quot;treatment&quot;</span><span class="p">},</span>
+    <span class="n">data_path</span><span class="o">=</span><span class="s2">&quot;./data&quot;</span><span class="p">,</span>
+    <span class="n">backend_type</span><span class="o">=</span><span class="s2">&quot;simu&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>Note that you can replace split_method by any callable with the signature
+<code class="docutils literal notranslate"><span class="pre">pd.DataFrame</span> <span class="pre">-&gt;</span> <span class="pre">list[list[int]]</span></code> where the list of list of ints is the split of the indices
+of the df across the different institutions.
+To convince you that the split was effective you can inspect the folder “./data”.
+You will find different subfolders <code class="docutils literal notranslate"><span class="pre">center0</span></code> to <code class="docutils literal notranslate"><span class="pre">center3</span></code> each with different
+parts of the data.
+To unpack a bit what is going on in more depth, we have created a dict of client
+‘clients’,
+which is a dict with 4 keys containing substra API handles towards the different
+institutions and their data.
+<code class="docutils literal notranslate"><span class="pre">train_data_nodes</span></code> is a list of handles towards the datasets of the different institutions
+that were registered through the substra interface using the data in the different
+folders.
+You might have noticed that we did not talk about the <code class="docutils literal notranslate"><span class="pre">backend_type</span></code> argument.
+This argument is used to choose on which network will experiments be run.
+“simu” means in-RAM. If you finish this tutorial do try other values such as:
+“docker” or “subprocess” but expect a significant slow-down as experiments
+get closer and closer to a real distributed system.</p>
+<p>Now let’s try to see if we can reproduce the pooled anaysis in this much more
+complicated distributed setting:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">fedeca</span><span class="w"> </span><span class="kn">import</span> <span class="n">FedECA</span>
+<span class="c1"># We use the first client as the node, which launches order</span>
+<span class="n">ds_client</span> <span class="o">=</span> <span class="n">clients</span><span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">clients</span><span class="o">.</span><span class="n">keys</span><span class="p">())[</span><span class="mi">0</span><span class="p">]]</span>
+<span class="n">fed_iptw</span> <span class="o">=</span> <span class="n">FedECA</span><span class="p">(</span><span class="n">ndim</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">ds_client</span><span class="o">=</span><span class="n">ds_client</span><span class="p">,</span> <span class="n">train_data_nodes</span><span class="o">=</span><span class="n">train_data_nodes</span><span class="p">,</span> <span class="n">treated_col</span><span class="o">=</span><span class="s2">&quot;treatment&quot;</span><span class="p">,</span> <span class="n">duration_col</span><span class="o">=</span><span class="s2">&quot;time&quot;</span><span class="p">,</span> <span class="n">event_col</span><span class="o">=</span><span class="s2">&quot;event&quot;</span><span class="p">,</span> <span class="n">variance_method</span><span class="o">=</span><span class="s2">&quot;robust&quot;</span><span class="p">)</span>
+<span class="n">fed_iptw</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">fed_iptw</span><span class="o">.</span><span class="n">results_</span><span class="p">)</span>
+<span class="c1"># Final partial log-likelihood:</span>
+<span class="c1"># [-11499.19619422]</span>
+<span class="c1">#        coef  se(coef)  coef lower 95%  coef upper 95%         z         p  exp(coef)  exp(coef) lower 95%  exp(coef) upper 95%</span>
+<span class="c1"># 0  0.041718  0.070581       -0.096618        0.180054  0.591062  0.554479     1.0426             0.907902             1.197282</span>
+</pre></div>
+</div>
+<p>In fact what we did above is both quite verbose. For simulation purposes we
+advise to use directly the scikit-learn inspired syntax:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">fedeca</span><span class="w"> </span><span class="kn">import</span> <span class="n">FedECA</span>
+
+<span class="n">fed_iptw</span> <span class="o">=</span> <span class="n">FedECA</span><span class="p">(</span><span class="n">ndim</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">treated_col</span><span class="o">=</span><span class="s2">&quot;treatment&quot;</span><span class="p">,</span> <span class="n">event_col</span><span class="o">=</span><span class="s2">&quot;event&quot;</span><span class="p">,</span> <span class="n">duration_col</span><span class="o">=</span><span class="s2">&quot;time&quot;</span><span class="p">)</span>
+<span class="n">fed_iptw</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">n_clients</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">split_method</span><span class="o">=</span><span class="s2">&quot;split_control_over_centers&quot;</span><span class="p">,</span> <span class="n">split_method_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;treatment_info&quot;</span><span class="p">:</span> <span class="s2">&quot;treatment&quot;</span><span class="p">},</span> <span class="n">data_path</span><span class="o">=</span><span class="s2">&quot;./data&quot;</span><span class="p">,</span> <span class="n">variance_method</span><span class="o">=</span><span class="s2">&quot;robust&quot;</span><span class="p">,</span> <span class="n">backend_type</span><span class="o">=</span><span class="s2">&quot;simu&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">fed_iptw</span><span class="o">.</span><span class="n">results_</span><span class="p">)</span>
+<span class="c1">#        coef  se(coef)  coef lower 95%  coef upper 95%         z         p  exp(coef)  exp(coef) lower 95%  exp(coef) upper 95%</span>
+<span class="c1"># 0  0.041718  0.070581       -0.096618        0.180054  0.591062  0.554479     1.0426             0.907902             1.197282</span>
+</pre></div>
+</div>
+<p>We find a similar p-value ! The distributed analysis is working as expected.
+We recommend to users that made it to here as a next step to use their own data
+and write custom split functions and to test this pipeline under various
+heterogeneity settings.
+Another interesting avenue is to try adding differential privacy to the training
+of the propensity model but that is outside the scope of this quickstart.</p>
+</section>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="api/competitors.html" class="btn btn-neutral float-right" title="fedeca.competitors" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="installation.html" class="btn btn-neutral" title="Installation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2025, OWKIN
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
+    
+
+  
+
+  <script type="text/javascript" src="_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

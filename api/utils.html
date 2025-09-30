@@ -1,0 +1,646 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>fedeca.utils &mdash; FedECA 135f89e55308c499013645884a817dd686810572 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/fonts.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/owkin.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/sidebar.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="prev" title="fedeca.strategies" href="strategies.html" /> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> FedECA
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                135f89e55308c499013645884a817dd686810572
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption" role="heading"><span class="caption-text">Installation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Getting Started Instructions</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html#pooled-iptw-analysis">Pooled IPTW analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html#distributed-analysis">Distributed Analysis</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="competitors.html">fedeca.competitors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="algorithms.html">fedeca.algorithms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="metrics.html">fedeca.metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="scripts.html">fedeca.scripts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="strategies.html">fedeca.strategies</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">fedeca.utils</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#fedeca.utils.data_utils.generate_cox_data_and_substra_clients"><code class="docutils literal notranslate"><span class="pre">generate_cox_data_and_substra_clients()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#fedeca.utils.data_utils.split_control_over_centers"><code class="docutils literal notranslate"><span class="pre">split_control_over_centers()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#fedeca.utils.data_utils.split_dataframe_across_clients"><code class="docutils literal notranslate"><span class="pre">split_dataframe_across_clients()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#fedeca.utils.data_utils.uniform_split"><code class="docutils literal notranslate"><span class="pre">uniform_split()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#fedeca.utils.moments_utils.aggregation_mean"><code class="docutils literal notranslate"><span class="pre">aggregation_mean()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#fedeca.utils.moments_utils.compute_centered_moment"><code class="docutils literal notranslate"><span class="pre">compute_centered_moment()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#fedeca.utils.moments_utils.compute_global_moments"><code class="docutils literal notranslate"><span class="pre">compute_global_moments()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#fedeca.utils.moments_utils.compute_uncentered_moment"><code class="docutils literal notranslate"><span class="pre">compute_uncentered_moment()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#fedeca.utils.substrafl_utils.Experiment"><code class="docutils literal notranslate"><span class="pre">Experiment</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#fedeca.utils.substrafl_utils.Experiment.fit"><code class="docutils literal notranslate"><span class="pre">Experiment.fit()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fedeca.utils.substrafl_utils.Experiment.get_outmodel"><code class="docutils literal notranslate"><span class="pre">Experiment.get_outmodel()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fedeca.utils.substrafl_utils.Experiment.reset_experiment"><code class="docutils literal notranslate"><span class="pre">Experiment.reset_experiment()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fedeca.utils.substrafl_utils.Experiment.run"><code class="docutils literal notranslate"><span class="pre">Experiment.run()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#fedeca.utils.substrafl_utils.SubstraflTorchDataset"><code class="docutils literal notranslate"><span class="pre">SubstraflTorchDataset</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#fedeca.utils.substrafl_utils.download_train_task_models_by_round"><code class="docutils literal notranslate"><span class="pre">download_train_task_models_by_round()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#fedeca.utils.substrafl_utils.get_outmodel_function"><code class="docutils literal notranslate"><span class="pre">get_outmodel_function()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#fedeca.utils.substrafl_utils.get_simu_state_from_round"><code class="docutils literal notranslate"><span class="pre">get_simu_state_from_round()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#fedeca.utils.substrafl_utils.make_accuracy_function"><code class="docutils literal notranslate"><span class="pre">make_accuracy_function()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#fedeca.utils.substrafl_utils.make_c_index_function"><code class="docutils literal notranslate"><span class="pre">make_c_index_function()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#fedeca.utils.substrafl_utils.make_substrafl_torch_dataset_class"><code class="docutils literal notranslate"><span class="pre">make_substrafl_torch_dataset_class()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#fedeca.utils.tensor_utils.compare_tensors_lists"><code class="docutils literal notranslate"><span class="pre">compare_tensors_lists()</span></code></a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">FedECA</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+      <li>fedeca.utils</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <section id="module-fedeca.utils.data_utils">
+<span id="fedeca-utils"></span><h1>fedeca.utils<a class="headerlink" href="#module-fedeca.utils.data_utils" title="Permalink to this heading">¶</a></h1>
+<p>Utility functions of data generation.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="fedeca.utils.data_utils.generate_cox_data_and_substra_clients">
+<span class="sig-name descname"><span class="pre">generate_cox_data_and_substra_clients</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_clients</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ndim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">split_method_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'subprocess'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">urls</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tokens</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">42</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_per_client</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">200</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">add_treated</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ncategorical</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fedeca.utils.data_utils.generate_cox_data_and_substra_clients" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate Cox data on disk for several clients.</p>
+<p>Generate Cox data and register them with different
+fake clients.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n_clients</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">(optional)</span></code>) – Number of clients. Defaults to 2.</p></li>
+<li><p><strong>ndim</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">(optional)</span></code>) – Number of covariates. Defaults to 10.</p></li>
+<li><p><strong>Union</strong><strong>[</strong><strong>dict</strong> (<em>split_method_kwargs =</em>) – The argument to the split_method uniform.</p></li>
+<li><p><strong>None</strong><strong>]</strong> – The argument to the split_method uniform.</p></li>
+<li><p><strong>backend_type</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">(optional)</span></code>) – Type of backend. Defaults to “subprocess”.</p></li>
+<li><p><strong>data_path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">(optional)</span></code>) – Path to save the data. Defaults to None.</p></li>
+<li><p><strong>seed</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">(optional)</span></code>) – Random seed. Defaults to 42.</p></li>
+<li><p><strong>n_per_client</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">(optional)</span></code>) – Number of samples per client. Defaults to 200.</p></li>
+<li><p><strong>add_treated</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">(optional)</span></code>) – Whether or not to keep treated column.</p></li>
+<li><p><strong>ncategorical</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">(optional)</span></code>) – Number of features to make categorical a posteriori (moving away from Cox
+assumptions).</p></li>
+<li><p><strong>split_method_kwargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><em>dict</em></a><em> | </em><em>None</em>) – </p></li>
+<li><p><strong>urls</strong> (<em>None</em><em> | </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a>) – </p></li>
+<li><p><strong>tokens</strong> (<em>None</em><em> | </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a>) – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="fedeca.utils.data_utils.split_control_over_centers">
+<span class="sig-name descname"><span class="pre">split_control_over_centers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_clients</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">treatment_info</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'treatment_allocation'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_random</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">42</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fedeca.utils.data_utils.split_control_over_centers" title="Permalink to this definition">¶</a></dt>
+<dd><p>Split patients in the control group over the centers.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame,</span></code>) – Dataframe containing features of the patients.</p></li>
+<li><p><strong>n_clients</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int,</span></code>) – Number of clients.</p></li>
+<li><p><strong>treatment_info</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">(optional)</span></code>) – Column name for the treatment allocation covariate.
+Defaults to “treatment_allocation”.</p></li>
+<li><p><strong>use_random</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>) – Whether or not to shuffle the control group indices before splitting.</p></li>
+<li><p><strong>seed</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – The seed of the shuffling.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="fedeca.utils.data_utils.split_dataframe_across_clients">
+<span class="sig-name descname"><span class="pre">split_dataframe_across_clients</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_clients</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">split_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'uniform'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">split_method_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'subprocess'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">urls</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tokens</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fedeca.utils.data_utils.split_dataframe_across_clients" title="Permalink to this definition">¶</a></dt>
+<dd><p>Split patients over the centers.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame,</span></code>) – Dataframe containing features of the patients.</p></li>
+<li><p><strong>n_clients</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int,</span></code>) – Number of clients.</p></li>
+<li><p><strong>split_method</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Union[Callable</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str]</span></code>) – How to split the dataset across all clients, if callable should have the
+signature: df, n_clients, kwargs -&gt; list[list[int]]
+if str should be an existing key, which will invoke the corresponding
+callable. Possible values are <cite>uniform</cite> which splits the patients
+uniformly across centers or <cite>split_control_over_centers</cite> where one
+center has all the treated patients and the control is split over the
+remaining ones.</p></li>
+<li><p><strong>split_method_kwargs</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Union[dict</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">None]</span></code>) – Optional kwargs for the split_method method.</p></li>
+<li><p><strong>backend_type</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">(optional)</span></code>) – Backend type. Default is “subprocess”.</p></li>
+<li><p><strong>data_path</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Union[str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">None],</span></code>) – Path on where to save the data on disk.</p></li>
+<li><p><strong>urls</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List,</span></code>) – List of urls.</p></li>
+<li><p><strong>tokens</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List,</span></code>) – List of tokens.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="fedeca.utils.data_utils.uniform_split">
+<span class="sig-name descname"><span class="pre">uniform_split</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_clients</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_random</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">42</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fedeca.utils.data_utils.uniform_split" title="Permalink to this definition">¶</a></dt>
+<dd><p>Split patients uniformly over n_clients.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame,</span></code>) – Dataframe containing features of the patients.</p></li>
+<li><p><strong>n_clients</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int,</span></code>) – Number of clients.</p></li>
+<li><p><strong>use_random</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>) – Whether or not to shuffle data before splitting. Defaults to True.</p></li>
+<li><p><strong>seed</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">(optional)</span></code>) – Seeding for shuffling</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<span class="target" id="module-fedeca.utils.moments_utils"></span><p>A module containing utils to compute high-order moments using Newton’s formeanla.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="fedeca.utils.moments_utils.aggregation_mean">
+<span class="sig-name descname"><span class="pre">aggregation_mean</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">local_means</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_local_samples</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fedeca.utils.moments_utils.aggregation_mean" title="Permalink to this definition">¶</a></dt>
+<dd><p>Aggregate local means.</p>
+<p>Aggregate the local means into a global mean by using the local number of samples.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>local_means</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List[Any]</span></code>) – List of local means. Could be array, float, Series.</p></li>
+<li><p><strong>n_local_samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List[int]</span></code>) – List of number of samples used for each local mean.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Aggregated mean. Same type of the local means</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Any</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="fedeca.utils.moments_utils.compute_centered_moment">
+<span class="sig-name descname"><span class="pre">compute_centered_moment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">uncentered_moments</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fedeca.utils.moments_utils.compute_centered_moment" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the centered moment of order k.</p>
+<p>Given a list of the k first unnormalized moments,
+compute the centered moment of order k.
+For high values of the moments the results can
+differ from scipy.special.moment.
+We are interested in computing
+.. math:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>\<span class="n">hat</span><span class="p">{</span>\<span class="n">mu</span><span class="p">}</span><span class="n">_k</span>  <span class="o">=</span> \<span class="n">frac</span><span class="p">{</span><span class="mi">1</span><span class="p">}{</span>\<span class="n">hat</span><span class="p">{</span>\<span class="n">sigma</span><span class="p">}</span><span class="o">^</span><span class="n">k</span><span class="p">}</span>
+    \<span class="n">mathbb</span> <span class="n">E_Z</span> \<span class="n">left</span><span class="p">[</span> <span class="p">(</span><span class="n">Z</span> <span class="o">-</span> \<span class="n">hat</span><span class="p">{</span>\<span class="n">mu</span><span class="p">})</span><span class="o">^</span><span class="n">k</span>\<span class="n">right</span><span class="p">]</span>
+\<span class="n">hat</span><span class="p">{</span>\<span class="n">mu</span><span class="p">}</span><span class="n">_k</span>  <span class="o">=</span> \<span class="n">frac</span><span class="p">{</span><span class="mi">1</span><span class="p">}{</span>\<span class="n">hat</span><span class="p">{</span>\<span class="n">sigma</span><span class="p">}</span><span class="o">^</span><span class="n">k</span><span class="p">}</span>
+    \<span class="n">mathbb</span> <span class="n">E_Z</span> \<span class="n">left</span><span class="p">[</span> \<span class="n">sum_</span><span class="p">{</span><span class="n">l</span><span class="o">=</span><span class="mi">0</span><span class="p">}</span><span class="o">^</span><span class="n">k</span>\<span class="n">binom</span><span class="p">{</span><span class="n">k</span><span class="p">}{</span><span class="n">l</span><span class="p">}</span> <span class="n">Z</span><span class="o">^</span><span class="p">{</span><span class="n">k</span><span class="o">-</span><span class="n">l</span><span class="p">}</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">^</span><span class="n">l</span>\<span class="n">hat</span>\<span class="n">mu</span><span class="o">^</span><span class="n">l</span><span class="p">)</span>\<span class="n">right</span><span class="p">]</span>
+\<span class="n">hat</span><span class="p">{</span>\<span class="n">mu</span><span class="p">}</span><span class="n">_k</span>  <span class="o">=</span> \<span class="n">frac</span><span class="p">{</span><span class="mi">1</span><span class="p">}{</span>\<span class="n">hat</span><span class="p">{</span>\<span class="n">sigma</span><span class="p">}</span><span class="o">^</span><span class="n">k</span><span class="p">}</span>
+  \<span class="n">sum_</span><span class="p">{</span><span class="n">l</span><span class="o">=</span><span class="mi">0</span><span class="p">}</span><span class="o">^</span><span class="n">k</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">^</span><span class="n">l</span>\<span class="n">binom</span><span class="p">{</span><span class="n">k</span><span class="p">}{</span><span class="n">l</span><span class="p">}</span> \<span class="n">mathbb</span> <span class="n">E_Z</span> \<span class="n">left</span><span class="p">[</span> <span class="n">Z</span><span class="o">^</span><span class="p">{</span><span class="n">k</span><span class="o">-</span><span class="n">l</span><span class="p">}</span>
+  \<span class="n">right</span><span class="p">]</span>\<span class="n">mathbb</span> <span class="n">E_Z</span> \<span class="n">left</span><span class="p">[</span> <span class="n">Z</span> \<span class="n">right</span><span class="p">]</span><span class="o">^</span><span class="n">l</span>
+</pre></div>
+</div>
+<p>thus we only need the list uncentered moments up to order k.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>uncentered_moments</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List[Any]</span></code>) – List of the k first non-centered moment.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The centered k-th moment.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Any</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="fedeca.utils.moments_utils.compute_global_moments">
+<span class="sig-name descname"><span class="pre">compute_global_moments</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">shared_states</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fedeca.utils.moments_utils.compute_global_moments" title="Permalink to this definition">¶</a></dt>
+<dd><p>Aggregate local moments.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>shared_states</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a>) – list of outputs from compute_uncentered_moment.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The results of the aggregation with both centered and uncentered moments.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="fedeca.utils.moments_utils.compute_uncentered_moment">
+<span class="sig-name descname"><span class="pre">compute_uncentered_moment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fedeca.utils.moments_utils.compute_uncentered_moment" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the uncentered moment.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">pd.DataFrame</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">np.array</span></code>) – dataframe.</p></li>
+<li><p><strong>order</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – order of the moment.</p></li>
+<li><p><strong>weights</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">np.array</span></code>) – weight for the aggregation.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Moment of order k.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">pd.DataFrame</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">np.array</span></code></p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#NotImplementedError" title="(in Python v3.13)"><strong>NotImplementedError</strong></a> – Raised if the data type is not Dataframe nor np.ndarray.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<span class="target" id="module-fedeca.utils.substrafl_utils"></span><p>Utils functions for Substra.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="fedeca.utils.substrafl_utils.Experiment">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Experiment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">strategies</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_rounds_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ds_client</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_data_nodes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_data_nodes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">aggregation_node</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">evaluation_frequency</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">experiment_folder</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'./experiments'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clean_models</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fedeca_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">algo_dependencies</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">partner_client</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fedeca.utils.substrafl_utils.Experiment" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Experiment class.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>strategies</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a>) – </p></li>
+<li><p><strong>num_rounds_list</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em>]</em>) – </p></li>
+<li><p><strong>ds_client</strong> (<em>Client</em><em> | </em><em>None</em>) – </p></li>
+<li><p><strong>train_data_nodes</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a><em>[</em><em>substrafl.nodes.train_data_node.TrainDataNode</em><em>] </em><em>| </em><em>None</em>) – </p></li>
+<li><p><strong>test_data_nodes</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a><em>[</em><em>substrafl.nodes.test_data_node.TestDataNode</em><em>] </em><em>| </em><em>None</em>) – </p></li>
+<li><p><strong>aggregation_node</strong> (<em>AggregationNode</em><em> | </em><em>None</em>) – </p></li>
+<li><p><strong>evaluation_frequency</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em> | </em><em>None</em>) – </p></li>
+<li><p><strong>experiment_folder</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – </p></li>
+<li><p><strong>clean_models</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a>) – </p></li>
+<li><p><strong>fedeca_path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em> | </em><em>None</em>) – </p></li>
+<li><p><strong>algo_dependencies</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a><em> | </em><em>None</em>) – </p></li>
+<li><p><strong>partner_client</strong> (<em>Client</em><em> | </em><em>None</em>) – </p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="fedeca.utils.substrafl_utils.Experiment.fit">
+<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nb_clients</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">split_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'uniform'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">split_method_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'subprocess'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">urls</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tokens</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fedeca.utils.substrafl_utils.Experiment.fit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fit strategies on global data split across clients.</p>
+<p>For test if provided we use test_data_nodes from int or the
+train_data_nodes in the latter train=test.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">pd.DataFrame</span></code>) – The global data to be split has to be a dataframe as we only support
+one opener type.</p></li>
+<li><p><strong>nb_clients</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Union[int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">None]</span></code>, <em>optional</em>) – The number of clients used to split data across, by default None</p></li>
+<li><p><strong>split_method</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Union[Callable</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">None]</span></code>, <em>optional</em>) – How to split data across the nb_clients, by default None.</p></li>
+<li><p><strong>split_method_kwargs</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Union[Callable</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">None]</span></code>, <em>optional</em>) – Argument of the function used to split data, by default None.</p></li>
+<li><p><strong>data_path</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Union[str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">None]</span></code>) – Where to store the data on disk when backend is not remote.</p></li>
+<li><p><strong>backend_type</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – The backend to use for substra. Can be either:
+[“subprocess”, “docker”, “remote”]. Defaults to “subprocess”.</p></li>
+<li><p><strong>urls</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Union[list[str]</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">None]</span></code>) – Urls corresponding to clients API if using remote backend_type.
+Defaults to None.</p></li>
+<li><p><strong>tokens</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Union[list[str]</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">None]</span></code>) – Tokens necessary to authenticate each client API if backend_type
+is remote. Defauts to None.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fedeca.utils.substrafl_utils.Experiment.get_outmodel">
+<span class="sig-name descname"><span class="pre">get_outmodel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strategy_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">idx_task</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fedeca.utils.substrafl_utils.Experiment.get_outmodel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the output model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>task_name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Name of the task.</p></li>
+<li><p><strong>strategy_idx</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>, <em>optional</em>) – Index of the strategy, by default 0.</p></li>
+<li><p><strong>idx_task</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>, <em>optional</em>) – Index of the task, by default 0.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fedeca.utils.substrafl_utils.Experiment.reset_experiment">
+<span class="sig-name descname"><span class="pre">reset_experiment</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#fedeca.utils.substrafl_utils.Experiment.reset_experiment" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reset the state of the object.</p>
+<p>So it can be fit with a new dataset.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fedeca.utils.substrafl_utils.Experiment.run">
+<span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_strategies_to_run</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fedeca.utils.substrafl_utils.Experiment.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run the experiment.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>num_strategies_to_run</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>, <em>optional</em>) – Number of strategies to run, by default None.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="fedeca.utils.substrafl_utils.SubstraflTorchDataset">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">SubstraflTorchDataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_from_opener</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_inference</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_columns</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">columns_to_drop</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_cols</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'float64'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_torch_tensors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fedeca.utils.substrafl_utils.SubstraflTorchDataset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Dataset</span></code></p>
+<p>Substra torch dataset class.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>is_inference</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a>) – </p></li>
+<li><p><strong>target_columns</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a><em> | </em><em>None</em>) – </p></li>
+<li><p><strong>columns_to_drop</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a><em> | </em><em>None</em>) – </p></li>
+<li><p><strong>fit_cols</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a><em> | </em><em>None</em>) – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="fedeca.utils.substrafl_utils.download_train_task_models_by_round">
+<span class="sig-name descname"><span class="pre">download_train_task_models_by_round</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">client</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dest_folder</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compute_plan_key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">round_idx</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fedeca.utils.substrafl_utils.download_train_task_models_by_round" title="Permalink to this definition">¶</a></dt>
+<dd><p>Download models associated with a specific round of a train task.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="fedeca.utils.substrafl_utils.get_outmodel_function">
+<span class="sig-name descname"><span class="pre">get_outmodel_function</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">client</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compute_plan_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">idx_task</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tasks_dict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fedeca.utils.substrafl_utils.get_outmodel_function" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieve an output model from a task or tasks_dict.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="fedeca.utils.substrafl_utils.get_simu_state_from_round">
+<span class="sig-name descname"><span class="pre">get_simu_state_from_round</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">simu_memory</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">client_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">round_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fedeca.utils.substrafl_utils.get_simu_state_from_round" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the simulation state from a specific round and client.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>simu_memory</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">SimuStatesMemory</span></code>) – Simulation memory.</p></li>
+<li><p><strong>client_id</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Client ID.</p></li>
+<li><p><strong>round_idx</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Optional[int]</span></code>, <em>optional</em>) – Round index, by default None.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="fedeca.utils.substrafl_utils.make_accuracy_function">
+<span class="sig-name descname"><span class="pre">make_accuracy_function</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">treatment_col</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fedeca.utils.substrafl_utils.make_accuracy_function" title="Permalink to this definition">¶</a></dt>
+<dd><p>Build accuracy function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>treatment_col</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str,</span></code>) – Column name for the treatment allocation.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="fedeca.utils.substrafl_utils.make_c_index_function">
+<span class="sig-name descname"><span class="pre">make_c_index_function</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">duration_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">event_col</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fedeca.utils.substrafl_utils.make_c_index_function" title="Permalink to this definition">¶</a></dt>
+<dd><p>Build C-index function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>duration_col</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str,</span></code>) – Column name for the duration.</p></li>
+<li><p><strong>event_col</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str,</span></code>) – Column name for the event.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="fedeca.utils.substrafl_utils.make_substrafl_torch_dataset_class">
+<span class="sig-name descname"><span class="pre">make_substrafl_torch_dataset_class</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">target_cols</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">event_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">duration_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_cols</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'float64'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_torch_tensors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">client_identifier</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fedeca.utils.substrafl_utils.make_substrafl_torch_dataset_class" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a custom SubstraflTorchDataset class for survival analysis.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>target_cols</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a>) – List of target columns.</p></li>
+<li><p><strong>event_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Name of the event column.</p></li>
+<li><p><strong>duration_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Name of the duration column.</p></li>
+<li><p><strong>fit_cols</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Union[list</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">None]</span></code>, <em>optional</em>) – List of columns to fit on, by default None will use all
+columns that can be cast to numeric except target_columns.</p></li>
+<li><p><strong>dtype</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <em>optional</em>) – Data type, by default “float64”.</p></li>
+<li><p><strong>return_torch_tensors</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>, <em>optional</em>) – Returns torch.Tensor. Defaults to False.</p></li>
+<li><p><strong>client_identifier</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Union[None</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str]</span></code>, <em>optional</em>) – Name of the column that identifies the client and that is to be dropped.
+By default assumes there is no client identifier.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Custom SubstraflTorchDataset class.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#type" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">type</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<span class="target" id="module-fedeca.utils.tensor_utils"></span><p>Functions for tensors comparison.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="fedeca.utils.tensor_utils.compare_tensors_lists">
+<span class="sig-name descname"><span class="pre">compare_tensors_lists</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tensor_list_a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tensor_list_b</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rtol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-05</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">atol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-08</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fedeca.utils.tensor_utils.compare_tensors_lists" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compare list of tensors up to a certain precision.</p>
+<p>The criteria that is checked is the following: <a href="#id1"><span class="problematic" id="id2">|x - y|</span></a> &lt;= <a href="#id3"><span class="problematic" id="id4">|y|</span></a> * rtol + atol.
+So there are two terms to consider. The first one is relative (rtol) and the second
+is absolute (atol). The default for atol is a bit low for float32 tensors. We keep
+the defaults everywhereto be safe except in the tests computed gradients wrt theory
+where we raise atol to 1e-6. It makes sens in this case because it matches the
+expected precision for slightly different float32 ops that should theoretically
+give the exact same result.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tensor_list_a</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a>) – a list of tensors</p></li>
+<li><p><strong>tensor_list_b</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a>) – a list of tensors</p></li>
+<li><p><strong>atol</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>, <em>optional</em>) – absolute difference tolerance for tensor-to-tensor comparison. Default to 1e-5.</p></li>
+<li><p><strong>rtol</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>, <em>optional</em>) – relative difference tolerance for tensor-to-tensor comparison. Default to 1e-8.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<span class="target" id="module-fedeca.utils.typing"></span><p>Module defining type alias.</p>
+</section>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="strategies.html" class="btn btn-neutral" title="fedeca.strategies" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2025, OWKIN
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/sphinx_highlight.js"></script>
+    
+
+  
+
+  <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
