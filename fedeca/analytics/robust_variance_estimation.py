@@ -5,6 +5,7 @@ import numpy as np
 from substrafl.nodes import AggregationNode, TrainDataNode
 from substrafl.remote import remote
 from substrafl.strategies.strategy import Strategy
+from fedeca.utils.logging import log_remote
 
 
 class RobustCoxVariance(Strategy):
@@ -57,6 +58,7 @@ class RobustCoxVariance(Strategy):
         pass
 
     @remote
+    @log_remote
     def sum(self, shared_states: List[np.ndarray]):
         """Compute sum of Qks.
 

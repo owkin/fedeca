@@ -1,0 +1,44 @@
+moment1: "Uncentered (scalar) moments of order 1 for each covariate used by the Cox model. Therefore it is a list of scalars of size the number of covariates. In the case of IPTW the only covariate is the treatment."
+moment2: "Uncentered (scalar) moments of order 2 for each covariate used by the Cox model. Therefore it is a list of scalars of size the number of covariates. In the case of IPTW the only covariate is the treatment."
+n_samples: "The number of samples (scalar) of each center"
+global_centered_moment_1: "Global centered moment of order 1 for each covariate used by the Cox model. Therefore it is a list of scalars of size the number of covariates. In the case of IPTW the only covariate is the treatment."
+global_centered_moment_2: "Global centered moment of order 2 for each covariate used by the Cox model. Therefore it is a list of scalars of size the number of covariates. In the case of IPTW the only covariate is the treatment."
+global_uncentered_moment_1: "Global uncentered moment of order 1 for each covariate used by the Cox model. Therefore it is a list of scalars of size the number of covariates. In the case of IPTW the only covariate is the treatment. Those values are not used in fact and are computed for testing purposes."
+global_uncentered_moment_2: "Global uncentered moment of order 2 for each covariate used by the Cox model. Therefore it is a list of scalars of size the number of covariates. In the case of IPTW the only covariate is the treatment. Those values are not used in fact and are computed for testing purposes."
+total_n_samples: "The total number of samples (scalar) across centers."
+global_survival_statistics: "A dict whose values are the ones that will not change throughout trainings and that are used in the computation of gradients and hessian for the Cox model, contains all distinct event times (list of scalars), the global sum of features of all samples on each distinct event times (list of vectors of dimension the number of covariates), the number of events per distinct times (list of scalars) and the weighted sum of samples on each distinct event times (list of scalars)."
+sum_features_on_events: "the global sum of features of all samples on each distinct event times"
+distinct_event_times: "All distinct event times, which is list of scalars."
+num_global_events_time: "The number of distinct event times globally, which is also the size of distinct\\_event\\_times list."
+number_events_by_time: "The number of events per distinct times (scalar)."
+total_number_samples: "The total number of samples (scalar)."
+weights_counts_on_events: "The weighted sum of samples on each distinct event times (list of scalars)."
+moments: "The global centered moments of order 1 and 2 of each covariate of the Cox model (moment1, moment2 which are forwarded)"
+local_phi_stats: "A dict whose values are the sums on risk sets of different quantities used to compute gradient and or hessians. Its values are: 1. the local sum on each risk set of risk\\_phi which is a scalar (thus a list of scalars). 2. the local sum on each risk set of risk\\_phi\\_x which is of dimension the number of features (a list of vectors). and 3. the local sum on each risk set of risk\\_phi\\_x\\_x which is of the dimension of the number of features squared (a list of matrices)."
+hessian: "The hessian of the model of dimension the number of covariates squared."
+gradient: "The global gradient of the Cox model of dimension the number of covariates."
+gradients: "The local gradient of the propensity model of dimension the number of covariates."
+second_part_ll: "Quantity necessary to compute the log-likelihood."
+gradient_shape: "The shape of the gradient (scalar)."
+global_risk_phi_list: "Global sums on each risk sets of risk\\_phi globally that is a list of scalars."
+global_risk_phi_x_list: "Global sums on each risk sets of risk\\_phi\\_x globally that is a list of vector of dimensions number of features."
+parameters_update: "The Newton-Raphson step computed with the global hessian."
+avg_parameters_update:  "The average of the gradient from each center."
+list_number_events_by_time: "The number of events at each distinct event times that is a list of scalars."
+global_sum_features_on_events: "The global sum of covariates on each event times, a list of inputs of dimensions the number of covariates. Quantity which doesn't change through times."
+risk_phi: "Local sums on each risk sets of risk\\_phi globally that is a list of scalars."
+risk_phi_x: "Local sums on each risk sets of risk\\_phi\\_x globally that is a list of vector of dimensions number of features and that is involved in the gradient computation."
+risk_phi_x_x: "Local sums on each risk sets of risk\\_phi\\_x\\_x globally that is a list of vector of dimensions number of features squared that is involved in the hessian computation."
+# For FedKaplan
+treated: "Statistics dict computed on the treated population and containing 1. unique times of events in ascending order (list of scalars), the (weighted) number of individual at risks at each corresponding unique times (list of scalars), the (weighted) number of individuals with an event (death) at each corresponding unique times (list of scalars)."
+untreated: "Statistics dict computed on the treated population and containing 1. unique times of events in ascending order (list of scalars), the (weighted) number of individual at risks at each corresponding unique times (list of scalars), the (weighted) number of individuals with an event (death) at each corresponding unique times (list of scalars)."
+array: "The Qk matrices on each client or their sum."
+# For FedSMD
+# treated: "Statistics dict computed on the treated population and containing weighted and unweighted moments (and sums of moments) of order 1 and 2, the number of samples, the global moments of order 1 and 2, the total number of samples weighted and unweighted
+# untreated: "Statistics dict computed on the untreated population and containing weighted and unweighted moments (and sums of moments) of order 1 and 2, the number of samples, the global moments of order 1 and 2, the total number of samples weighted and unweighted
+# Examples on how to differentiate quantities with the same name
+# patterns XX_YY_ZZ
+# local_features:
+#   "7": $\xz_{k}  := \design_k^{\top} \ncounts_{k}$.
+#   "16_42" : For each active gene $g$, the projected features $\design_k^{\top} \wmat_{k,g} \phi_{k,g}$, where $\phi_{k,i,g} = \log\left(\frac{\mean_{k,i,g}}{\sfactor_{i}}\right) + \frac{\counts_{k,i,g} - \mean_{k,i,g}}{\mean_{k,i,g}}$ and $\phi_{k,g}$ is the vector of $(\phi_{k,i,g})_{1 \leq i \leq \nsamples_k}$.
+#   "77_111": $\xz_{k}  := \design_k^{\top} \ncounts_{k}$, where $\ncounts_{k}$ is the normalized counts in the center $k$ on the set of genes to replace, where the value of Cook's outliers have been replaced using a trimmed mean.

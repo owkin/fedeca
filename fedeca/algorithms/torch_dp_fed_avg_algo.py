@@ -17,6 +17,7 @@ from substrafl.algorithms.pytorch import weight_manager
 from substrafl.algorithms.pytorch.torch_fed_avg_algo import TorchFedAvgAlgo
 from substrafl.remote import remote_data
 from substrafl.strategies.schemas import FedAvgAveragedState, FedAvgSharedState
+from fedeca.utils.logging import log_remote_data
 
 logger = logging.getLogger(__name__)
 
@@ -214,6 +215,7 @@ class TorchDPFedAvgAlgo(TorchFedAvgAlgo):
                 self._scheduler.step()
 
     @remote_data
+    @log_remote_data
     def train(
         self,
         data_from_opener: Any,

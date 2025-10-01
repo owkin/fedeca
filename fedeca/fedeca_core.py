@@ -13,10 +13,12 @@ import torch
 from pandas.api.types import is_numeric_dtype
 from scipy.linalg import inv
 from substra.sdk.models import ComputePlanStatus
-from substrafl.algorithms.pytorch import TorchNewtonRaphsonAlgo
+from fedeca.algorithms.torch_newton_raphson_algo_decorated import TorchNewtonRaphsonAlgoDecorated as TorchNewtonRaphsonAlgo  # noqa: E501
+
 from substrafl.model_loading import download_algo_state
 from substrafl.nodes import AggregationNode, TrainDataNode
-from substrafl.strategies import FedAvg, NewtonRaphson
+from fedeca.strategies.fed_avg_decorated import FedAvgDecorated as FedAvg
+from fedeca.strategies.newton_raphson_decorated import NewtonRaphsonDecorated as NewtonRaphson  # noqa: E501
 from torch import nn
 from torch.optim import SGD, Optimizer
 

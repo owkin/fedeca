@@ -17,6 +17,7 @@ from substrafl.remote import remote
 from substrafl.strategies.strategy import Strategy
 
 from fedeca.utils.moments_utils import compute_global_moments
+from fedeca.utils.logging import log_remote
 
 
 class StrategyName(str, Enum):
@@ -415,6 +416,7 @@ class WebDisco(Strategy):
         self._shared_states = next_shared_states
 
     @remote
+    @log_remote
     def _compute_global_survival_statistics(self, shared_states):
         """Aggregate different needed statistics.
 
@@ -511,6 +513,7 @@ class WebDisco(Strategy):
         return results
 
     @remote
+    @log_remote
     def _build_global_gradient_and_hessian(
         self,
         shared_states,
@@ -619,6 +622,7 @@ class WebDisco(Strategy):
         }
 
     @remote
+    @log_remote
     def aggregate_moments(self, shared_states):
         """Compute the global centered moments given the local results.
 

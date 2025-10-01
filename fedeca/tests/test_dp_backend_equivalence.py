@@ -6,7 +6,8 @@ import torch
 import torch.nn as nn
 
 # from substrafl.model_loading import download_algo_state
-from substrafl.strategies import FedAvg
+from fedeca.strategies.fed_avg_decorated import FedAvgDecorated as FedAvg
+
 from torch.optim import SGD
 
 from fedeca.algorithms.torch_dp_fed_avg_algo import TorchDPFedAvgAlgo
