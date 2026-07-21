@@ -139,7 +139,7 @@ class Experiment:
         dependencies_kwargs = {
             "local_code": [],
             "local_installable_dependencies": [],
-            "pypi_dependencies": [],
+            "pypi_dependencies": ["--extra-index-url https://download.pytorch.org/whl/cpu"],
         }
         for alg_dep in algo_dependencies:
             if str(alg_dep).endswith(".py"):
