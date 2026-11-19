@@ -29,6 +29,7 @@ jobs:
         with:
           # Do not checkout in the current working directory to ensure the further imported module is the installed one
           path: anywhere
+          persist-credentials: false
       - name: Install miniconda
         uses: conda-incubator/setup-miniconda@v3
         with:
