@@ -25,13 +25,13 @@ jobs:
         os: [ windows-2025 ]
         python: [ "3.9" ]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4.4.0
         with:
           # Do not checkout in the current working directory to ensure the further imported module is the installed one
           path: anywhere
           persist-credentials: false
       - name: Install miniconda
-        uses: conda-incubator/setup-miniconda@v3
+        uses: conda-incubator/setup-miniconda@v3.3.0
         with:
           python-version: ${{ matrix.python }}
           activate-environment: fedeca
@@ -55,12 +55,12 @@ jobs:
         python: [ "3.9" ]
         # python: ["3.9", "3.10", "3.11"]  # TODO: expand to other pythons
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4.4.0
         with:
           repository: ${{ github.event.pull_request.head.repo.full_name }}
           ref: ${{ github.event.pull_request.head.ref }}
       - name: Set up Python ${{ matrix.python }}
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v4.9.1
         with:
           python-version: ${{ matrix.python }}
       - name: Install dependencies
@@ -75,7 +75,7 @@ jobs:
         run: |
           coverage html
       - name: Upload coverage artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4.6.2
         with:
           name: test-coverage-report
           path: htmlcov/
@@ -100,7 +100,7 @@ jobs:
 
       - name: Commit coverage badge
         if: github.event_name == 'pull_request'
-        uses: EndBug/add-and-commit@v9
+        uses: EndBug/add-and-commit@v9.1.4
         with:
           add: badges/cov_badge.svg
           default_author: github_actor

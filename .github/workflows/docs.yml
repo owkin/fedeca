@@ -24,10 +24,10 @@ jobs:
         python: ["3.9"]
         # python: ["3.9", "3.10", "3.11"]  # TODO: expand to other pythons
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3.7.0
         with:
           persist-credentials: false
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v4.9.1
         with:
           python-version: ${{ matrix.python }}
       - name: Install dependencies
@@ -39,7 +39,7 @@ jobs:
           cd docs
           make clean html
       - name: Publish docs to gh-pages
-        uses: peaceiris/actions-gh-pages@v3
+        uses: peaceiris/actions-gh-pages@v3.9.3
         if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         with:
           publish_branch: gh-pages
