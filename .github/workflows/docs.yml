@@ -9,10 +9,15 @@ on:
     branches:
       - 'main'
 
+permissions:
+  contents: read
+
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   build_docs:
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: write # the publish step pushes to gh-pages
     strategy:
       matrix:
         os: [ubuntu-latest]

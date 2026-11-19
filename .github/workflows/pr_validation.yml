@@ -13,6 +13,9 @@ on:
     # Every monday at 3h30 UTC
     - cron: '30 3 * * 1'
 
+permissions:
+  contents: read
+
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   verify_windows_setup:
@@ -43,6 +46,8 @@ jobs:
           pip list
   run_tests:
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: write # the coverage badge step pushes a commit to the PR branch
     strategy:
       matrix:
         os: [ ubuntu-latest ]
